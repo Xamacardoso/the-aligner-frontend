@@ -1,0 +1,29 @@
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\app\(dashboard)\dentista\pacientes\page.tsx
+   80:31  error  Error: Cannot call impure function during render
+
+  83 |                         className="accent-primary"                                                                                                                                                                                                                                       react-hooks/purity
+  130:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\app\(dashboard)\gerente\dentistas\page.tsx
+  22:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\app\(dashboard)\gerente\pacientes\page.tsx
+  16:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+  19 |     useEffect(() => {                                                                                           react-hooks/set-state-in-effect
+  21:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\components\DashboardLayout.tsx
+  35:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\components\ui\command.tsx
+  24:11  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\components\ui\sidebar.tsx
+  536:26  error  Error: Cannot call impure function during render
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\components\ui\textarea.tsx
+  5:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+
+✖ 18 problems (9 errors, 9 warnings)

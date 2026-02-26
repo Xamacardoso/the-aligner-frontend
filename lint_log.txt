@@ -1,0 +1,148 @@
+
+> align-dental-next@0.1.0 lint
+> eslint
+
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\app\(dashboard)\dentista\paciente\[id]\page.tsx
+  3:25  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\app\(dashboard)\dentista\pacientes\page.tsx
+   80:31  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\app\(dashboard)\dentista\pacientes\page.tsx:80:31
+  78 |                     <input
+  79 |                         type="radio"
+> 80 |                         name={Math.random().toString()}
+     |                               ^^^^^^^^^^^^^ Cannot call impure function
+  81 |                         checked={value === opt.value}
+  82 |                         onChange={() => onChange(value === opt.value ? null : opt.value)}
+  83 |                         className="accent-primary"                                                                                                                                                                                                                                       react-hooks/purity
+  130:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\app\(dashboard)\dentista\pacientes\page.tsx:130:9
+  128 |
+  129 |     useEffect(() => {
+> 130 |         setPatients(getPatientsByDentist(dentistId));
+      |         ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  131 |     }, [dentistId]);
+  132 |
+  133 |     const refresh = () => setPatients(getPatientsByDentist(dentistId));  react-hooks/set-state-in-effect
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\app\(dashboard)\gerente\dentistas\page.tsx
+  22:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\app\(dashboard)\gerente\dentistas\page.tsx:22:9
+  20 |
+  21 |     useEffect(() => {
+> 22 |         setDentists(getDentists());
+     |         ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  23 |     }, []);
+  24 |
+  25 |     const refresh = () => setDentists(getDentists());  react-hooks/set-state-in-effect
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\app\(dashboard)\gerente\paciente\[id]\page.tsx
+  3:25  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\app\(dashboard)\gerente\pacientes\page.tsx
+  16:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\app\(dashboard)\gerente\pacientes\page.tsx:16:9
+  14 |
+  15 |     useEffect(() => {
+> 16 |         setDentists(getDentists());
+     |         ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  17 |     }, []);
+  18 |
+  19 |     useEffect(() => {                                                                                           react-hooks/set-state-in-effect
+  21:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\app\(dashboard)\gerente\pacientes\page.tsx:21:13
+  19 |     useEffect(() => {
+  20 |         if (selectedDentist) {
+> 21 |             setPatients(getPatientsByDentist(selectedDentist.id));
+     |             ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  22 |         } else {
+  23 |             setPatients([]);
+  24 |         }  react-hooks/set-state-in-effect
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\components\DashboardLayout.tsx
+  35:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\components\DashboardLayout.tsx:35:9
+  33 |
+  34 |     useEffect(() => {
+> 35 |         setMounted(true);
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  36 |     }, []);
+  37 |
+  38 |     const navItems = role === 'gerente' ? gerenteNav : dentistaNav;  react-hooks/set-state-in-effect
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\components\ui\calendar.tsx
+  45:25  warning  '_props' is defined but never used  @typescript-eslint/no-unused-vars
+  46:26  warning  '_props' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\components\ui\chart.tsx
+  62:55  warning  '_' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\components\ui\command.tsx
+  24:11  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\components\ui\sidebar.tsx
+  536:26  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\components\ui\sidebar.tsx:536:26
+  534 |   // Random width between 50 to 90%.
+  535 |   const width = React.useMemo(() => {
+> 536 |     return `${Math.floor(Math.random() * 40) + 50}%`;
+      |                          ^^^^^^^^^^^^^ Cannot call impure function
+  537 |   }, []);
+  538 |
+  539 |   return (  react-hooks/purity
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\components\ui\textarea.tsx
+  5:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\lib\auth.ts
+  13:21  warning  '_pw' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\igles\Documents\the_aligner\align-dental-next\src\middleware.ts
+   5:7   warning  'isProtectedRoute' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  10:39  warning  'auth' is defined but never used                       @typescript-eslint/no-unused-vars
+  10:45  warning  'req' is defined but never used                        @typescript-eslint/no-unused-vars
+
+✖ 18 problems (9 errors, 9 warnings)
+
