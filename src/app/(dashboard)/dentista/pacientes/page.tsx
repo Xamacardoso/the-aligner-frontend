@@ -129,19 +129,44 @@ export default function DentistaPatientsPage() {
                                 </TableRow>
                             )}
                             {patients.map(p => (
-                                <TableRow key={p.cpf}>
+                                <TableRow
+                                    key={p.cpf}
+                                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                                    onClick={() => router.push(`/dentista/paciente/${p.cpf}`)}
+                                >
                                     <TableCell>{p.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}</TableCell>
                                     <TableCell className="font-medium">{p.nome}</TableCell>
                                     <TableCell>{p.nascimento ? new Date(p.nascimento).toLocaleDateString('pt-BR') : '-'}</TableCell>
                                     <TableCell>
                                         <div className="flex gap-1 justify-end">
-                                            <Button variant="ghost" size="icon" onClick={() => router.push(`/dentista/paciente/${p.cpf}`)}>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    router.push(`/dentista/paciente/${p.cpf}`);
+                                                }}
+                                            >
                                                 <Eye className="h-4 w-4" />
                                             </Button>
-                                            <Button variant="ghost" size="icon" onClick={() => openEdit(p)}>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openEdit(p);
+                                                }}
+                                            >
                                                 <Pencil className="h-4 w-4" />
                                             </Button>
-                                            <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm(p.cpf)}>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setDeleteConfirm(p.cpf);
+                                                }}
+                                            >
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
                                         </div>

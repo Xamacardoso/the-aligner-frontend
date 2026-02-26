@@ -143,7 +143,11 @@ export async function createPatient(patient: Patient): Promise<Patient | null> {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
         });
-        if (!res.ok) throw new Error('Failed to create patient');
+        if (!res.ok) {
+            console.error(payload);
+            console.error(res);
+            throw new Error('Failed to create patient')
+        };
         return await res.json();
     } catch (err) {
         console.error('Error creating patient:', err);
@@ -239,6 +243,30 @@ export async function deleteBudget(id: string): Promise<boolean> {
         return res.ok;
     } catch (err) {
         console.error(`Error deleting/canceling budget ${id}:`, err);
+        return false;
+    }
+}
+
+export async function approveBudget(id: string): Promise<boolean> {
+    try {
+        const res = await fetch(`${API_BASE_URL}/budgets/${id}/approve`, {
+            method: 'POST',
+        });
+        return res.ok;
+    } catch (err) {
+        console.error(`Error approving budget ${id}:`, err);
+        return false;
+    }
+}
+
+export async function declineBudget(id: string): Promise<boolean> {
+    try {
+        const res = await fetch(`${API_BASE_URL}/budgets/${id}/decline`, {
+            method: 'POST',
+        });
+        return res.ok;
+    } catch (err) {
+        console.error(`Error declining budget ${id}:`, err);
         return false;
     }
 }

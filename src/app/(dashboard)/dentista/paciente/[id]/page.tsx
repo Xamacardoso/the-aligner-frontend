@@ -2,8 +2,9 @@
 
 import { useState, use, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { fetchPatient, fetchDentists, fetchBudgets, createBudget, deleteBudget } from '@/lib/api';
+import { fetchPatient, fetchDentists, fetchBudgets, createBudget, deleteBudget, approveBudget, declineBudget } from '@/lib/api';
 import { Budget, BudgetProcedure, Patient, Dentist } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,13 +31,15 @@ const formatNestedObj = (jsonStr: string) => {
 
 const statusLabel: Record<string, string> = {
     pendente: 'Pendente',
-    deferido: 'Deferido',
-    indeferido: 'Indeferido',
+    aprovado: 'Aprovado',
+    declinado: 'Declinado',
+    cancelado: 'Cancelado',
 };
 const statusClass: Record<string, string> = {
     pendente: 'bg-muted text-muted-foreground',
-    deferido: 'bg-green-100 text-green-700',
-    indeferido: 'bg-red-100 text-red-700',
+    aprovado: 'bg-green-100 text-green-700',
+    declinado: 'bg-red-100 text-red-700',
+    cancelado: 'bg-gray-100 text-gray-500',
 };
 
 // Generates a mock ID for now
@@ -55,8 +58,10 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
 
     const [budgets, setBudgets] = useState<Budget[]>([]);
     const [openBudget, setOpenBudget] = useState(false);
+    const [viewingBudget, setViewingBudget] = useState<Budget | null>(null);
     const [procedures, setProcedures] = useState<BudgetProcedure[]>([{ id: generateId(), name: '', value: 0 }]);
     const [observations, setObservations] = useState('');
+    const { toast } = useToast();
 
     const loadData = async () => {
         if (!cpf) return;
@@ -107,8 +112,33 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
 
     const handleDeleteBudget = async (bid: string) => {
         await deleteBudget(bid);
+        toast({ title: "Orçamento excluído", variant: "destructive" });
         const b = await fetchBudgets(patient.cpf);
         setBudgets(b);
+    };
+
+    const handleApproveBudget = async (bid: string) => {
+        const ok = await approveBudget(bid);
+        if (ok) {
+            toast({ title: "Orçamento aprovado!" });
+            const b = await fetchBudgets(patient.cpf);
+            setBudgets(b);
+            setViewingBudget(null);
+        } else {
+            toast({ title: "Erro ao aprovar", variant: "destructive" });
+        }
+    };
+
+    const handleDeclineBudget = async (bid: string) => {
+        const ok = await declineBudget(bid);
+        if (ok) {
+            toast({ title: "Orçamento declinado" });
+            const b = await fetchBudgets(patient.cpf);
+            setBudgets(b);
+            setViewingBudget(null);
+        } else {
+            toast({ title: "Erro ao declinar", variant: "destructive" });
+        }
     };
 
     return (
@@ -199,18 +229,17 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                                     <span className="text-sm font-semibold text-foreground">
                                         {b.totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                                     </span>
+                                    <Button variant="outline" size="sm" onClick={() => setViewingBudget(b)} className="h-8 text-xs">
+                                        Visualizar
+                                    </Button>
                                     <Button variant="ghost" size="icon" onClick={() => handleDeleteBudget(b.id)}>
                                         <Trash2 className="h-4 w-4 text-destructive" />
                                     </Button>
                                 </div>
                             </div>
-                            <ul className="text-xs text-muted-foreground space-y-0.5 mt-2">
-                                {b.procedures.map(p => (
-                                    <li key={p.id}>• {p.name} — <span className="text-foreground">{Number(p.value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></li>
-                                ))}
-                            </ul>
-                            {b.observations && <p className="text-sm text-muted-foreground mt-3 pt-2 border-t border-border">Obs: {b.observations}</p>}
-                            {b.justification && <p className="text-sm text-muted-foreground mt-1">Justificativa: {b.justification}</p>}
+                            <div className="text-xs text-muted-foreground line-clamp-1">
+                                {b.procedures.length > 0 ? b.procedures.map(p => p.name).join(', ') : b.observations?.substring(0, 50)}
+                            </div>
                         </div>
                     ))
                 )}
@@ -269,6 +298,80 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setOpenBudget(false)}>Cancelar</Button>
                         <Button onClick={handleSaveBudget} disabled={procedures.length === 0 || procedures.some(p => !p.name || !p.value)}>Salvar Orçamento</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            {/* Budget View Modal */}
+            <Dialog open={!!viewingBudget} onOpenChange={v => !v && setViewingBudget(null)}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Detalhes do Orçamento</DialogTitle>
+                    </DialogHeader>
+                    {viewingBudget && (
+                        <div className="space-y-6 py-2">
+                            <div className="flex items-center justify-between border-b pb-4 border-border">
+                                <div>
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase">Status</p>
+                                    <span className={`text-xs px-2.5 py-1 rounded-full font-semibold inline-block mt-1 ${statusClass[viewingBudget.status]}`}>
+                                        {statusLabel[viewingBudget.status]}
+                                    </span>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase">Valor Total</p>
+                                    <p className="text-xl font-bold text-foreground mt-0.5">
+                                        {viewingBudget.totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase">Procedimentos</p>
+                                <div className="bg-muted/30 rounded-md p-3 space-y-2 border border-border">
+                                    {viewingBudget.procedures.length > 0 ? (
+                                        viewingBudget.procedures.map(p => (
+                                            <div key={p.id} className="flex justify-between text-sm">
+                                                <span>{p.name}</span>
+                                                <span className="font-medium">{Number(p.value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm text-foreground whitespace-pre-wrap">{viewingBudget.observations}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {viewingBudget.procedures.length > 0 && viewingBudget.observations && (
+                                <div className="space-y-1.5">
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase">Observações Extras</p>
+                                    <p className="text-sm text-foreground bg-muted/20 p-3 rounded-md border border-border">
+                                        {viewingBudget.observations}
+                                    </p>
+                                </div>
+                            )}
+
+                            {viewingBudget.status === 'pendente' && (
+                                <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border">
+                                    <Button variant="outline" className="w-full text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleDeclineBudget(viewingBudget.id)}>
+                                        Declinar Orçamento
+                                    </Button>
+                                    <Button className="w-full bg-green-600 hover:bg-green-700 text-white" onClick={() => handleApproveBudget(viewingBudget.id)}>
+                                        Aprovar Orçamento
+                                    </Button>
+                                </div>
+                            )}
+
+                            {viewingBudget.justification && (
+                                <div className="space-y-1.5 pt-2">
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase">Justificativa da Equipe</p>
+                                    <p className="text-sm text-foreground p-3 rounded-md bg-amber-50 text-amber-900 border border-amber-200 italic">
+                                        "{viewingBudget.justification}"
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="secondary" onClick={() => setViewingBudget(null)}>Fechar</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
