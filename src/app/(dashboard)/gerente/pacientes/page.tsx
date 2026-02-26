@@ -26,7 +26,8 @@ export default function GerentePacientesPage() {
                 const data = await fetchPatients(selectedDentist.cpf);
                 setPatients(data);
             } else {
-                setPatients([]);
+                const data = await fetchPatients();
+                setPatients(data);
             }
         };
         loadPatients();
@@ -62,34 +63,38 @@ export default function GerentePacientesPage() {
 
                 {/* Patient list */}
                 <div className="col-span-8">
-                    {!selectedDentist ? (
-                        <div className="bg-card rounded-lg border border-border p-8 text-center text-muted-foreground text-sm">
-                            Selecione um parceiro para ver os pacientes associados.
-                        </div>
-                    ) : (
-                        <div className="bg-card rounded-lg border border-border overflow-hidden">
-                            <div className="px-4 py-3 border-b border-border">
-                                <p className="text-sm font-medium text-foreground">Pacientes de {selectedDentist.nome}</p>
-                            </div>
-                            {patients.length === 0 ? (
-                                <p className="text-sm text-muted-foreground p-4">Nenhum paciente associado.</p>
-                            ) : (
-                                patients.map(p => (
-                                    <button
-                                        key={p.cpf}
-                                        onClick={() => router.push(`/gerente/paciente/${p.cpf}?partnerCpf=${selectedDentist.cpf}`)}
-                                        className="w-full text-left px-4 py-3 border-b border-border last:border-b-0 flex items-center justify-between hover:bg-muted transition-colors"
-                                    >
-                                        <div>
-                                            <p className="text-sm font-medium text-foreground">{p.nome}</p>
-                                            <p className="text-xs text-muted-foreground">CPF: {p.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")} • Nasc: {p.nascimento ? new Date(p.nascimento).toLocaleDateString('pt-BR') : '-'}</p>
-                                        </div>
-                                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                                    </button>
-                                ))
+                    <div className="bg-card rounded-lg border border-border overflow-hidden">
+                        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+                            <p className="text-sm font-medium text-foreground">
+                                {selectedDentist ? `Pacientes de ${selectedDentist.nome}` : 'Todos os Pacientes'}
+                            </p>
+                            {selectedDentist && (
+                                <button
+                                    onClick={() => setSelectedDentist(null)}
+                                    className="text-xs text-muted-foreground hover:text-foreground"
+                                >
+                                    Ver todos
+                                </button>
                             )}
                         </div>
-                    )}
+                        {patients.length === 0 ? (
+                            <p className="text-sm text-muted-foreground p-4">Nenhum paciente encontrado.</p>
+                        ) : (
+                            patients.map(p => (
+                                <button
+                                    key={p.cpf}
+                                    onClick={() => router.push(`/gerente/paciente/${p.cpf}?partnerCpf=${p.cpfParceiro}`)}
+                                    className="w-full text-left px-4 py-3 border-b border-border last:border-b-0 flex items-center justify-between hover:bg-muted transition-colors"
+                                >
+                                    <div>
+                                        <p className="text-sm font-medium text-foreground">{p.nome}</p>
+                                        <p className="text-xs text-muted-foreground">CPF: {p.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")} • Nasc: {p.nascimento ? new Date(p.nascimento).toLocaleDateString('pt-BR') : '-'}</p>
+                                    </div>
+                                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                </button>
+                            ))
+                        )}
+                    </div>
                 </div>
             </div >
         </div >

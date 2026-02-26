@@ -29,8 +29,7 @@ export async function fetchDentists(): Promise<Dentist[]> {
 }
 
 export async function createDentist(dentist: Dentist): Promise<Dentist | null> {
-    const payload = {
-        // O backend (CreatePartnerDto) espera os dados de forma plana
+    const payload: any = {
         cpf: dentist.cpf,
         nome: dentist.nome,
         email: dentist.email,
@@ -38,19 +37,19 @@ export async function createDentist(dentist: Dentist): Promise<Dentist | null> {
         tipoUsuarioId: dentist.tipoUsuarioId,
         cro: dentist.cro,
         croUf: dentist.croUf,
-        telefone: dentist.telefone,
-        especialidadeId: dentist.especialidadeId,
-        titulacaoId: dentist.titulacaoId,
-        cnpj: dentist.cnpj,
-        razaoSocial: dentist.razaoSocial,
-        endereco: dentist.endereco,
-        telefone_estabelecimento: dentist.telefone_estabelecimento,
-        complemento: dentist.complemento,
-        cep: dentist.cep,
-        bairro: dentist.bairro,
-        cidade: dentist.cidade,
-        uf_estabelecimento: dentist.uf_estabelecimento,
     };
+    if (dentist.telefone) payload.telefone = dentist.telefone;
+    if (dentist.especialidadeId) payload.especialidadeId = dentist.especialidadeId;
+    if (dentist.titulacaoId) payload.titulacaoId = dentist.titulacaoId;
+    if (dentist.cnpj) payload.cnpj = dentist.cnpj;
+    if (dentist.razaoSocial) payload.razaoSocial = dentist.razaoSocial;
+    if (dentist.endereco) payload.endereco = dentist.endereco;
+    if (dentist.telefone_estabelecimento) payload.telefone_estabelecimento = dentist.telefone_estabelecimento;
+    if (dentist.complemento) payload.complemento = dentist.complemento;
+    if (dentist.cep) payload.cep = dentist.cep;
+    if (dentist.bairro) payload.bairro = dentist.bairro;
+    if (dentist.cidade) payload.cidade = dentist.cidade;
+    if (dentist.uf_estabelecimento) payload.uf_estabelecimento = dentist.uf_estabelecimento;
 
     try {
         const res = await fetch(`${API_BASE_URL}/admin/partners`, {
@@ -124,19 +123,19 @@ export async function fetchPatient(cpf: string, partnerCpf?: string): Promise<Pa
 }
 
 export async function createPatient(patient: Patient): Promise<Patient | null> {
-    const payload = {
+    const payload: any = {
         cpfParceiro: patient.cpfParceiro,
-        cnpjParceiro: patient.cnpjParceiro,
         cpfPaciente: patient.cpf,
         nomePaciente: patient.nome,
-        dataNascimento: patient.nascimento,
         descricaoQueixaPrincipal: patient.queixaPrincipal || '',
         descricaoObservacoes: patient.descricaoCaso || '',
         descricaoObjetivosTratamento: patient.descricaoObjetivosTratamento || '',
         objetivosTratamento: patient.objetivoTratamento || '',
         apinhamento: patient.apinhamento || '',
-        outrasObservacoes: patient.observacoes || ''
     };
+    if (patient.cnpjParceiro) payload.cnpjParceiro = patient.cnpjParceiro;
+    if (patient.nascimento) payload.dataNascimento = patient.nascimento;
+    if (patient.observacoes) payload.outrasObservacoes = patient.observacoes;
 
     try {
         const res = await fetch(`${API_BASE_URL}/partners/patients`, {

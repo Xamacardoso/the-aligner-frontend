@@ -44,7 +44,7 @@ export default function DentistaPatientsPage() {
     const { toast } = useToast();
 
     // FIX: Because we haven't implemented Clerk Auth yet, we use a mock dentist CPF.
-    const dentistCpf = '12345678901';
+    const dentistCpf = '22222222222';
 
     const [patients, setPatients] = useState<Patient[]>([]);
     const [open, setOpen] = useState(false);

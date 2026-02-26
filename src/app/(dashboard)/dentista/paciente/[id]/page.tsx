@@ -61,7 +61,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     const loadData = async () => {
         if (!cpf) return;
         // FIX: Using mock provider CPF until Clerk Auth is implemented
-        const dentistCpf = '12345678901';
+        const dentistCpf = '22222222222';
         const foundP = await fetchPatient(cpf, dentistCpf);
         setPatient(foundP);
         if (foundP) {
