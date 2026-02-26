@@ -86,11 +86,11 @@ export interface Budget {
 }
 
 export interface PatientDocument {
-  id: string;
-  patientId: string;
+  id?: number;
+  patientCpf: string;
   name: string;
-  type: string;
-  uploadedAt: string;
-  // stored as base64 or object URL for mock
-  dataUrl?: string;
+  format: string;
+  r2key: string;
+  downloadUrl?: string;
+  createdAt: string;
 }

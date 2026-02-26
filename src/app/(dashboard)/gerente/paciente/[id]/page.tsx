@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ArrowLeft, Plus, Trash2, FileText } from 'lucide-react';
+import { FileManagement } from '@/components/FileManagement';
 
 const formatNestedObj = (jsonStr: string) => {
     try {
@@ -30,13 +31,15 @@ const formatNestedObj = (jsonStr: string) => {
 
 const statusLabel: Record<string, string> = {
     pendente: 'Pendente',
-    deferido: 'Deferido',
-    indeferido: 'Indeferido',
+    aprovado: 'Aprovado',
+    declinado: 'Declinado',
+    cancelado: 'Cancelado',
 };
 const statusClass: Record<string, string> = {
     pendente: 'bg-muted text-muted-foreground',
-    deferido: 'bg-green-100 text-green-700',
-    indeferido: 'bg-red-100 text-red-700',
+    aprovado: 'bg-green-100 text-green-700',
+    declinado: 'bg-red-100 text-red-700',
+    cancelado: 'bg-gray-100 text-gray-500',
 };
 
 // Generates a mock ID for now
@@ -176,6 +179,8 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                     </div>
                 )}
             </div>
+
+            <FileManagement patientCpf={patient.cpf} />
 
             {/* Budgets */}
             <div className="bg-card rounded-lg border border-border overflow-hidden">

@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ArrowLeft, Plus, Trash2, FileText } from 'lucide-react';
+import { FileManagement } from '@/components/FileManagement';
 
 const formatNestedObj = (jsonStr: string) => {
     try {
@@ -206,6 +207,8 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                     </div>
                 )}
             </div>
+
+            <FileManagement patientCpf={patient.cpf} />
 
             {/* Budgets */}
             <div className="bg-card rounded-lg border border-border overflow-hidden">

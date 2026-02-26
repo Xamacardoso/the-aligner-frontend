@@ -1,4 +1,4 @@
-import { Dentist, Patient, Budget } from './types';
+import { Dentist, Patient, Budget, PatientDocument } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -267,6 +267,54 @@ export async function declineBudget(id: string): Promise<boolean> {
         return res.ok;
     } catch (err) {
         console.error(`Error declining budget ${id}:`, err);
+        return false;
+    }
+}
+
+// ==========================================
+// DOCUMENTS
+// ==========================================
+
+export async function fetchPatientDocuments(cpf: string): Promise<PatientDocument[]> {
+    const res = await fetch(`${API_BASE_URL}/partners/patients/${cpf}/documents`);
+    if (!res.ok) throw new Error('Failed to fetch documents');
+    const data = await res.json();
+    return data.map((d: any) => ({
+        id: d.id,
+        patientCpf: d.pacienteCpf,
+        name: d.nomeOriginal,
+        format: d.formato,
+        r2key: d.r2key,
+        downloadUrl: d.downloadUrl,
+        createdAt: d.dataCriacao ? new Date(d.dataCriacao).toLocaleDateString('pt-BR') : '',
+    })) as PatientDocument[];
+}
+
+export async function requestFileUpload(cpf: string, fileName: string, fileType: string): Promise<{ uploadUrl: string, r2key: string } | null> {
+    try {
+        const res = await fetch(`${API_BASE_URL}/partners/patients/${cpf}/documents/request-upload`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nomeOriginal: fileName, contentType: fileType }),
+        });
+        if (!res.ok) throw new Error('Failed to request upload URL');
+        return await res.json();
+    } catch (err) {
+        console.error(`Error requesting upload URL for patient ${cpf}:`, err);
+        return null;
+    }
+}
+
+export async function confirmFileUpload(cpf: string, fileName: string, r2key: string): Promise<boolean> {
+    try {
+        const res = await fetch(`${API_BASE_URL}/partners/patients/${cpf}/documents/confirm-upload`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nomeOriginal: fileName, r2key }),
+        });
+        return res.ok;
+    } catch (err) {
+        console.error(`Error confirming upload for patient ${cpf}:`, err);
         return false;
     }
 }
