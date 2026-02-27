@@ -106,16 +106,16 @@ export function deleteBudget(id: string): void {
 export function getDocuments(): PatientDocument[] {
   return getItem<PatientDocument[]>(DOCUMENTS_KEY, []);
 }
-export function getDocumentsByPatient(patientId: string): PatientDocument[] {
-  return getDocuments().filter(d => d.patientId === patientId);
+export function getDocumentsByPatient(patientCpf: string): PatientDocument[] {
+  return getDocuments().filter(d => d.patientCpf === patientCpf);
 }
 export function saveDocument(doc: PatientDocument): void {
   const list = getDocuments();
   list.push(doc);
   setItem(DOCUMENTS_KEY, list);
 }
-export function deleteDocument(id: string): void {
-  setItem(DOCUMENTS_KEY, getDocuments().filter(d => d.id !== id));
+export function deleteDocument(r2key: string): void {
+  setItem(DOCUMENTS_KEY, getDocuments().filter(d => d.r2key !== r2key));
 }
 
 export function generateId(): string {

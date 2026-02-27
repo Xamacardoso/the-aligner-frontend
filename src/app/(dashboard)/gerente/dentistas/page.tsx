@@ -1,5 +1,6 @@
 "use client"
 
+
 import { useState, useEffect } from 'react';
 import { fetchDentists, createDentist, updateDentist, removeDentist } from '@/lib/api';
 import { Dentist } from '@/lib/types';
@@ -24,20 +25,23 @@ const emptyDentist = (): Dentist => ({
 
 export default function GerenteDentistasPage() {
     const { toast } = useToast();
+    const [mounted, setMounted] = useState(false);
     const [dentists, setDentists] = useState<Dentist[]>([]);
     const [open, setOpen] = useState(false);
     const [form, setForm] = useState<Dentist>(emptyDentist());
     const [isEditing, setIsEditing] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
+    useEffect(() => {
+        setMounted(true);
+        loadData();
+    }, []);
+
     const loadData = async () => {
         const data = await fetchDentists();
         setDentists(data);
     };
 
-    useEffect(() => {
-        loadData();
-    }, []);
 
     const openCreate = () => { setIsEditing(false); setForm(emptyDentist()); setOpen(true); };
     const openEdit = (d: Dentist) => { setIsEditing(true); setForm({ ...d }); setOpen(true); };
@@ -65,6 +69,8 @@ export default function GerenteDentistasPage() {
     const updateForm = (field: keyof Dentist, value: string | number) => {
         setForm(f => ({ ...f, [field]: value }));
     };
+
+    if (!mounted) return null;
 
     return (
         <div className="p-8 h-[calc(100vh-80px)] overflow-hidden flex flex-col">

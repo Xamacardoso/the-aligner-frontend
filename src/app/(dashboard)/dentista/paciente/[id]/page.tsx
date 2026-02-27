@@ -1,5 +1,6 @@
 "use client"
 
+
 import { useState, use, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchPatient, fetchDentists, fetchBudgets, createBudget, deleteBudget, approveBudget, declineBudget } from '@/lib/api';
@@ -54,11 +55,16 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     const router = useRouter();
     const { id: cpf } = use(params);
 
+    const [mounted, setMounted] = useState(false);
     const [patient, setPatient] = useState<Patient | null>(null);
     const [dentist, setDentist] = useState<Dentist | null>(null);
 
     const [budgets, setBudgets] = useState<Budget[]>([]);
     const [openBudget, setOpenBudget] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+        loadData();
+    }, [cpf]);
     const [viewingBudget, setViewingBudget] = useState<Budget | null>(null);
     const [procedures, setProcedures] = useState<BudgetProcedure[]>([{ id: generateId(), name: '', value: 0 }]);
     const [observations, setObservations] = useState('');
@@ -78,11 +84,9 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
         }
     };
 
-    useEffect(() => {
-        loadData();
-    }, [cpf]);
 
 
+    if (!mounted) return null;
     if (!patient) return <div className="p-8 text-muted-foreground">Paciente não encontrado.</div>;
 
     const totalValue = procedures.reduce((s, p) => s + Number(p.value || 0), 0);

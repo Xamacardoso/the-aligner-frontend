@@ -46,20 +46,23 @@ export default function DentistaPatientsPage() {
     // FIX: Because we haven't implemented Clerk Auth yet, we use a mock dentist CPF.
     const dentistCpf = '22222222222';
 
+    const [mounted, setMounted] = useState(false);
     const [patients, setPatients] = useState<Patient[]>([]);
     const [open, setOpen] = useState(false);
     const [form, setForm] = useState<Patient>(emptyPatient(dentistCpf));
     const [isEditing, setIsEditing] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
+    useEffect(() => {
+        setMounted(true);
+        loadData();
+    }, [dentistCpf]);
+
     const loadData = async () => {
         const data = await fetchPatients(dentistCpf);
         setPatients(data);
     };
 
-    useEffect(() => {
-        loadData();
-    }, [dentistCpf]);
 
     const openCreate = () => { setIsEditing(false); setForm(emptyPatient(dentistCpf)); setOpen(true); };
     const openEdit = (p: Patient) => {
@@ -96,6 +99,8 @@ export default function DentistaPatientsPage() {
         await loadData();
         setDeleteConfirm(null);
     };
+
+    if (!mounted) return null;
 
     return (
         <div className="p-8 h-[calc(100vh-80px)] overflow-hidden flex flex-col">

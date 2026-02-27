@@ -17,7 +17,7 @@ const STLViewer = dynamic(() => import('@/components/STLViewer'), {
     )
 });
 
-export default function Visualizador3DPage() {
+function Visualizador3DContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -25,12 +25,9 @@ export default function Visualizador3DPage() {
     const name = searchParams.get('name') || 'Modelo 3D';
 
     const handleBack = () => {
-        // If there's history, go back. For new tabs, try to close if possible
-        // or just navigate back to a safe route.
         if (typeof window !== 'undefined' && window.history.length > 1) {
             router.back();
         } else {
-            // Fallback for new tabs
             window.close();
         }
     };
@@ -104,5 +101,17 @@ export default function Visualizador3DPage() {
                 </div>
             </main>
         </div>
+    );
+}
+
+export default function Visualizador3DPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        }>
+            <Visualizador3DContent />
+        </Suspense>
     );
 }
