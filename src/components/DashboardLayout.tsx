@@ -50,7 +50,7 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
                         <div className="relative w-7 h-7 flex-shrink-0 overflow-hidden">
                             <Image src="/thealign_logo2.jpeg" alt="The Aligner" fill className="object-cover" />
                         </div>
-                        <span className="font-bold text-foreground">TheAlign</span>
+                        <span className="font-bold text-foreground">TheAligner</span>
                     </div>
                 </div>
 

@@ -16,7 +16,7 @@ export default function Home() {
     <div className="flex bg-secondary min-h-screen items-center justify-center">
       <div className="animate-pulse flex flex-col items-center">
         <div className="w-12 h-12 rounded-full bg-primary mb-4"></div>
-        <p className="text-muted-foreground font-medium text-sm">Carregando Align Dental...</p>
+        <p className="text-muted-foreground font-medium text-sm">Carregando TheAligner...</p>
       </div>
     </div>
   );

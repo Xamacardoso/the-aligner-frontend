@@ -167,7 +167,10 @@ export function FileManagement({ patientCpf }: FileManagementProps) {
                                             variant="outline"
                                             size="sm"
                                             className="h-8 gap-1.5 text-xs hidden md:flex"
-                                            onClick={() => { }} // Placeholder for 3D viewer
+                                            onClick={() => {
+                                                const viewerUrl = `/visualizador-3d?url=${encodeURIComponent(doc.downloadUrl!)}&name=${encodeURIComponent(doc.name)}`;
+                                                window.open(viewerUrl, '_blank');
+                                            }}
                                         >
                                             <Box className="h-3.5 w-3.5" />
                                             Visualizar Modelo 3D

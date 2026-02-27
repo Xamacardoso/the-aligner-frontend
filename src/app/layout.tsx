@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Align Dental Next",
+  title: "TheAligner",
   description: "MVP do sistema odontológico",
 };
 
