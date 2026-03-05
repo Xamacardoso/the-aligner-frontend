@@ -9,7 +9,7 @@ export const treatmentService = {
         apiClient<TreatmentDetails>(`/treatments/${publicId}`),
 
     create: (data: any, patientPublicId: string, partnerPublicId: string) =>
-        apiClient<TreatmentDetails>(`/treatments?pacientePublicId=${patientPublicId}&parceiroPublicId=${partnerPublicId}`, {
+        apiClient<TreatmentDetails>(`/treatments?patientPublicId=${patientPublicId}&partnerPublicId=${partnerPublicId}`, {
             method: 'POST',
             body: JSON.stringify(data),
         }),
