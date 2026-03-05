@@ -144,6 +144,7 @@ export function FileManagement({ patientCpf: treatmentPublicId }: FileManagement
                         className="h-8 gap-1.5 text-xs"
                         disabled={isUploading}
                         onClick={() => document.getElementById('patient-file-upload')?.click()}
+                        title="Fazer upload de novo arquivo"
                     >
                         {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <UploadCloud className="h-3 w-3" />}
                         {isUploading ? 'Enviando...' : 'Upload'}

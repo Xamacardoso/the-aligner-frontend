@@ -148,7 +148,11 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
 
     return (
         <div className="p-8 max-w-4xl">
-            <button onClick={() => router.back()} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors">
+            <button
+                onClick={() => router.back()}
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors"
+                title="Voltar para a lista"
+            >
                 <ArrowLeft className="h-4 w-4" /> Voltar
             </button>
 
@@ -158,7 +162,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                     <p className="text-sm text-muted-foreground">Dentista Responsável: {dentist?.nome ?? '—'}</p>
                 </div>
                 {selectedTreatmentId && (
-                    <Button size="sm" onClick={() => setOpenBudget(true)} className="gap-1.5">
+                    <Button size="sm" onClick={() => setOpenBudget(true)} className="gap-1.5" title="Criar um novo orçamento para este tratamento">
                         <Plus className="h-4 w-4" /> Novo Orçamento
                     </Button>
                 )}
@@ -173,8 +177,8 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                         ['Nascimento', patient.nascimento ? new Date(patient.nascimento).toLocaleDateString('pt-BR') : '—'],
                     ].map(([label, value]) => (
                         <div key={label}>
-                            <span className="text-muted-foreground">{label}: </span>
-                            <span className="text-foreground">{value || '—'}</span>
+                            <span className="text-foreground font-semibold">{label}: </span>
+                            <span className="text-muted-foreground">{value || '—'}</span>
                         </div>
                     ))}
                 </div>
@@ -207,14 +211,14 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                         <h2 className="text-sm font-semibold text-foreground mb-4">Caso Clínico</h2>
                         {treatmentDetails.queixaPrincipal && (
                             <div className="mb-4">
-                                <p className="text-xs font-semibold text-muted-foreground uppercase">Queixa</p>
-                                <p className="text-sm text-foreground">{treatmentDetails.queixaPrincipal}</p>
+                                <p className="text-xs font-semibold text-foreground uppercase">Queixa</p>
+                                <p className="text-sm text-muted-foreground">{treatmentDetails.queixaPrincipal}</p>
                             </div>
                         )}
                         {treatmentDetails.descricaoCaso && (
                             <div className="mb-4">
-                                <p className="text-xs font-semibold text-muted-foreground uppercase">Descrição</p>
-                                <p className="text-sm text-foreground whitespace-pre-wrap">{treatmentDetails.descricaoCaso}</p>
+                                <p className="text-xs font-semibold text-foreground uppercase">Descrição</p>
+                                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{treatmentDetails.descricaoCaso}</p>
                             </div>
                         )}
                     </div>
@@ -245,7 +249,12 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                                             <span className="text-sm font-semibold text-foreground">
                                                 {Number(b.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                                             </span>
-                                            <Button variant="ghost" size="icon" onClick={() => handleDeleteBudget(b.publicId)}>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleDeleteBudget(b.publicId)}
+                                                title="Cancelar este orçamento"
+                                            >
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
                                         </div>

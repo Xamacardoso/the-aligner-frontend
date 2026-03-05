@@ -165,6 +165,7 @@ export default function DentistaPatientsPage() {
                                                     e.stopPropagation();
                                                     router.push(`/dentista/paciente/${p.publicId}`);
                                                 }}
+                                                title="Ver informações do paciente"
                                             >
                                                 <Eye className="h-4 w-4" />
                                             </Button>
@@ -175,6 +176,7 @@ export default function DentistaPatientsPage() {
                                                     e.stopPropagation();
                                                     openEdit(p);
                                                 }}
+                                                title="Editar identificação"
                                             >
                                                 <Pencil className="h-4 w-4" />
                                             </Button>
@@ -185,6 +187,7 @@ export default function DentistaPatientsPage() {
                                                     e.stopPropagation();
                                                     setDeleteConfirm(p.publicId);
                                                 }}
+                                                title="Excluir paciente"
                                             >
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>

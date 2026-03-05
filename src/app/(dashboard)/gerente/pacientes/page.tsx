@@ -54,6 +54,7 @@ export default function GerentePacientesPage() {
                                 onClick={() => setSelectedDentist(d)}
                                 className={`w-full text-left px-4 py-3 border-b border-border last:border-b-0 flex items-center justify-between hover:bg-muted transition-colors ${selectedDentist?.publicId === d.publicId ? 'bg-muted' : ''
                                     }`}
+                                title="Ver pacientes deste dentista"
                             >
                                 <div>
                                     <p className="text-sm font-medium text-foreground">{d.nome}</p>
@@ -92,6 +93,7 @@ export default function GerentePacientesPage() {
                                     key={p.publicId}
                                     onClick={() => router.push(`/gerente/paciente/${p.publicId}`)}
                                     className="w-full text-left px-4 py-3 border-b border-border last:border-b-0 flex items-center justify-between hover:bg-muted transition-colors"
+                                    title="Ver detalhes do paciente"
                                 >
                                     <div>
                                         <p className="text-sm font-medium text-foreground">{p.nome}</p>

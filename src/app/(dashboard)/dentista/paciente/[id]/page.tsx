@@ -80,17 +80,6 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     const [observations, setObservations] = useState('');
     const { toast } = useToast();
 
-    useEffect(() => {
-        setMounted(true);
-        loadData();
-    }, [publicId]);
-
-    useEffect(() => {
-        if (selectedTreatmentId) {
-            loadTreatmentData(selectedTreatmentId);
-        }
-    }, [selectedTreatmentId]);
-
     const loadData = async () => {
         if (!publicId) return;
         // FIX: Using mock provider CPF until Clerk Auth is implemented
@@ -124,6 +113,17 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
             console.error(err);
         }
     };
+
+    useEffect(() => {
+        setMounted(true);
+        loadData();
+    }, [publicId]);
+
+    useEffect(() => {
+        if (selectedTreatmentId) {
+            loadTreatmentData(selectedTreatmentId);
+        }
+    }, [selectedTreatmentId]);
 
     if (!mounted) return null;
     if (!patient) return <div className="p-8 text-muted-foreground">Paciente não encontrado.</div>;
@@ -195,7 +195,11 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
 
     return (
         <div className="p-8 max-w-4xl">
-            <button onClick={() => router.back()} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors">
+            <button
+                onClick={() => router.back()}
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors"
+                title="Voltar para a lista"
+            >
                 <ArrowLeft className="h-4 w-4" /> Voltar
             </button>
 
@@ -205,7 +209,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                     <p className="text-sm text-muted-foreground">Dentista: {dentist?.nome ?? '—'}</p>
                 </div>
                 {selectedTreatmentId && (
-                    <Button size="sm" onClick={() => setOpenBudget(true)} className="gap-1.5">
+                    <Button size="sm" onClick={() => setOpenBudget(true)} className="gap-1.5" title="Criar um novo orçamento para este tratamento">
                         <Plus className="h-4 w-4" /> Novo Orçamento
                     </Button>
                 )}
@@ -220,8 +224,8 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                         ['Data de Nascimento', patient.nascimento ? new Date(patient.nascimento).toLocaleDateString('pt-BR') : '—'],
                     ].map(([label, value]) => (
                         <div key={label}>
-                            <span className="text-muted-foreground">{label}: </span>
-                            <span className="text-foreground">{value || '—'}</span>
+                            <span className="text-foreground font-semibold">{label}: </span>
+                            <span className="text-muted-foreground">{value || '—'}</span>
                         </div>
                     ))}
                 </div>
@@ -259,31 +263,31 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
 
                         {treatmentDetails.queixaPrincipal && (
                             <div className="mb-4">
-                                <p className="text-xs font-semibold text-muted-foreground uppercase">Queixa Principal</p>
-                                <p className="text-sm text-foreground mt-1">{treatmentDetails.queixaPrincipal}</p>
+                                <p className="text-xs font-semibold text-foreground uppercase">Queixa Principal</p>
+                                <p className="text-sm text-muted-foreground mt-1">{treatmentDetails.queixaPrincipal}</p>
                             </div>
                         )}
 
                         {treatmentDetails.descricaoCaso && (
                             <div className="mb-4">
-                                <p className="text-xs font-semibold text-muted-foreground uppercase">Descrição do Caso</p>
-                                <p className="text-sm text-foreground mt-1">{treatmentDetails.descricaoCaso}</p>
+                                <p className="text-xs font-semibold text-foreground uppercase">Descrição do Caso</p>
+                                <p className="text-sm text-muted-foreground mt-1">{treatmentDetails.descricaoCaso}</p>
                             </div>
                         )}
 
                         <div className="grid grid-cols-2 gap-4">
                             {treatmentDetails.objetivos && treatmentDetails.objetivos.length > 0 && (
                                 <div>
-                                    <p className="text-xs font-semibold text-muted-foreground uppercase">Objetivos</p>
-                                    <ul className="list-disc pl-4 mt-1 text-sm text-foreground">
+                                    <p className="text-xs font-semibold text-foreground uppercase">Objetivos</p>
+                                    <ul className="list-disc pl-4 mt-1 text-sm text-muted-foreground">
                                         {treatmentDetails.objetivos.map((o: any) => <li key={o.id}>{o.nome}</li>)}
                                     </ul>
                                 </div>
                             )}
                             {treatmentDetails.apinhamentos && treatmentDetails.apinhamentos.length > 0 && (
                                 <div>
-                                    <p className="text-xs font-semibold text-muted-foreground uppercase">Apinhamento</p>
-                                    <ul className="list-disc pl-4 mt-1 text-sm text-foreground">
+                                    <p className="text-xs font-semibold text-foreground uppercase">Apinhamento</p>
+                                    <ul className="list-disc pl-4 mt-1 text-sm text-muted-foreground">
                                         {treatmentDetails.apinhamentos.map((a: any) => <li key={a.id}>{a.nome}</li>)}
                                     </ul>
                                 </div>
@@ -292,8 +296,8 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
 
                         {treatmentDetails.observacoesAdicionais && (
                             <div className="mt-4 pt-3 border-t border-border">
-                                <p className="text-xs font-semibold text-muted-foreground uppercase">Observações Extras</p>
-                                <p className="text-sm text-foreground mt-1">{treatmentDetails.observacoesAdicionais}</p>
+                                <p className="text-xs font-semibold text-foreground uppercase">Observações Extras</p>
+                                <p className="text-sm text-muted-foreground mt-1">{treatmentDetails.observacoesAdicionais}</p>
                             </div>
                         )}
                     </div>
@@ -327,7 +331,12 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                                             <Button variant="outline" size="sm" onClick={() => setViewingBudget(b)} className="h-8 text-xs">
                                                 Visualizar
                                             </Button>
-                                            <Button variant="ghost" size="icon" onClick={() => handleDeleteBudget(b.publicId)}>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleDeleteBudget(b.publicId)}
+                                                title="Cancelar orçamento"
+                                            >
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
                                         </div>
@@ -372,7 +381,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                                             className="w-28"
                                             onChange={e => updateProcedure(proc.id, 'value', e.target.value)}
                                         />
-                                        <Button variant="ghost" size="icon" onClick={() => removeProcedure(proc.id)}>
+                                        <Button variant="ghost" size="icon" onClick={() => removeProcedure(proc.id)} title="Remover procedimento">
                                             <Trash2 className="h-4 w-4 text-destructive" />
                                         </Button>
                                     </div>
