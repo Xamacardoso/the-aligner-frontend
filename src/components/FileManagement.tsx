@@ -1,27 +1,28 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { PatientDocument } from '@/lib/types';
-import { fetchPatientDocuments, requestFileUpload, confirmFileUpload } from '@/lib/api';
+import { TreatmentFile } from '@/lib/types';
+import { treatmentService } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { File, Download, UploadCloud, Loader2, Eye, Box } from 'lucide-react';
+import { File, Download, UploadCloud, Loader2, Eye, Box, Trash2 } from 'lucide-react';
 
 interface FileManagementProps {
-    patientCpf: string;
+    patientCpf: string; // Keeping name for compatibility but it should be treatmentPublicId now
 }
 
-export function FileManagement({ patientCpf }: FileManagementProps) {
-    const [documents, setDocuments] = useState<PatientDocument[]>([]);
+export function FileManagement({ patientCpf: treatmentPublicId }: FileManagementProps) {
+    const [documents, setDocuments] = useState<TreatmentFile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
+    const [deletingKey, setDeletingKey] = useState<string | null>(null);
     const { toast } = useToast();
 
     const loadDocuments = async () => {
-        if (!patientCpf) return;
+        if (!treatmentPublicId) return;
         setIsLoading(true);
         try {
-            const docs = await fetchPatientDocuments(patientCpf);
+            const docs = await treatmentService.getFiles(treatmentPublicId);
             setDocuments(docs);
         } catch (err) {
             console.error(err);
@@ -32,18 +33,22 @@ export function FileManagement({ patientCpf }: FileManagementProps) {
 
     useEffect(() => {
         loadDocuments();
-    }, [patientCpf]);
+    }, [treatmentPublicId]);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file || !patientCpf) return;
+        if (!file || !treatmentPublicId) return;
 
         setIsUploading(true);
         try {
             const fileType = file.type || 'application/octet-stream';
 
             // 1. Request presigned URL
-            const data = await requestFileUpload(patientCpf, file.name, fileType);
+            const data = await treatmentService.requestUpload(treatmentPublicId, {
+                fileName: file.name,
+                contentType: fileType
+            });
+
             if (!data) throw new Error("Falha ao obter URL de upload");
 
             const { uploadUrl, r2key } = data;
@@ -60,13 +65,15 @@ export function FileManagement({ patientCpf }: FileManagementProps) {
             if (!res.ok) throw new Error("Upload para nuvem falhou");
 
             // 3. Confirm metadata to backend
-            const confirmed = await confirmFileUpload(patientCpf, file.name, r2key);
-            if (confirmed) {
-                toast({ title: "Arquivo enviado com sucesso!", description: file.name });
-                loadDocuments();
-            } else {
-                throw new Error("Falha ao confirmar arquivo no servidor");
-            }
+            const format = file.name.split('.').pop() || '';
+            await treatmentService.confirmUpload(treatmentPublicId, {
+                nomeOriginal: file.name,
+                r2key,
+                formato: format
+            });
+
+            toast({ title: "Arquivo enviado com sucesso!", description: file.name });
+            loadDocuments();
         } catch (err: any) {
             console.error(err);
             toast({
@@ -76,7 +83,20 @@ export function FileManagement({ patientCpf }: FileManagementProps) {
             });
         } finally {
             setIsUploading(false);
-            e.target.value = ''; // Reset input so same file can be chosen again
+            e.target.value = '';
+        }
+    };
+
+    const handleDelete = async (r2key: string) => {
+        setDeletingKey(r2key);
+        try {
+            await treatmentService.deleteFile(r2key);
+            toast({ title: "Arquivo excluído" });
+            loadDocuments();
+        } catch (err) {
+            toast({ title: "Erro ao excluir arquivo", variant: "destructive" });
+        } finally {
+            setDeletingKey(null);
         }
     };
 
@@ -99,17 +119,16 @@ export function FileManagement({ patientCpf }: FileManagementProps) {
         } catch (err) {
             console.error(err);
             toast({ title: "Erro ao baixar", description: "Não foi possível forçar o download.", variant: "destructive" });
-            // Fallback to simpler method if fetch fails (CORS might still be an issue for GET)
             window.open(url, '_blank');
         }
     };
 
     return (
-        <div className="bg-card rounded-lg border border-border mt-10 overflow-hidden">
+        <div className="bg-card rounded-lg border border-border mt-1 overflow-hidden">
             <div className="px-5 py-3 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <File className="h-4 w-4 text-muted-foreground" />
-                    <h2 className="text-sm font-semibold text-foreground">Documentos e Arquivos</h2>
+                    <h2 className="text-sm font-semibold text-foreground">Documentos e Arquivos do Tratamento</h2>
                 </div>
                 <div className="relative">
                     <input
@@ -143,7 +162,7 @@ export function FileManagement({ patientCpf }: FileManagementProps) {
                     <div className="flex flex-col gap-3">
                         {documents.map((doc) => (
                             <div
-                                key={doc.r2key}
+                                key={doc.publicId}
                                 className="flex items-center justify-between p-3 border border-border rounded-md hover:bg-muted/30 transition-colors group"
                             >
                                 <div className="flex items-center gap-3 overflow-hidden">
@@ -151,53 +170,71 @@ export function FileManagement({ patientCpf }: FileManagementProps) {
                                         <File className="h-4 w-4" />
                                     </div>
                                     <div className="overflow-hidden">
-                                        <p className="text-sm font-medium text-foreground truncate max-w-[150px] md:max-w-[300px]" title={doc.name}>
-                                            {doc.name}
+                                        <p className="text-sm font-medium text-foreground truncate max-w-[150px] md:max-w-[300px]" title={doc.nomeOriginal}>
+                                            {doc.nomeOriginal}
                                         </p>
                                         <p className="text-[10px] text-muted-foreground flex gap-2">
-                                            <span className="uppercase">{doc.format}</span>
+                                            <span className="uppercase">{doc.formato}</span>
                                             <span>•</span>
-                                            <span>{doc.createdAt}</span>
+                                            <span>{doc.dataCriacao ? new Date(doc.dataCriacao).toLocaleDateString('pt-BR') : ''}</span>
                                         </p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    {doc.format.toLowerCase() === 'stl' && (
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-8 gap-1.5 text-xs hidden md:flex"
-                                            onClick={() => {
-                                                const viewerUrl = `/visualizador-3d?url=${encodeURIComponent(doc.downloadUrl!)}&name=${encodeURIComponent(doc.name)}`;
-                                                window.open(viewerUrl, '_blank');
-                                            }}
-                                        >
-                                            <Box className="h-3.5 w-3.5" />
-                                            Visualizar Modelo 3D
-                                        </Button>
-                                    )}
-
-                                    {doc.downloadUrl && (
-                                        <div className="flex items-center gap-1">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8"
-                                                onClick={() => window.open(doc.downloadUrl, '_blank')}
-                                                title="Visualizar"
-                                            >
-                                                <Eye className="h-4 w-4 text-muted-foreground" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8"
-                                                onClick={() => handleDownload(doc.downloadUrl!, doc.name)}
-                                                title="Baixar"
-                                            >
-                                                <Download className="h-4 w-4 text-muted-foreground" />
-                                            </Button>
+                                    {deletingKey === doc.r2key ? (
+                                        <div className="flex items-center gap-2 px-3">
+                                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                            <span className="text-[10px] text-muted-foreground font-medium uppercase animate-pulse">Excluindo...</span>
                                         </div>
+                                    ) : (
+                                        <>
+                                            {doc.formato.toLowerCase() === 'stl' && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-8 gap-1.5 text-xs hidden md:flex"
+                                                    onClick={() => {
+                                                        const viewerUrl = `/visualizador-3d?url=${encodeURIComponent(doc.downloadUrl!)}&name=${encodeURIComponent(doc.nomeOriginal)}`;
+                                                        window.open(viewerUrl, '_blank');
+                                                    }}
+                                                >
+                                                    <Box className="h-3.5 w-3.5" />
+                                                    Visualizar 3D
+                                                </Button>
+                                            )}
+
+                                            {doc.downloadUrl && (
+                                                <div className="flex items-center gap-1">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8"
+                                                        onClick={() => window.open(doc.downloadUrl, '_blank')}
+                                                        title="Visualizar"
+                                                    >
+                                                        <Eye className="h-4 w-4 text-muted-foreground" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8"
+                                                        onClick={() => handleDownload(doc.downloadUrl!, doc.nomeOriginal)}
+                                                        title="Baixar"
+                                                    >
+                                                        <Download className="h-4 w-4 text-muted-foreground" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8"
+                                                        onClick={() => handleDelete(doc.r2key)}
+                                                        title="Excluir"
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             </div>

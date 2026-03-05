@@ -2,32 +2,39 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { fetchDentists, fetchPatients } from '@/lib/api';
-import { Dentist, Patient } from '@/lib/types';
+import { partnerService, patientService } from '@/lib/api';
+import { PartnerListItem, PatientListItem } from '@/lib/types';
 import { ChevronRight } from 'lucide-react';
 
 export default function GerentePacientesPage() {
     const router = useRouter();
-    const [dentists, setDentists] = useState<Dentist[]>([]);
-    const [selectedDentist, setSelectedDentist] = useState<Dentist | null>(null);
-    const [patients, setPatients] = useState<Patient[]>([]);
+    const [dentists, setDentists] = useState<PartnerListItem[]>([]);
+    const [selectedDentist, setSelectedDentist] = useState<PartnerListItem | null>(null);
+    const [patients, setPatients] = useState<PatientListItem[]>([]);
 
     useEffect(() => {
         const load = async () => {
-            const data = await fetchDentists();
-            setDentists(data);
+            try {
+                const data = await partnerService.findAll();
+                setDentists(data);
+            } catch (err) {
+                console.error(err);
+            }
         };
         load();
     }, []);
 
     useEffect(() => {
         const loadPatients = async () => {
-            if (selectedDentist) {
-                const data = await fetchPatients(selectedDentist.cpf);
-                setPatients(data);
-            } else {
-                const data = await fetchPatients();
-                setPatients(data);
+            try {
+                if (selectedDentist) {
+                    const data = await patientService.findByPartner(selectedDentist.publicId);
+                    setPatients(data);
+                } else {
+                    setPatients([]);
+                }
+            } catch (err) {
+                console.error(err);
             }
         };
         loadPatients();
@@ -43,9 +50,9 @@ export default function GerentePacientesPage() {
                     <div className="bg-card rounded-lg border border-border overflow-hidden">
                         {dentists.map(d => (
                             <button
-                                key={d.cpf}
+                                key={d.publicId}
                                 onClick={() => setSelectedDentist(d)}
-                                className={`w-full text-left px-4 py-3 border-b border-border last:border-b-0 flex items-center justify-between hover:bg-muted transition-colors ${selectedDentist?.cpf === d.cpf ? 'bg-muted' : ''
+                                className={`w-full text-left px-4 py-3 border-b border-border last:border-b-0 flex items-center justify-between hover:bg-muted transition-colors ${selectedDentist?.publicId === d.publicId ? 'bg-muted' : ''
                                     }`}
                             >
                                 <div>
@@ -82,13 +89,13 @@ export default function GerentePacientesPage() {
                         ) : (
                             patients.map(p => (
                                 <button
-                                    key={p.cpf}
-                                    onClick={() => router.push(`/gerente/paciente/${p.cpf}?partnerCpf=${p.cpfParceiro}`)}
+                                    key={p.publicId}
+                                    onClick={() => router.push(`/gerente/paciente/${p.publicId}`)}
                                     className="w-full text-left px-4 py-3 border-b border-border last:border-b-0 flex items-center justify-between hover:bg-muted transition-colors"
                                 >
                                     <div>
                                         <p className="text-sm font-medium text-foreground">{p.nome}</p>
-                                        <p className="text-xs text-muted-foreground">CPF: {p.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")} • Nasc: {p.nascimento ? new Date(p.nascimento).toLocaleDateString('pt-BR') : '-'}</p>
+                                        <p className="text-xs text-muted-foreground">CPF: {p.cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")} • Nasc: {p.nascimento ? new Date(p.nascimento).toLocaleDateString('pt-BR') : '-'}</p>
                                     </div>
                                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                                 </button>

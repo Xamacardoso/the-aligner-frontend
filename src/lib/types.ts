@@ -1,59 +1,64 @@
 export type UserRole = 'gerente' | 'dentista';
 
 export interface User {
-  id: string; // fallback
+  id: string;
   name: string;
   email: string;
   role: UserRole;
 }
 
-export interface Dentist {
-  cpf: string;
+// ==========================================
+// PARTNER / DENTIST
+// ==========================================
+
+export interface PartnerListItem {
+  publicId: string;
   nome: string;
-  senha?: string; // only for creation, don't expose otherwise
-  tipoUsuarioId: number;
+  cpf: string;
   cro: string;
   croUf: string;
-  email: string;
-  telefone: string;
-  especialidadeId?: number;
-  titulacaoId?: number;
-  cnpj?: string;
-  razaoSocial?: string;
-  endereco?: string;
-  telefone_estabelecimento?: string;
-  complemento?: string;
-  cep?: string;
-  bairro?: string;
-  cidade?: string;
-  uf_estabelecimento?: string;
+  email?: string | null;
+  telefone?: string | null;
 }
 
-export type TreatmentObjectiveOption = 'manter' | 'corrigir' | null;
-export type CrowdingOption = 'projetar_expandir' | 'inclinar' | 'ipr' | null;
-
-export interface TreatmentObjectives {
-  linhaMediaSuperior: TreatmentObjectiveOption;
-  linhaMeidaInferior: TreatmentObjectiveOption;
-  overjet: TreatmentObjectiveOption;
-  overbite: TreatmentObjectiveOption;
-  formaArcoSuperior: TreatmentObjectiveOption;
-  formaArcoInferior: TreatmentObjectiveOption;
+export interface PartnerDetails extends PartnerListItem {
+  titulacao?: string | null;
+  especialidades?: string[] | null;
+  cnpj?: string | null;
+  razaoSocial?: string | null;
+  endereco?: string | null;
+  telefone_estabelecimento?: string | null;
+  complemento?: string | null;
+  cep?: string | null;
+  bairro?: string | null;
+  cidade?: string | null;
+  uf_estabelecimento?: string | null;
+  comunicacoes: string[];
 }
 
-export interface Crowding {
-  superiorAnterior: CrowdingOption;
-  superiorPosterior: CrowdingOption;
-  inferiorAnterior: CrowdingOption;
-  inferiorPosterior: CrowdingOption;
-}
+// Legacy support or fallback if needed
+export type Dentist = PartnerDetails;
 
-export interface Patient {
-  cpf: string;
+// ==========================================
+// PATIENT
+// ==========================================
+
+export interface PatientListItem {
+  publicId: string;
   nome: string;
-  nascimento?: string;
+  cpf: string;
+  nascimento?: string | Date | null;
+}
+
+export interface PatientDetails extends PatientListItem {
   cpfParceiro: string;
-  cnpjParceiro?: string;
+  partnerPublicId: string;
+  tratamentos?: TreatmentListItem[];
+}
+
+// Legacy support
+export interface Patient extends PatientDetails {
+  // These fields are now mainly in TreatmentDetails but keeping for compatibility during migration
   queixaPrincipal?: string;
   descricaoCaso?: string;
   descricaoObjetivosTratamento?: string;
@@ -61,36 +66,51 @@ export interface Patient {
   apinhamento?: string;
   observacoes?: string;
   inicioTratamento?: string;
-
-  objetivosTratamentoObj?: TreatmentObjectives;
-  apinhamentoObj?: Crowding;
 }
 
-export interface BudgetProcedure {
-  id: string;
-  name: string;
-  value: number;
+// ==========================================
+// TREATMENT
+// ==========================================
+
+export interface TreatmentListItem {
+  publicId: string;
+  queixaPrincipal?: string | null;
+  dataInicio: string | Date | null;
 }
 
-export type BudgetStatus = 'pendente' | 'deferido' | 'indeferido';
+export interface TreatmentDetails extends TreatmentListItem {
+  descricaoCaso?: string | null;
+  observacoesAdicionais?: string | null;
+  objetivos: any[];
+  apinhamentos: any[];
+  arquivos?: TreatmentFile[] | null;
+}
+
+export interface TreatmentFile {
+  publicId: string;
+  formato: string;
+  r2key: string;
+  nomeOriginal: string;
+  dataCriacao: string | Date;
+  downloadUrl?: string;
+}
+
+// ==========================================
+// BUDGET
+// ==========================================
+
+export type BudgetStatus = 'pendente' | 'aprovado' | 'declinado' | 'cancelado';
 
 export interface Budget {
-  id: string;
-  patientId: string;
-  procedures: BudgetProcedure[];
-  totalValue: number;
-  observations: string;
+  publicId: string;
+  tratamentoPublicId: string;
+  valor: number;
+  descricao: string;
   status: BudgetStatus;
-  justification?: string;
-  createdAt: string;
+  dataCriacao: string | Date;
 }
 
-export interface PatientDocument {
-  id?: number;
-  patientCpf: string;
-  name: string;
-  format: string;
-  r2key: string;
-  downloadUrl?: string;
-  createdAt: string;
+// Legacy support
+export interface PatientDocument extends TreatmentFile {
+  patientCpf: string; // fallback
 }

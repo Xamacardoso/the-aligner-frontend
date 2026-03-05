@@ -1,320 +1,75 @@
-import { Dentist, Patient, Budget, PatientDocument } from './types';
+import { partnerService } from './api/partner.service';
+import { patientService } from './api/patient.service';
+import { treatmentService } from './api/treatment.service';
+import { budgetService } from './api/budget.service';
+import { clinicalService } from './api/clinical.service';
+import { PartnerListItem, PartnerDetails, PatientListItem, PatientDetails, Budget, TreatmentListItem, TreatmentDetails } from './types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+export * from './api/partner.service';
+export * from './api/patient.service';
+export * from './api/treatment.service';
+export * from './api/budget.service';
+export * from './api/clinical.service';
 
-// ==========================================
-// DENTISTS (partners + Usuarios)
-// ==========================================
+// Legacy Mappings for backward compatibility
+// These will help the app continue working while we update the components one by one
 
-export async function fetchDentists(): Promise<Dentist[]> {
-    try {
-        const res = await fetch(`${API_BASE_URL}/admin/partners`);
-        if (!res.ok) throw new Error('Failed to fetch dentists');
-
-        // The backend returns an array of partners, some fields are in 'usuario' relation.
-        // We map things to our flat 'Dentist' type.
-        const data = await res.json();
-        return data.map((d: any) => ({
-            ...d,
-            nome: d.nome || 'Sem Nome',
-            email: d.email || '',
-            tipoUsuarioId: d.tipoUsuarioId || null,
-            cro: d.cro || '',
-            croUf: d.croUf || '',
-        })) as Dentist[];
-    } catch (err) {
-        console.error('Error fetching dentists:', err);
-        return [];
-    }
+export async function fetchDentists(): Promise<any[]> {
+    return partnerService.findAll();
 }
 
-export async function createDentist(dentist: Dentist): Promise<Dentist | null> {
-    const payload: any = {
-        cpf: dentist.cpf,
-        nome: dentist.nome,
-        email: dentist.email,
-        senha: dentist.senha,
-        tipoUsuarioId: dentist.tipoUsuarioId,
-        cro: dentist.cro,
-        croUf: dentist.croUf,
-    };
-    if (dentist.telefone) payload.telefone = dentist.telefone;
-    if (dentist.especialidadeId) payload.especialidadeId = dentist.especialidadeId;
-    if (dentist.titulacaoId) payload.titulacaoId = dentist.titulacaoId;
-    if (dentist.cnpj) payload.cnpj = dentist.cnpj;
-    if (dentist.razaoSocial) payload.razaoSocial = dentist.razaoSocial;
-    if (dentist.endereco) payload.endereco = dentist.endereco;
-    if (dentist.telefone_estabelecimento) payload.telefone_estabelecimento = dentist.telefone_estabelecimento;
-    if (dentist.complemento) payload.complemento = dentist.complemento;
-    if (dentist.cep) payload.cep = dentist.cep;
-    if (dentist.bairro) payload.bairro = dentist.bairro;
-    if (dentist.cidade) payload.cidade = dentist.cidade;
-    if (dentist.uf_estabelecimento) payload.uf_estabelecimento = dentist.uf_estabelecimento;
-
-    try {
-        const res = await fetch(`${API_BASE_URL}/admin/partners`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error('Failed to create dentist');
-        return await res.json();
-    } catch (err) {
-        console.error('Error creating dentist:', err);
-        return null;
-    }
+export async function createDentist(data: any) {
+    return partnerService.create(data);
 }
 
-export async function updateDentist(cpf: string, updates: Partial<Dentist>): Promise<Dentist | null> {
-    try {
-        const res = await fetch(`${API_BASE_URL}/admin/partners/${cpf}`, {
-            method: 'PATCH', // or PUT depending on your backend
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updates),
-        });
-        if (!res.ok) throw new Error('Failed to update dentist');
-        return await res.json();
-    } catch (err) {
-        console.error(`Error updating dentist ${cpf}:`, err);
-        return null;
-    }
+export async function updateDentist(cpf: string, data: any) {
+    return partnerService.update(cpf, data);
 }
 
-export async function removeDentist(cpf: string): Promise<boolean> {
-    try {
-        const res = await fetch(`${API_BASE_URL}/admin/partners/${cpf}`, {
-            method: 'DELETE',
-        });
-        return res.ok;
-    } catch (err) {
-        console.error(`Error deleting dentist ${cpf}:`, err);
-        return false;
-    }
+export async function removeDentist(cpf: string) {
+    return partnerService.remove(cpf);
 }
 
-// ==========================================
-// PATIENTS
-// ==========================================
-
-export async function fetchPatients(dentistCpf?: string): Promise<Patient[]> {
-    try {
-        const url = dentistCpf ? `${API_BASE_URL}/partners/patients/dentist/${dentistCpf}` : `${API_BASE_URL}/partners/patients`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('Failed to fetch patients');
-        return await res.json();
-    } catch (err) {
-        console.error('Error fetching patients:', err);
-        return [];
-    }
+export async function fetchPatients(partnerPublicId?: string): Promise<any[]> {
+    if (!partnerPublicId) return [];
+    return patientService.findByPartner(partnerPublicId);
 }
 
-export async function fetchPatient(cpf: string, partnerCpf?: string): Promise<Patient | null> {
-    try {
-        const url = partnerCpf
-            ? `${API_BASE_URL}/partners/patients/${cpf}?partnerCpf=${partnerCpf}`
-            : `${API_BASE_URL}/partners/patients/${cpf}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('Failed to fetch patient');
-        return await res.json();
-    } catch (err) {
-        console.error(`Error fetching patient ${cpf}:`, err);
-        return null;
-    }
+export async function fetchPatient(publicId: string, partnerCpf: string) {
+    return patientService.findOne(publicId, partnerCpf);
 }
 
-export async function createPatient(patient: Patient): Promise<Patient | null> {
-    const payload: any = {
-        cpfParceiro: patient.cpfParceiro,
-        cpfPaciente: patient.cpf,
-        nomePaciente: patient.nome,
-        descricaoQueixaPrincipal: patient.queixaPrincipal || '',
-        descricaoObservacoes: patient.descricaoCaso || '',
-        descricaoObjetivosTratamento: patient.descricaoObjetivosTratamento || '',
-        objetivosTratamento: patient.objetivoTratamento || '',
-        apinhamento: patient.apinhamento || '',
-    };
-    if (patient.cnpjParceiro) payload.cnpjParceiro = patient.cnpjParceiro;
-    if (patient.nascimento) payload.dataNascimento = patient.nascimento;
-    if (patient.observacoes) payload.outrasObservacoes = patient.observacoes;
-
-    try {
-        const res = await fetch(`${API_BASE_URL}/partners/patients`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-        });
-        if (!res.ok) {
-            console.error(payload);
-            console.error(res);
-            throw new Error('Failed to create patient')
-        };
-        return await res.json();
-    } catch (err) {
-        console.error('Error creating patient:', err);
-        return null;
-    }
+export async function createPatient(data: any) {
+    // Note: This might need partnerPublicId in the new logic
+    // For now we try to extract or expect it in the component update
+    return patientService.create(data, data.partnerPublicId);
 }
 
-export async function updatePatient(cpf: string, updates: Partial<Patient>): Promise<Patient | null> {
-    const payload = {
-        ...(updates.cpf && { cpfPaciente: updates.cpf }),
-        ...(updates.nome && { nomePaciente: updates.nome }),
-        ...(updates.nascimento && { dataNascimento: updates.nascimento }),
-        ...(updates.queixaPrincipal !== undefined && { descricaoQueixaPrincipal: updates.queixaPrincipal }),
-        ...(updates.descricaoCaso !== undefined && { descricaoObservacoes: updates.descricaoCaso }),
-        ...(updates.descricaoObjetivosTratamento !== undefined && { descricaoObjetivosTratamento: updates.descricaoObjetivosTratamento }),
-        ...(updates.objetivoTratamento !== undefined && { objetivosTratamento: updates.objetivoTratamento }),
-        ...(updates.apinhamento !== undefined && { apinhamento: updates.apinhamento }),
-        ...(updates.observacoes !== undefined && { outrasObservacoes: updates.observacoes })
-    };
-
-    try {
-        const res = await fetch(`${API_BASE_URL}/partners/patients/${cpf}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error('Failed to update patient');
-        return await res.json();
-    } catch (err) {
-        console.error(`Error updating patient ${cpf}:`, err);
-        return null;
-    }
+export async function updatePatient(publicId: string, partnerCpf: string, data: any) {
+    return patientService.update(publicId, partnerCpf, data);
 }
 
-export async function removePatient(cpf: string): Promise<boolean> {
-    try {
-        const res = await fetch(`${API_BASE_URL}/partners/patients/${cpf}`, {
-            method: 'DELETE',
-        });
-        return res.ok;
-    } catch (err) {
-        console.error(`Error deleting patient ${cpf}:`, err);
-        return false;
-    }
+export async function removePatient(publicId: string, partnerCpf: string) {
+    return patientService.remove(publicId, partnerCpf);
 }
 
-// ==========================================
-// BUDGETS 
-// ==========================================
-
-export async function fetchBudgets(patientCpf?: string): Promise<Budget[]> {
-    try {
-        const url = patientCpf ? `${API_BASE_URL}/budgets/patient/${patientCpf}` : `${API_BASE_URL}/budgets`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('Failed to fetch budgets');
-        const data = await res.json();
-        return data.map((b: any) => ({
-            id: String(b.id),
-            patientId: b.pacienteCpf || patientCpf || '',
-            procedures: [], // Mapped when procedures are implemented in backend
-            totalValue: Number(b.valor) || 0,
-            observations: b.descricao || '',
-            status: b.status || 'pendente',
-            createdAt: b.dataCriacao ? new Date(b.dataCriacao).toLocaleDateString('pt-BR') : '',
-        })) as Budget[];
-    } catch (err) {
-        console.error('Error fetching budgets:', err);
-        return [];
-    }
+export async function fetchBudgets(treatmentPublicId: string) {
+    return budgetService.findByTreatment(treatmentPublicId);
 }
 
-export async function createBudget(data: { pacienteCpf: string, valor: number, descricao: string }): Promise<any> {
-    try {
-        const res = await fetch(`${API_BASE_URL}/budgets`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-        });
-        if (!res.ok) throw new Error('Failed to create budget');
-        return await res.json();
-    } catch (err) {
-        console.error('Error creating budget:', err);
-        return null;
-    }
+export async function createBudget(data: any) {
+    return budgetService.create(data);
 }
 
-export async function deleteBudget(id: string): Promise<boolean> {
-    try {
-        // Backend cancelling endpoint
-        const res = await fetch(`${API_BASE_URL}/budgets/${id}/cancel`, {
-            method: 'POST',
-        });
-        return res.ok;
-    } catch (err) {
-        console.error(`Error deleting/canceling budget ${id}:`, err);
-        return false;
-    }
+export async function fetchPatientDocuments(treatmentPublicId: string) {
+    return treatmentService.getFiles(treatmentPublicId);
 }
 
-export async function approveBudget(id: string): Promise<boolean> {
-    try {
-        const res = await fetch(`${API_BASE_URL}/budgets/${id}/approve`, {
-            method: 'POST',
-        });
-        return res.ok;
-    } catch (err) {
-        console.error(`Error approving budget ${id}:`, err);
-        return false;
-    }
+export async function requestFileUpload(treatmentPublicId: string, fileName: string, contentType: string) {
+    return treatmentService.requestUpload(treatmentPublicId, { fileName, contentType });
 }
 
-export async function declineBudget(id: string): Promise<boolean> {
-    try {
-        const res = await fetch(`${API_BASE_URL}/budgets/${id}/decline`, {
-            method: 'POST',
-        });
-        return res.ok;
-    } catch (err) {
-        console.error(`Error declining budget ${id}:`, err);
-        return false;
-    }
-}
-
-// ==========================================
-// DOCUMENTS
-// ==========================================
-
-export async function fetchPatientDocuments(cpf: string): Promise<PatientDocument[]> {
-    const res = await fetch(`${API_BASE_URL}/partners/patients/${cpf}/documents`);
-    if (!res.ok) throw new Error('Failed to fetch documents');
-    const data = await res.json();
-    return data.map((d: any) => ({
-        id: d.id,
-        patientCpf: d.pacienteCpf,
-        name: d.nomeOriginal,
-        format: d.formato,
-        r2key: d.r2key,
-        downloadUrl: d.downloadUrl,
-        createdAt: d.dataCriacao ? new Date(d.dataCriacao).toLocaleDateString('pt-BR') : '',
-    })) as PatientDocument[];
-}
-
-export async function requestFileUpload(cpf: string, fileName: string, fileType: string): Promise<{ uploadUrl: string, r2key: string } | null> {
-    try {
-        const res = await fetch(`${API_BASE_URL}/partners/patients/${cpf}/documents/request-upload`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nomeOriginal: fileName, contentType: fileType }),
-        });
-        if (!res.ok) throw new Error('Failed to request upload URL');
-        return await res.json();
-    } catch (err) {
-        console.error(`Error requesting upload URL for patient ${cpf}:`, err);
-        return null;
-    }
-}
-
-export async function confirmFileUpload(cpf: string, fileName: string, r2key: string): Promise<boolean> {
-    try {
-        const res = await fetch(`${API_BASE_URL}/partners/patients/${cpf}/documents/confirm-upload`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nomeOriginal: fileName, r2key }),
-        });
-        return res.ok;
-    } catch (err) {
-        console.error(`Error confirming upload for patient ${cpf}:`, err);
-        return false;
-    }
+export async function confirmFileUpload(treatmentPublicId: string, fileName: string, r2key: string) {
+    const format = fileName.split('.').pop() || '';
+    return treatmentService.confirmUpload(treatmentPublicId, { r2key, nomeOriginal: fileName, formato: format });
 }

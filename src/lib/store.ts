@@ -23,8 +23,8 @@ function seedData() {
   const dentists = getItem<Dentist[]>(DENTISTS_KEY, []);
   if (dentists.length === 0) {
     const seed: Dentist[] = [
-      { cpf: '12345678901', nome: 'Dr. Carlos Mendes', cro: '12345', croUf: 'SP', email: 'dentista@thealign.com', telefone: '11987654321', tipoUsuarioId: 2, especialidadeId: 1, titulacaoId: 1, cnpj: '12345678000199', razaoSocial: 'Clinica Mendes Ltda', endereco: 'Rua das Flores, 123', bairro: 'Centro', cidade: 'São Paulo', uf_estabelecimento: 'SP', cep: '01000000' },
-      { cpf: '98765432109', nome: 'Dra. Ana Souza', cro: '67890', croUf: 'SP', email: 'ana@thealign.com', telefone: '11912345678', tipoUsuarioId: 2 },
+      { publicId: 'd1', cpf: '12345678901', nome: 'Dr. Carlos Mendes', cro: '12345', croUf: 'SP', email: 'dentista@thealign.com', telefone: '11987654321', cnpj: '12345678000199', razaoSocial: 'Clinica Mendes Ltda', endereco: 'Rua das Flores, 123', bairro: 'Centro', cidade: 'São Paulo', uf_estabelecimento: 'SP', cep: '01000000', comunicacoes: [] },
+      { publicId: 'd2', cpf: '98765432109', nome: 'Dra. Ana Souza', cro: '67890', croUf: 'SP', email: 'ana@thealign.com', telefone: '11912345678', comunicacoes: [] },
     ];
     setItem(DENTISTS_KEY, seed);
   }
@@ -33,8 +33,10 @@ function seedData() {
   if (patients.length === 0) {
     const seed: Patient[] = [
       {
+        publicId: 'p1',
         cpf: '98765432100',
         cpfParceiro: '12345678901',
+        partnerPublicId: 'd1',
         nome: 'Maria Silva',
         nascimento: '1990-05-15',
         queixaPrincipal: 'Dentes desalinhados',
@@ -88,18 +90,18 @@ export function deletePatient(cpf: string): void {
 export function getBudgets(): Budget[] {
   return getItem<Budget[]>(BUDGETS_KEY, []);
 }
-export function getBudgetsByPatient(patientId: string): Budget[] {
-  return getBudgets().filter(b => b.patientId === patientId);
+export function getBudgetsByPatient(treatmentId: string): Budget[] {
+  return getBudgets().filter(b => b.tratamentoPublicId === treatmentId);
 }
 export function saveBudget(budget: Budget): void {
   const list = getBudgets();
-  const idx = list.findIndex(b => b.id === budget.id);
+  const idx = list.findIndex(b => b.publicId === budget.publicId);
   if (idx >= 0) list[idx] = budget;
   else list.push(budget);
   setItem(BUDGETS_KEY, list);
 }
-export function deleteBudget(id: string): void {
-  setItem(BUDGETS_KEY, getBudgets().filter(b => b.id !== id));
+export function deleteBudget(publicId: string): void {
+  setItem(BUDGETS_KEY, getBudgets().filter(b => b.publicId !== publicId));
 }
 
 // --- Documents ---
