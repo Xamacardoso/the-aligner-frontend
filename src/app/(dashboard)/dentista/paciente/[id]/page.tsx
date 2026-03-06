@@ -23,10 +23,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ArrowLeft, Plus, Trash2, FileText, ClipboardList, Stethoscope, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, FileText, ClipboardList, Stethoscope, CheckCircle2, Pencil } from 'lucide-react';
 import { FileManagement } from '@/components/FileManagement';
 import { Separator } from '@/components/ui/separator';
-import { NewTreatmentForm } from '@/components/treatment/NewTreatmentForm';
+import { TreatmentForm } from '@/components/treatment/TreatmentForm';
 
 const formatNestedObj = (jsonStr: string) => {
     try {
@@ -84,6 +84,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     const [observations, setObservations] = useState('');
 
     const [openCreateTreatment, setOpenCreateTreatment] = useState(false);
+    const [openEditTreatment, setOpenEditTreatment] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
     const { toast } = useToast();
@@ -209,7 +210,9 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
 
     const handleTreatmentSuccess = () => {
         setOpenCreateTreatment(false);
+        setOpenEditTreatment(false);
         loadData();
+        if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId);
     };
 
     return (
@@ -288,8 +291,18 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
 
             {treatmentDetails && (
                 <>
-                    <div className="bg-card rounded-lg border border-border p-5 mb-6">
-                        <h2 className="text-sm font-semibold text-foreground mb-4">Detalhes do Tratamento Selecionado</h2>
+                    <div className="bg-card rounded-lg border border-border p-5 mb-6 relative">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-sm font-semibold text-foreground">Detalhes do Tratamento Selecionado</h2>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 gap-1.5"
+                                onClick={() => setOpenEditTreatment(true)}
+                            >
+                                <Pencil className="h-3.5 w-3.5" /> Editar
+                            </Button>
+                        </div>
 
                         {treatmentDetails.queixaPrincipal && (
                             <div className="mb-4">
@@ -498,11 +511,37 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                     <div className="flex-1 overflow-y-auto min-h-0 overscroll-contain">
                         <div className="p-6">
                             {patient && dentist && (
-                                <NewTreatmentForm
+                                <TreatmentForm
                                     patientPublicId={patient.publicId}
                                     partnerPublicId={dentist.publicId}
                                     onSuccess={handleTreatmentSuccess}
                                     onCancel={() => setOpenCreateTreatment(false)}
+                                />
+                            )}
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Treatment Dialog */}
+            <Dialog open={openEditTreatment} onOpenChange={setOpenEditTreatment}>
+                <DialogContent className="max-w-3xl h-[80vh] flex flex-col p-0 overflow-hidden gap-0">
+                    <DialogHeader className="p-6 border-b border-border flex-shrink-0">
+                        <DialogTitle className="flex items-center gap-2">
+                            <Pencil className="h-5 w-5 text-primary" />
+                            Editar Tratamento Clínico
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="flex-1 overflow-y-auto min-h-0 overscroll-contain">
+                        <div className="p-6">
+                            {patient && dentist && treatmentDetails && (
+                                <TreatmentForm
+                                    patientPublicId={patient.publicId}
+                                    partnerPublicId={dentist.publicId}
+                                    initialData={treatmentDetails}
+                                    onSuccess={handleTreatmentSuccess}
+                                    onCancel={() => setOpenEditTreatment(false)}
                                 />
                             )}
                         </div>

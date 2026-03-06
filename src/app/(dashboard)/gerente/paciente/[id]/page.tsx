@@ -211,14 +211,40 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                         <h2 className="text-sm font-semibold text-foreground mb-4">Caso Clínico</h2>
                         {treatmentDetails.queixaPrincipal && (
                             <div className="mb-4">
-                                <p className="text-xs font-semibold text-foreground uppercase">Queixa</p>
-                                <p className="text-sm text-muted-foreground">{treatmentDetails.queixaPrincipal}</p>
+                                <p className="text-xs font-semibold text-foreground uppercase">Queixa Principal</p>
+                                <p className="text-sm text-muted-foreground mt-1">{treatmentDetails.queixaPrincipal}</p>
                             </div>
                         )}
                         {treatmentDetails.descricaoCaso && (
                             <div className="mb-4">
-                                <p className="text-xs font-semibold text-foreground uppercase">Descrição</p>
-                                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{treatmentDetails.descricaoCaso}</p>
+                                <p className="text-xs font-semibold text-foreground uppercase">Descrição do Caso</p>
+                                <p className="text-sm text-muted-foreground mt-1">{treatmentDetails.descricaoCaso}</p>
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-4">
+                            {treatmentDetails.objetivos && treatmentDetails.objetivos.length > 0 && (
+                                <div>
+                                    <p className="text-xs font-semibold text-foreground uppercase">Objetivos</p>
+                                    <ul className="list-disc pl-4 mt-1 text-sm text-muted-foreground">
+                                        {treatmentDetails.objetivos.map((o: any) => <li key={o.id}>{o.nome}</li>)}
+                                    </ul>
+                                </div>
+                            )}
+                            {treatmentDetails.apinhamentos && treatmentDetails.apinhamentos.length > 0 && (
+                                <div>
+                                    <p className="text-xs font-semibold text-foreground uppercase">Apinhamento</p>
+                                    <ul className="list-disc pl-4 mt-1 text-sm text-muted-foreground">
+                                        {treatmentDetails.apinhamentos.map((a: any) => <li key={a.id}>{a.nome}</li>)}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+
+                        {treatmentDetails.observacoesAdicionais && (
+                            <div className="mt-4 pt-3 border-t border-border">
+                                <p className="text-xs font-semibold text-foreground uppercase">Observações Extras</p>
+                                <p className="text-sm text-muted-foreground mt-1">{treatmentDetails.observacoesAdicionais}</p>
                             </div>
                         )}
                     </div>

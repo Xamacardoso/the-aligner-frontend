@@ -15,31 +15,35 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle2 } from "lucide-react";
 import { FormSection } from "@/components/forms/FormSection";
 
-interface NewTreatmentFormProps {
+import { TreatmentDetails } from "@/lib/types";
+
+interface TreatmentFormProps {
     patientPublicId: string;
     partnerPublicId: string;
+    initialData?: TreatmentDetails; // If provided, we are in edit mode
     onSuccess?: () => void;
     onCancel?: () => void;
 }
 
-export function NewTreatmentForm({
+export function TreatmentForm({
     patientPublicId,
     partnerPublicId,
+    initialData,
     onSuccess,
     onCancel
-}: NewTreatmentFormProps) {
+}: TreatmentFormProps) {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [clinicalObjectives, setClinicalObjectives] = useState<{ id: number, nome: string }[]>([]);
     const [crowdingTypes, setCrowdingTypes] = useState<{ id: number, nome: string }[]>([]);
 
     const [form, setForm] = useState({
-        queixaPrincipal: '',
-        descricaoCaso: '',
-        observacoesAdicionais: '',
-        dataInicio: new Date().toISOString().split('T')[0],
-        objetivos: {} as Record<string, number>,
-        apinhamentos: [] as number[]
+        queixaPrincipal: initialData?.queixaPrincipal || '',
+        descricaoCaso: initialData?.descricaoCaso || '',
+        observacoesAdicionais: initialData?.observacoesAdicionais || '',
+        dataInicio: initialData?.dataInicio ? new Date(initialData.dataInicio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        objetivos: {} as Record<string, number>, // cat -> id
+        apinhamentos: initialData?.apinhamentos?.map(a => a.id) || [] as number[]
     });
 
     useEffect(() => {
@@ -51,12 +55,22 @@ export function NewTreatmentForm({
                 ]);
                 setClinicalObjectives(objs);
                 setCrowdingTypes(crows);
+
+                // If editing, map initial objetivos (ids) to the categories
+                if (initialData?.objetivos) {
+                    const mappedObjs: Record<string, number> = {};
+                    initialData.objetivos.forEach(o => {
+                        const cat = o.nome.split(' - ')[0];
+                        mappedObjs[cat] = o.id;
+                    });
+                    setForm(f => ({ ...f, objetivos: mappedObjs }));
+                }
             } catch (err) {
                 console.error("Erro ao carregar dados clínicos auxiliares", err);
             }
         }
         loadAuxData();
-    }, []);
+    }, [initialData]);
 
     const handleSave = async () => {
         const objectiveCategories = Array.from(new Set(clinicalObjectives.map(o => o.nome.split(' - ')[0])));
@@ -71,19 +85,26 @@ export function NewTreatmentForm({
 
         setLoading(true);
         try {
-            await treatmentService.create({
+            const payload = {
                 queixaPrincipal: form.queixaPrincipal,
                 descricaoCaso: form.descricaoCaso,
                 observacoesAdicionais: form.observacoesAdicionais,
                 dataInicio: form.dataInicio,
                 objetivosIds: Object.values(form.objetivos),
                 apinhamentosIds: form.apinhamentos
-            }, patientPublicId, partnerPublicId);
+            };
 
-            toast({ title: "Tratamento criado com sucesso!" });
+            if (initialData) {
+                await treatmentService.update(initialData.publicId, payload);
+                toast({ title: "Tratamento atualizado com sucesso!" });
+            } else {
+                await treatmentService.create(payload, patientPublicId, partnerPublicId);
+                toast({ title: "Tratamento criado com sucesso!" });
+            }
+
             if (onSuccess) onSuccess();
         } catch (err) {
-            toast({ title: "Erro ao criar tratamento", variant: "destructive" });
+            toast({ title: initialData ? "Erro ao atualizar tratamento" : "Erro ao criar tratamento", variant: "destructive" });
         } finally {
             setLoading(false);
         }
@@ -217,7 +238,7 @@ export function NewTreatmentForm({
             <div className="flex justify-end gap-3 pt-6">
                 <Button variant="ghost" onClick={onCancel} disabled={loading}>Cancelar</Button>
                 <Button onClick={handleSave} disabled={loading} className="min-w-[150px]">
-                    {loading ? "Criando..." : "Criar Tratamento"}
+                    {loading ? (initialData ? "Salvando..." : "Criando...") : (initialData ? "Salvar Alterações" : "Criar Tratamento")}
                 </Button>
             </div>
         </div>
