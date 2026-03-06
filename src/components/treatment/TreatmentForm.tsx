@@ -14,6 +14,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle2 } from "lucide-react";
 import { FormSection } from "@/components/forms/FormSection";
+import { cn } from "@/lib/utils";
 
 import { TreatmentDetails } from "@/lib/types";
 
@@ -21,7 +22,7 @@ interface TreatmentFormProps {
     patientPublicId: string;
     partnerPublicId: string;
     initialData?: TreatmentDetails; // If provided, we are in edit mode
-    onSuccess?: () => void;
+    onSuccess?: (data: TreatmentDetails) => void;
     onCancel?: () => void;
 }
 
@@ -36,6 +37,7 @@ export function TreatmentForm({
     const [loading, setLoading] = useState(false);
     const [clinicalObjectives, setClinicalObjectives] = useState<{ id: number, nome: string }[]>([]);
     const [crowdingTypes, setCrowdingTypes] = useState<{ id: number, nome: string }[]>([]);
+    const [missingCategories, setMissingCategories] = useState<string[]>([]);
 
     const [form, setForm] = useState({
         queixaPrincipal: initialData?.queixaPrincipal || '',
@@ -70,18 +72,51 @@ export function TreatmentForm({
             }
         }
         loadAuxData();
+    }, []); // Only on mount
+
+    useEffect(() => {
+        if (initialData) {
+            const mappedObjs: Record<string, number> = {};
+            if (initialData.objetivos) {
+                initialData.objetivos.forEach(o => {
+                    const cat = o.nome.split(' - ')[0];
+                    mappedObjs[cat] = o.id;
+                });
+            }
+
+            setForm({
+                queixaPrincipal: initialData.queixaPrincipal || '',
+                descricaoCaso: initialData.descricaoCaso || '',
+                observacoesAdicionais: initialData.observacoesAdicionais || '',
+                dataInicio: initialData.dataInicio ? new Date(initialData.dataInicio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                objetivos: mappedObjs,
+                apinhamentos: initialData.apinhamentos?.map(a => a.id) || []
+            });
+            setMissingCategories([]);
+        }
     }, [initialData]);
 
     const handleSave = async () => {
         const objectiveCategories = Array.from(new Set(clinicalObjectives.map(o => o.nome.split(' - ')[0])));
-        if (objectiveCategories.some(cat => !form.objetivos[cat])) {
+        const missing = objectiveCategories.filter(cat => !form.objetivos[cat]);
+
+        if (missing.length > 0) {
+            setMissingCategories(missing);
             toast({
-                title: "Atenção",
-                description: "Todos os objetivos de tratamento devem ser preenchidos.",
+                title: "Campos Obrigatórios",
+                description: `Por favor, preencha os itens: ${missing.join(', ')}`,
                 variant: "destructive"
             });
+
+            // Scroll to first error
+            setTimeout(() => {
+                const firstError = document.getElementById(`cat-${missing[0]}`);
+                if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
             return;
         }
+
+        setMissingCategories([]);
 
         setLoading(true);
         try {
@@ -94,15 +129,19 @@ export function TreatmentForm({
                 apinhamentosIds: form.apinhamentos
             };
 
+            let response;
             if (initialData) {
-                await treatmentService.update(initialData.publicId, payload);
+                response = await treatmentService.update(initialData.publicId, payload);
                 toast({ title: "Tratamento atualizado com sucesso!" });
             } else {
-                await treatmentService.create(payload, patientPublicId, partnerPublicId);
-                toast({ title: "Tratamento criado com sucesso!" });
+                response = await treatmentService.create(payload, patientPublicId, partnerPublicId);
+                toast({
+                    title: "Tratamento criado com sucesso!",
+                    description: "O novo tratamento já está disponível na lista."
+                });
             }
 
-            if (onSuccess) onSuccess();
+            if (onSuccess && response) onSuccess(response);
         } catch (err) {
             toast({ title: initialData ? "Erro ao atualizar tratamento" : "Erro ao criar tratamento", variant: "destructive" });
         } finally {
@@ -126,7 +165,16 @@ export function TreatmentForm({
     }, {} as Record<string, { id: number, option: string }[]>);
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 relative">
+            {loading && (
+                <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] z-50 flex flex-col items-center justify-center rounded-xl animate-in fade-in duration-300">
+                    <div className="h-12 w-12 rounded-full border-4 border-primary/30 border-t-primary animate-spin mb-4" />
+                    <p className="text-sm font-bold uppercase tracking-widest text-primary animate-pulse">
+                        {initialData ? "Salvando Alterações..." : "Criando Tratamento..."}
+                    </p>
+                </div>
+            )}
+
             <FormSection title="Informações Iniciais">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
@@ -164,18 +212,31 @@ export function TreatmentForm({
             >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                     {Object.entries(groupedObjectives).map(([cat, opts]) => (
-                        <div key={cat} className="space-y-2">
-                            <Label className="text-xs font-bold text-foreground inline-flex items-center gap-1">
+                        <div
+                            key={cat}
+                            id={`cat-${cat}`}
+                            className={cn(
+                                "space-y-2 p-3 rounded-lg transition-colors border-2 border-transparent scroll-mt-20",
+                                missingCategories.includes(cat) && "bg-red-50/50 border-red-200"
+                            )}>
+                            <Label className={cn(
+                                "text-xs font-bold inline-flex items-center gap-1",
+                                missingCategories.includes(cat) ? "text-red-600" : "text-foreground"
+                            )}>
                                 {cat}
                                 {form.objetivos[cat] && <CheckCircle2 className="h-3 w-3 text-green-500" />}
+                                {missingCategories.includes(cat) && <span className="text-[10px] uppercase font-black ml-auto">* Obrigatório</span>}
                             </Label>
                             <RadioGroup
                                 className="flex items-center gap-4"
                                 value={form.objetivos[cat]?.toString()}
-                                onValueChange={(val) => setForm(f => ({
-                                    ...f,
-                                    objetivos: { ...f.objetivos, [cat]: parseInt(val) }
-                                }))}
+                                onValueChange={(val) => {
+                                    setForm(f => ({
+                                        ...f,
+                                        objetivos: { ...f.objetivos, [cat]: parseInt(val) }
+                                    }));
+                                    setMissingCategories(prev => prev.filter(c => c !== cat));
+                                }}
                             >
                                 {opts.map(opt => (
                                     <div key={opt.id} className="flex items-center gap-2">

@@ -92,10 +92,10 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
 
     const { toast } = useToast();
 
-    const loadData = async () => {
+    const loadData = async (silent = false) => {
         if (!publicId) return;
         const dentistCpf = '22222222222';
-        setIsLoading(true);
+        if (!silent) setIsLoading(true);
         try {
             // First, get the patient to find the partnerPublicId
             const foundP = await patientService.findOne(publicId, dentistCpf);
@@ -118,19 +118,51 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
             console.error(err);
             toast({ title: "Erro ao carregar dados do paciente", variant: "destructive" });
         } finally {
-            setIsLoading(false);
+            if (!silent) setIsLoading(false);
         }
     };
 
     const loadTreatmentData = async (treatmentId: string, silent = false) => {
+        if (!treatmentId || typeof treatmentId !== 'string' || treatmentId.trim() === '') {
+            console.warn('[DEBUG] loadTreatmentData ignorado: ID vazio ou inválido', treatmentId);
+            return;
+        }
+
+        // Se já temos os detalhes e não é um refresh forçado (silent), evitamos o fetch redundante
+        if (!silent && treatmentDetails?.publicId === treatmentId) {
+            console.log('[DEBUG] loadTreatmentData ignorado: Já carregado', treatmentId);
+            return;
+        }
+
+        console.log(`[DEBUG] Executando fetch de detalhes para: "${treatmentId}" (silent: ${silent})`);
+
         if (!silent) setIsLoadingDetails(true);
         try {
             const details = await treatmentService.findOne(treatmentId);
+
+            if (!details || !details.publicId) {
+                console.error('[ERROR] Detalhes inválidos retornados pela API:', details);
+                return;
+            }
+
             setTreatmentDetails(details);
             const b = await budgetService.findByTreatment(treatmentId);
             setBudgets(b);
-        } catch (err) {
-            console.error(err);
+        } catch (err: any) {
+            console.error(`[ERROR] Falha ao carregar tratamento "${treatmentId}":`, err);
+
+            // Tratamento especial para 404 intermitente (pode ser delay de escrita em DBs distribuídos/replicados)
+            if (err.message?.includes('404') || err.message?.includes('não encontrado')) {
+                toast({
+                    title: "Sincronizando dados...",
+                    description: "Houve um pequeno atraso na resposta do servidor. Tentando novamente...",
+                    variant: "default"
+                });
+                // Tentativa de retry único após 1.5s
+                setTimeout(() => loadTreatmentData(treatmentId, true), 1500);
+            } else {
+                toast({ title: "Erro ao carregar detalhes", variant: "destructive" });
+            }
         } finally {
             if (!silent) setIsLoadingDetails(false);
         }
@@ -255,11 +287,36 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
         }
     };
 
-    const handleTreatmentSuccess = () => {
+    const handleTreatmentSuccess = (data: any) => {
+        // Extrai o objeto treatment caso ele venha embrulhado pelo backend antiga/erradamente
+        const actualTreatment = data?.treatment ? data.treatment : data;
+        const isEdit = openEditTreatment;
+
+        console.log('[DEBUG] handleTreatmentSuccess recebido:', actualTreatment);
+
+        // 1. Fechar modais imediatamente
         setOpenCreateTreatment(false);
         setOpenEditTreatment(false);
-        loadData();
-        if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId);
+
+        if (!actualTreatment || !actualTreatment.publicId) {
+            console.error('[ERROR] Objeto de tratamento inválido após sucesso:', actualTreatment);
+            loadData(); // Recuperação de emergência
+            return;
+        }
+
+        // 2. Atualização otimista
+        if (isEdit) {
+            setTreatments(prev => prev.map(t => t.publicId === actualTreatment.publicId ? actualTreatment : t));
+            setTreatmentDetails(actualTreatment);
+        } else {
+            setTreatments(prev => [actualTreatment, ...prev]);
+            setSelectedTreatmentId(actualTreatment.publicId);
+            setTreatmentDetails(actualTreatment);
+        }
+
+        // 3. Sincronismo silencioso
+        loadData(true);
+        loadTreatmentData(actualTreatment.publicId, true);
     };
 
     return (
