@@ -41,9 +41,9 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
     if (!mounted) return null;
 
     return (
-        <div className="flex min-h-screen bg-secondary">
+        <div className="flex h-screen bg-secondary overflow-hidden">
             {/* Sidebar */}
-            <aside className="w-56 bg-card border-r border-border flex flex-col">
+            <aside className="w-56 bg-card border-r border-border flex flex-col flex-shrink-0">
                 {/* Logo */}
                 <div className="px-5 py-5 border-b border-border">
                     <div className="flex items-center gap-2">

@@ -22,6 +22,7 @@ import { TreatmentListItem, TreatmentDetails, Budget } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { FileManagement } from "@/components/FileManagement";
+import { ClinicalVisualizer } from "./ClinicalVisualizer";
 
 /**
  * Cores e rótulos para os status de orçamento
@@ -142,34 +143,11 @@ export function TreatmentAccordion({
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {treatmentDetails.objetivos && treatmentDetails.objetivos.length > 0 && (
-                                        <div className="space-y-2">
-                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Objetivos</p>
-                                            <div className="flex flex-wrap gap-1.5">
-                                                {treatmentDetails.objetivos.map((o: any) => (
-                                                    <span key={o.id} className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/5 text-primary rounded-md text-[11px] border border-primary/10 font-medium">
-                                                        <CheckCircle2 className="h-3 w-3" />
-                                                        {o.nome}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {treatmentDetails.apinhamentos && treatmentDetails.apinhamentos.length > 0 && (
-                                        <div className="space-y-2">
-                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Apinhamento</p>
-                                            <div className="flex flex-wrap gap-1.5">
-                                                {treatmentDetails.apinhamentos.map((a: any) => (
-                                                    <span key={a.id} className="inline-flex items-center gap-1 px-2 py-0.5 bg-accent/10 text-accent-foreground rounded-md text-[11px] border border-border font-medium">
-                                                        {a.nome}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                                {/* Seção visual melhorada de Objetivos e Apinhamentos */}
+                                <ClinicalVisualizer
+                                    objetivos={treatmentDetails.objetivos}
+                                    apinhamentos={treatmentDetails.apinhamentos}
+                                />
 
                                 {treatmentDetails.observacoesAdicionais && (
                                     <div className="space-y-1">
