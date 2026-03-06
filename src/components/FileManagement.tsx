@@ -12,15 +12,28 @@ import { cn } from "@/lib/utils";
 interface FileManagementProps {
     patientCpf: string; // Keeping name for compatibility but it should be treatmentPublicId now
     noCard?: boolean;
+    onUploadSuccess?: () => void;
+    onUploadingChange?: (isUploading: boolean) => void;
 }
 
-export function FileManagement({ patientCpf: treatmentPublicId, noCard = false }: FileManagementProps) {
-    const inputId = useId();
+export function FileManagement({
+    patientCpf: treatmentPublicId,
+    noCard = false,
+    onUploadSuccess,
+    onUploadingChange
+}: FileManagementProps) {
+    const inputId = `file-upload-${treatmentPublicId}`;
     const [documents, setDocuments] = useState<TreatmentFile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [deletingKey, setDeletingKey] = useState<string | null>(null);
     const { toast } = useToast();
+
+    useEffect(() => {
+        if (onUploadingChange) {
+            onUploadingChange(isUploading);
+        }
+    }, [isUploading, onUploadingChange]);
 
     const loadDocuments = async () => {
         if (!treatmentPublicId) return;
@@ -78,6 +91,7 @@ export function FileManagement({ patientCpf: treatmentPublicId, noCard = false }
 
             toast({ title: "Arquivo enviado com sucesso!", description: file.name });
             loadDocuments();
+            if (onUploadSuccess) onUploadSuccess();
         } catch (err: any) {
             console.error(err);
             toast({
@@ -132,35 +146,36 @@ export function FileManagement({ patientCpf: treatmentPublicId, noCard = false }
             "mt-1 overflow-hidden",
             noCard ? "" : "bg-card rounded-lg border border-border"
         )}>
-            <div className={cn(
-                "px-5 py-3 flex items-center justify-between",
-                noCard ? "px-0" : "border-b border-border"
-            )}>
-                <div className="flex items-center gap-2">
-                    <File className="h-4 w-4 text-primary" />
-                    <h2 className="text-sm font-bold text-foreground">Arquivos e Exames</h2>
+            {/* Input oculto sempre disponível para gatilhos externos ou internos */}
+            <input
+                type="file"
+                id={inputId}
+                className="hidden"
+                onChange={handleFileChange}
+                disabled={isUploading}
+            />
+
+            {!noCard && (
+                <div className="border-b border-border px-5 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <File className="h-4 w-4 text-primary" />
+                        <h2 className="text-sm font-bold text-foreground">Arquivos e Exames</h2>
+                    </div>
+                    <div className="relative">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 gap-1.5 text-[10px] font-bold uppercase"
+                            disabled={isUploading}
+                            onClick={() => document.getElementById(inputId)?.click()}
+                            title="Fazer upload de novo arquivo"
+                        >
+                            {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <UploadCloud className="h-3 w-3" />}
+                            {isUploading ? 'Enviando...' : 'Upload'}
+                        </Button>
+                    </div>
                 </div>
-                <div className="relative">
-                    <input
-                        type="file"
-                        id={inputId}
-                        className="hidden"
-                        onChange={handleFileChange}
-                        disabled={isUploading}
-                    />
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 gap-1.5 text-[10px] font-bold uppercase"
-                        disabled={isUploading}
-                        onClick={() => document.getElementById(inputId)?.click()}
-                        title="Fazer upload de novo arquivo"
-                    >
-                        {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <UploadCloud className="h-3 w-3" />}
-                        {isUploading ? 'Enviando...' : 'Upload'}
-                    </Button>
-                </div>
-            </div>
+            )}
 
             <div className={cn(noCard ? "pt-2" : "p-5")}>
                 {isLoading ? (
