@@ -221,7 +221,7 @@ export function PartnerForm({
             </FormSection>
 
             <FormSection
-                title="Tituladação Principal"
+                title="Titulação Principal"
                 description="Escolha sua maior titulação *"
             >
                 <RadioGroup
@@ -346,15 +346,8 @@ export function PartnerForm({
 
             <div className="flex justify-end gap-3 pt-6">
                 <Button variant="ghost" onClick={onCancel} disabled={loading}>Cancelar</Button>
-                <Button onClick={handleSave} disabled={loading} className="min-w-[150px]">
-                    {loading ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Salvando...
-                        </>
-                    ) : (
-                        isEditing ? "Salvar Alterações" : "Cadastrar Parceiro"
-                    )}
+                <Button onClick={handleSave} loading={loading} className="min-w-[150px]">
+                    {isEditing ? "Salvar Alterações" : "Cadastrar Parceiro"}
                 </Button>
             </div>
         </div>

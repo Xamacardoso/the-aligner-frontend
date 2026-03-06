@@ -26,6 +26,7 @@ export default function GerenteDentistasPage() {
     const [viewDetails, setViewDetails] = useState<PartnerDetails | null>(null);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const loadData = async () => {
         try {
@@ -87,6 +88,7 @@ export default function GerenteDentistasPage() {
     };
 
     const handleDelete = async (cpf: string) => {
+        setIsSubmitting(true);
         try {
             await partnerService.remove(cpf);
             toast({ title: "Sucesso", description: "Parceiro removido.", variant: "destructive" });
@@ -94,6 +96,8 @@ export default function GerenteDentistasPage() {
             setDeleteConfirm(null);
         } catch (err) {
             toast({ title: "Erro ao remover", variant: "destructive" });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -405,8 +409,8 @@ export default function GerenteDentistasPage() {
                     </DialogHeader>
                     <p className="text-sm text-muted-foreground">Tem certeza que deseja excluir permanentemente este dentista parceiro?</p>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancelar</Button>
-                        <Button variant="destructive" onClick={() => deleteConfirm && handleDelete(deleteConfirm)}>Excluir Parceiro</Button>
+                        <Button variant="outline" onClick={() => setDeleteConfirm(null)} disabled={isSubmitting}>Cancelar</Button>
+                        <Button variant="destructive" onClick={() => deleteConfirm && handleDelete(deleteConfirm)} loading={isSubmitting}>Excluir Parceiro</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

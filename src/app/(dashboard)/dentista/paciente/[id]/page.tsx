@@ -86,6 +86,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     const [openCreateTreatment, setOpenCreateTreatment] = useState(false);
     const [openEditTreatment, setOpenEditTreatment] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { toast } = useToast();
 
@@ -156,6 +157,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     const handleSaveBudget = async () => {
         if (!selectedTreatmentId) return;
 
+        setIsSubmitting(true);
         let descricao = procedures.map(p => `${p.name}: R$ ${p.value}`).join('; ');
         if (observations) {
             descricao += `\nObs: ${observations}`;
@@ -175,20 +177,26 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
             setObservations('');
         } catch (err) {
             toast({ title: "Erro ao criar orçamento", variant: "destructive" });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleDeleteBudget = async (bid: string) => {
+        setIsSubmitting(true);
         try {
             await budgetService.cancel(bid);
             toast({ title: "Orçamento cancelado", variant: "destructive" });
             if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId);
         } catch (err) {
             toast({ title: "Erro ao cancelar orçamento", variant: "destructive" });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleApproveBudget = async (bid: string) => {
+        setIsSubmitting(true);
         try {
             await budgetService.approve(bid);
             toast({ title: "Orçamento aprovado!" });
@@ -196,15 +204,22 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
             setViewingBudget(null);
         } catch (err) {
             toast({ title: "Erro ao aprovar", variant: "destructive" });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleDeclineBudget = async (bid: string) => {
+        setIsSubmitting(true);
         try {
             await budgetService.decline(bid);
             toast({ title: "Orçamento declinado", variant: "destructive" });
+            if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId);
+            setViewingBudget(null);
         } catch (err) {
             toast({ title: "Erro ao declinar", variant: "destructive" });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -445,8 +460,8 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setOpenBudget(false)}>Cancelar</Button>
-                        <Button onClick={handleSaveBudget} disabled={procedures.length === 0 || procedures.some(p => !p.name || !p.value)}>Salvar Orçamento</Button>
+                        <Button variant="outline" onClick={() => setOpenBudget(false)} disabled={isSubmitting}>Cancelar</Button>
+                        <Button onClick={handleSaveBudget} loading={isSubmitting} disabled={procedures.length === 0 || procedures.some(p => !p.name || !p.value)}>Salvar Orçamento</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -483,10 +498,19 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
 
                             {viewingBudget.status === 'pendente' && (
                                 <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border">
-                                    <Button variant="outline" className="w-full text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleDeclineBudget(viewingBudget.publicId)}>
+                                    <Button
+                                        variant="outline"
+                                        className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        onClick={() => handleDeclineBudget(viewingBudget.publicId)}
+                                        loading={isSubmitting}
+                                    >
                                         Declinar Orçamento
                                     </Button>
-                                    <Button className="w-full bg-green-600 hover:bg-green-700 text-white" onClick={() => handleApproveBudget(viewingBudget.publicId)}>
+                                    <Button
+                                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                                        onClick={() => handleApproveBudget(viewingBudget.publicId)}
+                                        loading={isSubmitting}
+                                    >
                                         Aprovar Orçamento
                                     </Button>
                                 </div>

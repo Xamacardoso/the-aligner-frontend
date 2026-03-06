@@ -237,8 +237,8 @@ export function TreatmentForm({
 
             <div className="flex justify-end gap-3 pt-6">
                 <Button variant="ghost" onClick={onCancel} disabled={loading}>Cancelar</Button>
-                <Button onClick={handleSave} disabled={loading} className="min-w-[150px]">
-                    {loading ? (initialData ? "Salvando..." : "Criando...") : (initialData ? "Salvar Alterações" : "Criar Tratamento")}
+                <Button onClick={handleSave} loading={loading} className="min-w-[150px]">
+                    {initialData ? "Salvar Alterações" : "Criar Tratamento"}
                 </Button>
             </div>
         </div>
