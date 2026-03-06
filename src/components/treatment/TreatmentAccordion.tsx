@@ -1,0 +1,270 @@
+"use client";
+
+import React from "react";
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import {
+    Pencil,
+    Plus,
+    Trash2,
+    FileText,
+    Calendar,
+    Stethoscope,
+    AlertCircle,
+    CheckCircle2
+} from "lucide-react";
+import { TreatmentListItem, TreatmentDetails, Budget } from "@/lib/types";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { FileManagement } from "@/components/FileManagement";
+
+/**
+ * Cores e rótulos para os status de orçamento
+ */
+const statusLabel: Record<string, string> = {
+    pendente: 'Pendente',
+    aprovado: 'Aprovado',
+    declinado: 'Declinado',
+    cancelado: 'Cancelado',
+};
+
+const statusClass: Record<string, string> = {
+    pendente: 'bg-muted text-muted-foreground',
+    aprovado: 'bg-green-100 text-green-700',
+    declinado: 'bg-red-100 text-red-700',
+    cancelado: 'bg-gray-100 text-gray-500',
+};
+
+interface TreatmentAccordionProps {
+    treatments: TreatmentListItem[];
+    selectedTreatmentId: string | null;
+    onSelect: (id: string) => void;
+    treatmentDetails: TreatmentDetails | null;
+    budgets: Budget[];
+    onEditTreatment: () => void;
+    onAddBudget: () => void;
+    onViewBudget: (budget: Budget) => void;
+    onDeleteBudget: (id: string) => void;
+    isLoadingDetails?: boolean;
+}
+
+export function TreatmentAccordion({
+    treatments,
+    selectedTreatmentId,
+    onSelect,
+    treatmentDetails,
+    budgets,
+    onEditTreatment,
+    onAddBudget,
+    onViewBudget,
+    onDeleteBudget,
+    isLoadingDetails = false
+}: TreatmentAccordionProps) {
+    if (treatments.length === 0) {
+        return (
+            <div className="bg-muted/20 rounded-xl p-8 text-center border border-dashed border-border">
+                <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground italic">Nenhum tratamento registrado para este paciente.</p>
+            </div>
+        );
+    }
+
+    return (
+        <Accordion
+            type="single"
+            collapsible
+            value={selectedTreatmentId || ""}
+            onValueChange={(value) => {
+                onSelect(value); // Permitindo valor vazio para colapsar
+            }}
+            className="space-y-3"
+        >
+            {treatments.map((t) => (
+                <AccordionItem
+                    key={t.publicId}
+                    value={t.publicId}
+                    className="bg-card border border-border rounded-xl px-4 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                >
+                    <AccordionTrigger className="hover:no-underline py-4">
+                        <div className="flex items-center gap-4 text-left">
+                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                                <Stethoscope className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-foreground">
+                                    {t.queixaPrincipal || "Sem queixa principal definida"}
+                                </p>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider h-5">
+                                        <Calendar className="h-3 w-3 mr-1" />
+                                        {t.dataInicio ? new Date(t.dataInicio).toLocaleDateString('pt-BR') : 'Início não definido'}
+                                    </Badge>
+                                </div>
+                            </div>
+                        </div>
+                    </AccordionTrigger>
+
+                    <AccordionContent className="pt-2 pb-6">
+                        {isLoadingDetails && selectedTreatmentId === t.publicId ? (
+                            <div className="flex justify-center py-8">
+                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                            </div>
+                        ) : treatmentDetails && selectedTreatmentId === t.publicId ? (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                                {/* Detalhes Clínicos */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                                    {treatmentDetails.descricaoCaso && (
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Descrição do Caso</p>
+                                            <p className="text-sm text-foreground bg-muted/30 p-3 rounded-lg border border-border/50 italic">
+                                                "{treatmentDetails.descricaoCaso}"
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-end items-start">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onEditTreatment();
+                                            }}
+                                            className="h-8 gap-1.5 font-bold uppercase text-[10px]"
+                                        >
+                                            <Pencil className="h-3.5 w-3.5" /> Editar Tratamento
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {treatmentDetails.objetivos && treatmentDetails.objetivos.length > 0 && (
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Objetivos</p>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {treatmentDetails.objetivos.map((o: any) => (
+                                                    <span key={o.id} className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/5 text-primary rounded-md text-[11px] border border-primary/10 font-medium">
+                                                        <CheckCircle2 className="h-3 w-3" />
+                                                        {o.nome}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {treatmentDetails.apinhamentos && treatmentDetails.apinhamentos.length > 0 && (
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Apinhamento</p>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {treatmentDetails.apinhamentos.map((a: any) => (
+                                                    <span key={a.id} className="inline-flex items-center gap-1 px-2 py-0.5 bg-accent/10 text-accent-foreground rounded-md text-[11px] border border-border font-medium">
+                                                        {a.nome}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {treatmentDetails.observacoesAdicionais && (
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Observações Extras</p>
+                                        <p className="text-sm text-muted-foreground">{treatmentDetails.observacoesAdicionais}</p>
+                                    </div>
+                                )}
+
+                                {/* Seção de Arquivos e Exames */}
+                                <div className="pt-4 border-t border-border">
+                                    <FileManagement
+                                        patientCpf={t.publicId}
+                                        noCard
+                                    />
+                                </div>
+
+                                {/* Seção de Orçamentos */}
+                                <div className="pt-4 border-t border-border">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <FileText className="h-4 w-4 text-primary" />
+                                            <h3 className="text-xs font-bold uppercase tracking-tight text-foreground/80">
+                                                Orçamentos do Tratamento
+                                            </h3>
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onAddBudget();
+                                            }}
+                                            className="h-7 gap-1.5 text-[10px] font-bold uppercase"
+                                        >
+                                            <Plus className="h-3.5 w-3.5" /> Novo Orçamento
+                                        </Button>
+                                    </div>
+
+                                    {budgets.length === 0 ? (
+                                        <p className="text-xs text-muted-foreground italic bg-muted/20 p-4 rounded-lg border border-dashed text-center">
+                                            Nenhum orçamento para este tratamento.
+                                        </p>
+                                    ) : (
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {budgets.map(b => (
+                                                <div
+                                                    key={b.publicId}
+                                                    className="group flex flex-col md:flex-row md:items-center justify-between p-3 bg-muted/40 rounded-xl border border-border/40 hover:border-primary/30 transition-all"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <Badge className={cn("text-[8px] font-bold h-5 uppercase", statusClass[b.status])}>
+                                                            {statusLabel[b.status]}
+                                                        </Badge>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-xs font-bold text-foreground">
+                                                                {Number(b.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                                            </span>
+                                                            <span className="text-[9px] text-muted-foreground">
+                                                                {b.dataCriacao ? new Date(b.dataCriacao).toLocaleDateString('pt-BR') : ''}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2 mt-2 md:mt-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => onViewBudget(b)}
+                                                            className="h-7 text-[10px] font-bold uppercase text-primary hover:text-primary hover:bg-primary/10"
+                                                        >
+                                                            Visualizar
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => onDeleteBudget(b.publicId)}
+                                                            className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                                                            title="Cancelar orçamento"
+                                                        >
+                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="py-8 text-center text-muted-foreground text-sm">
+                                Selecione um tratamento para ver os detalhes
+                            </div>
+                        )}
+                    </AccordionContent>
+                </AccordionItem>
+            ))}
+        </Accordion>
+    );
+}

@@ -6,12 +6,16 @@ import { treatmentService } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { File, Download, UploadCloud, Loader2, Eye, Box, Trash2 } from 'lucide-react';
+import { useId } from 'react';
+import { cn } from "@/lib/utils";
 
 interface FileManagementProps {
     patientCpf: string; // Keeping name for compatibility but it should be treatmentPublicId now
+    noCard?: boolean;
 }
 
-export function FileManagement({ patientCpf: treatmentPublicId }: FileManagementProps) {
+export function FileManagement({ patientCpf: treatmentPublicId, noCard = false }: FileManagementProps) {
+    const inputId = useId();
     const [documents, setDocuments] = useState<TreatmentFile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
@@ -124,16 +128,22 @@ export function FileManagement({ patientCpf: treatmentPublicId }: FileManagement
     };
 
     return (
-        <div className="bg-card rounded-lg border border-border mt-1 overflow-hidden">
-            <div className="px-5 py-3 border-b border-border flex items-center justify-between">
+        <div className={cn(
+            "mt-1 overflow-hidden",
+            noCard ? "" : "bg-card rounded-lg border border-border"
+        )}>
+            <div className={cn(
+                "px-5 py-3 flex items-center justify-between",
+                noCard ? "px-0" : "border-b border-border"
+            )}>
                 <div className="flex items-center gap-2">
-                    <File className="h-4 w-4 text-muted-foreground" />
-                    <h2 className="text-sm font-semibold text-foreground">Documentos e Arquivos do Tratamento</h2>
+                    <File className="h-4 w-4 text-primary" />
+                    <h2 className="text-sm font-bold text-foreground">Arquivos e Exames</h2>
                 </div>
                 <div className="relative">
                     <input
                         type="file"
-                        id="patient-file-upload"
+                        id={inputId}
                         className="hidden"
                         onChange={handleFileChange}
                         disabled={isUploading}
@@ -141,9 +151,9 @@ export function FileManagement({ patientCpf: treatmentPublicId }: FileManagement
                     <Button
                         size="sm"
                         variant="outline"
-                        className="h-8 gap-1.5 text-xs"
+                        className="h-8 gap-1.5 text-[10px] font-bold uppercase"
                         disabled={isUploading}
-                        onClick={() => document.getElementById('patient-file-upload')?.click()}
+                        onClick={() => document.getElementById(inputId)?.click()}
                         title="Fazer upload de novo arquivo"
                     >
                         {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <UploadCloud className="h-3 w-3" />}
@@ -152,7 +162,7 @@ export function FileManagement({ patientCpf: treatmentPublicId }: FileManagement
                 </div>
             </div>
 
-            <div className="p-5">
+            <div className={cn(noCard ? "pt-2" : "p-5")}>
                 {isLoading ? (
                     <div className="flex justify-center py-4 text-muted-foreground italic text-sm">
                         Carregando documentos...

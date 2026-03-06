@@ -20,7 +20,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Trash2, FileText, ClipboardList } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, FileText, ClipboardList, User } from 'lucide-react';
+import { TreatmentAccordion } from '@/components/treatment/TreatmentAccordion';
 import { FileManagement } from '@/components/FileManagement';
 import { useToast } from '@/hooks/use-toast';
 
@@ -61,6 +62,8 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
     const [budgets, setBudgets] = useState<Budget[]>([]);
     const [openBudget, setOpenBudget] = useState(false);
     const [procedures, setProcedures] = useState<{ id: string, name: string, value: number }[]>([{ id: generateId(), name: '', value: 0 }]);
+    const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+    const [viewingBudget, setViewingBudget] = useState<Budget | null>(null);
     const [observations, setObservations] = useState('');
 
     const loadData = async () => {
@@ -87,6 +90,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
     };
 
     const loadTreatmentData = async (tid: string) => {
+        setIsLoadingDetails(true);
         try {
             const details = await treatmentService.findOne(tid);
             setTreatmentDetails(details);
@@ -94,6 +98,8 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
             setBudgets(b);
         } catch (err) {
             console.error(err);
+        } finally {
+            setIsLoadingDetails(false);
         }
     };
 
@@ -102,7 +108,12 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
     }, [publicId]);
 
     useEffect(() => {
-        if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId);
+        if (selectedTreatmentId) {
+            loadTreatmentData(selectedTreatmentId);
+        } else {
+            setTreatmentDetails(null);
+            setBudgets([]);
+        }
     }, [selectedTreatmentId]);
 
     if (!patient) return <div className="p-8 text-muted-foreground">Paciente não encontrado.</div>;
@@ -157,15 +168,15 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
             </button>
 
             <div className="flex items-center justify-between mb-6">
-                <div>
-                    <h1 className="text-xl font-semibold text-foreground">{patient.nome}</h1>
-                    <p className="text-sm text-muted-foreground">Dentista Responsável: {dentist?.nome ?? '—'}</p>
+                <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                        <User className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-bold text-foreground">{patient.nome}</h1>
+                        <p className="text-sm text-muted-foreground font-medium">Paciente do Dentista: {dentist?.nome ?? '—'}</p>
+                    </div>
                 </div>
-                {selectedTreatmentId && (
-                    <Button size="sm" onClick={() => setOpenBudget(true)} className="gap-1.5" title="Criar um novo orçamento para este tratamento">
-                        <Plus className="h-4 w-4" /> Novo Orçamento
-                    </Button>
-                )}
             </div>
 
             {/* Identity */}
@@ -184,116 +195,65 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                 </div>
             </div>
 
-            {/* Treatments Selection */}
+            {/* Accordion de Tratamentos */}
             <div className="mb-6">
-                <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                    <ClipboardList className="h-4 w-4 text-primary" />
-                    Tratamentos ({treatments.length})
-                </h2>
-                <div className="flex flex-wrap gap-2">
-                    {treatments.map((t) => (
-                        <Button
-                            key={t.publicId}
-                            variant={selectedTreatmentId === t.publicId ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSelectedTreatmentId(t.publicId)}
-                            className="text-xs h-8"
-                        >
-                            {t.dataInicio ? new Date(t.dataInicio).toLocaleDateString('pt-BR') : 'Início não definido'}
-                        </Button>
-                    ))}
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                        <ClipboardList className="h-6 w-6 text-primary" />
+                        Tratamentos Clínicos
+                    </h2>
                 </div>
+
+                <TreatmentAccordion
+                    treatments={treatments}
+                    selectedTreatmentId={selectedTreatmentId}
+                    onSelect={setSelectedTreatmentId}
+                    treatmentDetails={treatmentDetails}
+                    budgets={budgets}
+                    onEditTreatment={() => { }} // Gerente não edita tratamento
+                    onAddBudget={() => setOpenBudget(true)}
+                    onViewBudget={setViewingBudget}
+                    onDeleteBudget={handleDeleteBudget}
+                    isLoadingDetails={isLoadingDetails}
+                />
             </div>
 
-            {treatmentDetails && (
-                <>
-                    <div className="bg-card rounded-lg border border-border p-5 mb-6">
-                        <h2 className="text-sm font-semibold text-foreground mb-4">Caso Clínico</h2>
-                        {treatmentDetails.queixaPrincipal && (
-                            <div className="mb-4">
-                                <p className="text-xs font-semibold text-foreground uppercase">Queixa Principal</p>
-                                <p className="text-sm text-muted-foreground mt-1">{treatmentDetails.queixaPrincipal}</p>
-                            </div>
-                        )}
-                        {treatmentDetails.descricaoCaso && (
-                            <div className="mb-4">
-                                <p className="text-xs font-semibold text-foreground uppercase">Descrição do Caso</p>
-                                <p className="text-sm text-muted-foreground mt-1">{treatmentDetails.descricaoCaso}</p>
-                            </div>
-                        )}
-
-                        <div className="grid grid-cols-2 gap-4">
-                            {treatmentDetails.objetivos && treatmentDetails.objetivos.length > 0 && (
+            {/* Budget View Modal */}
+            <Dialog open={!!viewingBudget} onOpenChange={v => !v && setViewingBudget(null)}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Detalhes do Orçamento</DialogTitle>
+                    </DialogHeader>
+                    {viewingBudget && (
+                        <div className="space-y-6 py-2">
+                            <div className="flex items-center justify-between border-b pb-4 border-border">
                                 <div>
-                                    <p className="text-xs font-semibold text-foreground uppercase">Objetivos</p>
-                                    <ul className="list-disc pl-4 mt-1 text-sm text-muted-foreground">
-                                        {treatmentDetails.objetivos.map((o: any) => <li key={o.id}>{o.nome}</li>)}
-                                    </ul>
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase">Status</p>
+                                    <span className={`text-xs px-2.5 py-1 rounded-full font-semibold inline-block mt-1 ${statusClass[viewingBudget.status]}`}>
+                                        {statusLabel[viewingBudget.status]}
+                                    </span>
                                 </div>
-                            )}
-                            {treatmentDetails.apinhamentos && treatmentDetails.apinhamentos.length > 0 && (
-                                <div>
-                                    <p className="text-xs font-semibold text-foreground uppercase">Apinhamento</p>
-                                    <ul className="list-disc pl-4 mt-1 text-sm text-muted-foreground">
-                                        {treatmentDetails.apinhamentos.map((a: any) => <li key={a.id}>{a.nome}</li>)}
-                                    </ul>
+                                <div className="text-right">
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase">Valor Total</p>
+                                    <p className="text-xl font-bold text-foreground mt-0.5">
+                                        {Number(viewingBudget.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                    </p>
                                 </div>
-                            )}
-                        </div>
-
-                        {treatmentDetails.observacoesAdicionais && (
-                            <div className="mt-4 pt-3 border-t border-border">
-                                <p className="text-xs font-semibold text-foreground uppercase">Observações Extras</p>
-                                <p className="text-sm text-muted-foreground mt-1">{treatmentDetails.observacoesAdicionais}</p>
                             </div>
-                        )}
-                    </div>
 
-                    <FileManagement patientCpf={selectedTreatmentId || ''} />
-
-                    {/* Budgets */}
-                    <div className="bg-card rounded-lg border border-border overflow-hidden mt-6">
-                        <div className="px-5 py-3 border-b border-border flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-muted-foreground" />
-                            <h2 className="text-sm font-semibold text-foreground">Orçamentos do Tratamento</h2>
-                        </div>
-                        {budgets.length === 0 ? (
-                            <p className="text-sm text-muted-foreground p-5">Nenhum orçamento criado.</p>
-                        ) : (
-                            budgets.map(b => (
-                                <div key={b.publicId} className="px-5 py-4 border-b border-border last:border-b-0">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusClass[b.status]}`}>
-                                                {statusLabel[b.status]}
-                                            </span>
-                                            <span className="text-xs text-muted-foreground">
-                                                {b.dataCriacao ? new Date(b.dataCriacao).toLocaleDateString('pt-BR') : ''}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-foreground">
-                                                {Number(b.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                            </span>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => handleDeleteBudget(b.publicId)}
-                                                title="Cancelar este orçamento"
-                                            >
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                    <div className="text-xs text-muted-foreground line-clamp-2">
-                                        {b.descricao}
-                                    </div>
+                            <div className="space-y-3">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase">Descrição / Procedimentos</p>
+                                <div className="bg-muted/30 rounded-md p-3 border border-border">
+                                    <p className="text-sm text-foreground whitespace-pre-wrap">{viewingBudget.descricao}</p>
                                 </div>
-                            ))
-                        )}
-                    </div>
-                </>
-            )}
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="secondary" onClick={() => setViewingBudget(null)}>Fechar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Budget Dialog */}
             <Dialog open={openBudget} onOpenChange={setOpenBudget}>

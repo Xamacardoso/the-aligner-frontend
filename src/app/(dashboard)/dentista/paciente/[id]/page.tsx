@@ -23,10 +23,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ArrowLeft, Plus, Trash2, FileText, ClipboardList, Stethoscope, CheckCircle2, Pencil } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, FileText, ClipboardList, Stethoscope, CheckCircle2, Pencil, User } from 'lucide-react';
 import { FileManagement } from '@/components/FileManagement';
 import { Separator } from '@/components/ui/separator';
 import { TreatmentForm } from '@/components/treatment/TreatmentForm';
+import { TreatmentAccordion } from '@/components/treatment/TreatmentAccordion';
 
 const formatNestedObj = (jsonStr: string) => {
     try {
@@ -86,6 +87,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     const [openCreateTreatment, setOpenCreateTreatment] = useState(false);
     const [openEditTreatment, setOpenEditTreatment] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingDetails, setIsLoadingDetails] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { toast } = useToast();
@@ -121,6 +123,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     };
 
     const loadTreatmentData = async (treatmentId: string) => {
+        setIsLoadingDetails(true);
         try {
             const details = await treatmentService.findOne(treatmentId);
             setTreatmentDetails(details);
@@ -128,6 +131,8 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
             setBudgets(b);
         } catch (err) {
             console.error(err);
+        } finally {
+            setIsLoadingDetails(false);
         }
     };
 
@@ -139,6 +144,9 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     useEffect(() => {
         if (selectedTreatmentId) {
             loadTreatmentData(selectedTreatmentId);
+        } else {
+            setTreatmentDetails(null);
+            setBudgets([]);
         }
     }, [selectedTreatmentId]);
 
@@ -241,15 +249,15 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
             </button>
 
             <div className="flex items-center justify-between mb-6">
-                <div>
-                    <h1 className="text-xl font-semibold text-foreground">{patient.nome}</h1>
-                    <p className="text-sm text-muted-foreground">Dentista: {dentist?.nome ?? '—'}</p>
+                <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                        <User className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-bold text-foreground">{patient.nome}</h1>
+                        <p className="text-sm text-muted-foreground font-medium">Paciente do Dentista: {dentist?.nome ?? '—'}</p>
+                    </div>
                 </div>
-                {selectedTreatmentId && (
-                    <Button size="sm" onClick={() => setOpenBudget(true)} className="gap-1.5" title="Criar um novo orçamento para este tratamento">
-                        <Plus className="h-4 w-4" /> Novo Orçamento
-                    </Button>
-                )}
             </div>
 
             {/* Patient data (read-only) */}
@@ -268,146 +276,36 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                 </div>
             </div>
 
-            {/* Treatments Selection */}
+            {/* Accordion de Tratamentos */}
             <div className="mb-6">
-                <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                        <ClipboardList className="h-4 w-4 text-primary" />
-                        Tratamentos ({treatments.length})
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                        <ClipboardList className="h-6 w-6 text-primary" />
+                        Tratamentos Clínicos
                     </h2>
                     <Button
                         size="sm"
-                        variant="outline"
                         onClick={() => setOpenCreateTreatment(true)}
-                        className="gap-1.5"
-                        title="Cadastrar um novo tratamento completo para este paciente"
+                        className="gap-2 font-bold uppercase text-[10px] h-9 px-4"
                     >
                         <Stethoscope className="h-4 w-4" /> Novo Tratamento
                     </Button>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                    {treatments.map((t) => (
-                        <Button
-                            key={t.publicId}
-                            variant={selectedTreatmentId === t.publicId ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSelectedTreatmentId(t.publicId)}
-                            className="text-xs h-8"
-                        >
-                            {t.dataInicio ? new Date(t.dataInicio).toLocaleDateString('pt-BR') : 'Início não definido'}
-                            {t.queixaPrincipal && ` - ${t.queixaPrincipal.substring(0, 20)}...`}
-                        </Button>
-                    ))}
-                    {treatments.length === 0 && (
-                        <p className="text-sm text-muted-foreground italic">Nenhum tratamento registrado para este paciente.</p>
-                    )}
-                </div>
+
+                <TreatmentAccordion
+                    treatments={treatments}
+                    selectedTreatmentId={selectedTreatmentId}
+                    onSelect={setSelectedTreatmentId}
+                    treatmentDetails={treatmentDetails}
+                    budgets={budgets}
+                    onEditTreatment={() => setOpenEditTreatment(true)}
+                    onAddBudget={() => setOpenBudget(true)}
+                    onViewBudget={setViewingBudget}
+                    onDeleteBudget={handleDeleteBudget}
+                    isLoadingDetails={isLoadingDetails}
+                />
             </div>
 
-            {treatmentDetails && (
-                <>
-                    <div className="bg-card rounded-lg border border-border p-5 mb-6 relative">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-sm font-semibold text-foreground">Detalhes do Tratamento Selecionado</h2>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 gap-1.5"
-                                onClick={() => setOpenEditTreatment(true)}
-                            >
-                                <Pencil className="h-3.5 w-3.5" /> Editar
-                            </Button>
-                        </div>
-
-                        {treatmentDetails.queixaPrincipal && (
-                            <div className="mb-4">
-                                <p className="text-xs font-semibold text-foreground uppercase">Queixa Principal</p>
-                                <p className="text-sm text-muted-foreground mt-1">{treatmentDetails.queixaPrincipal}</p>
-                            </div>
-                        )}
-
-                        {treatmentDetails.descricaoCaso && (
-                            <div className="mb-4">
-                                <p className="text-xs font-semibold text-foreground uppercase">Descrição do Caso</p>
-                                <p className="text-sm text-muted-foreground mt-1">{treatmentDetails.descricaoCaso}</p>
-                            </div>
-                        )}
-
-                        <div className="grid grid-cols-2 gap-4">
-                            {treatmentDetails.objetivos && treatmentDetails.objetivos.length > 0 && (
-                                <div>
-                                    <p className="text-xs font-semibold text-foreground uppercase">Objetivos</p>
-                                    <ul className="list-disc pl-4 mt-1 text-sm text-muted-foreground">
-                                        {treatmentDetails.objetivos.map((o: any) => <li key={o.id}>{o.nome}</li>)}
-                                    </ul>
-                                </div>
-                            )}
-                            {treatmentDetails.apinhamentos && treatmentDetails.apinhamentos.length > 0 && (
-                                <div>
-                                    <p className="text-xs font-semibold text-foreground uppercase">Apinhamento</p>
-                                    <ul className="list-disc pl-4 mt-1 text-sm text-muted-foreground">
-                                        {treatmentDetails.apinhamentos.map((a: any) => <li key={a.id}>{a.nome}</li>)}
-                                    </ul>
-                                </div>
-                            )}
-                        </div>
-
-                        {treatmentDetails.observacoesAdicionais && (
-                            <div className="mt-4 pt-3 border-t border-border">
-                                <p className="text-xs font-semibold text-foreground uppercase">Observações Extras</p>
-                                <p className="text-sm text-muted-foreground mt-1">{treatmentDetails.observacoesAdicionais}</p>
-                            </div>
-                        )}
-                    </div>
-
-                    <FileManagement patientCpf={selectedTreatmentId || ''} />
-
-                    {/* Budgets */}
-                    <div className="bg-card rounded-lg border border-border overflow-hidden mt-6">
-                        <div className="px-5 py-3 border-b border-border flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-muted-foreground" />
-                            <h2 className="text-sm font-semibold text-foreground">Orçamentos do Tratamento</h2>
-                        </div>
-                        {budgets.length === 0 ? (
-                            <p className="text-sm text-muted-foreground p-5">Nenhum orçamento para este tratamento.</p>
-                        ) : (
-                            budgets.map(b => (
-                                <div key={b.publicId} className="px-5 py-4 border-b border-border last:border-b-0">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusClass[b.status]}`}>
-                                                {statusLabel[b.status]}
-                                            </span>
-                                            <span className="text-xs text-muted-foreground">
-                                                {b.dataCriacao ? new Date(b.dataCriacao).toLocaleDateString('pt-BR') : ''}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-foreground">
-                                                {Number(b.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                            </span>
-                                            <Button variant="outline" size="sm" onClick={() => setViewingBudget(b)} className="h-8 text-xs">
-                                                Visualizar
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => handleDeleteBudget(b.publicId)}
-                                                title="Cancelar orçamento"
-                                            >
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                    <div className="text-xs text-muted-foreground line-clamp-1">
-                                        {b.descricao?.substring(0, 100)}
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </>
-            )}
 
             {/* Budget Dialog */}
             <Dialog open={openBudget} onOpenChange={setOpenBudget}>
@@ -477,8 +375,8 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                             <div className="flex items-center justify-between border-b pb-4 border-border">
                                 <div>
                                     <p className="text-xs font-semibold text-muted-foreground uppercase">Status</p>
-                                    <span className={`text-xs px-2.5 py-1 rounded-full font-semibold inline-block mt-1 ${statusClass[viewingBudget.status]}`}>
-                                        {statusLabel[viewingBudget.status]}
+                                    <span className={`text-xs px-2.5 py-1 rounded-full font-semibold inline-block mt-1 ${statusClass[viewingBudget?.status || 'pendente']}`}>
+                                        {statusLabel[viewingBudget?.status || 'pendente']}
                                     </span>
                                 </div>
                                 <div className="text-right">
@@ -496,19 +394,19 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                                 </div>
                             </div>
 
-                            {viewingBudget.status === 'pendente' && (
+                            {viewingBudget?.status === 'pendente' && (
                                 <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border">
                                     <Button
                                         variant="outline"
                                         className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-                                        onClick={() => handleDeclineBudget(viewingBudget.publicId)}
+                                        onClick={() => viewingBudget && handleDeclineBudget(viewingBudget.publicId)}
                                         loading={isSubmitting}
                                     >
                                         Declinar Orçamento
                                     </Button>
                                     <Button
                                         className="w-full bg-green-600 hover:bg-green-700 text-white"
-                                        onClick={() => handleApproveBudget(viewingBudget.publicId)}
+                                        onClick={() => viewingBudget && handleApproveBudget(viewingBudget.publicId)}
                                         loading={isSubmitting}
                                     >
                                         Aprovar Orçamento
