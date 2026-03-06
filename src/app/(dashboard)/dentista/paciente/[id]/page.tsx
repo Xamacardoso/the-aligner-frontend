@@ -25,9 +25,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ArrowLeft, Plus, Trash2, FileText, ClipboardList, Stethoscope, CheckCircle2 } from 'lucide-react';
 import { FileManagement } from '@/components/FileManagement';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
+import { NewTreatmentForm } from '@/components/treatment/NewTreatmentForm';
 
 const formatNestedObj = (jsonStr: string) => {
     try {
@@ -85,40 +84,37 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     const [observations, setObservations] = useState('');
 
     const [openCreateTreatment, setOpenCreateTreatment] = useState(false);
-    const [clinicalObjectives, setClinicalObjectives] = useState<{ id: number, nome: string }[]>([]);
-    const [crowdingTypes, setCrowdingTypes] = useState<{ id: number, nome: string }[]>([]);
-
-    const [treatmentForm, setTreatmentForm] = useState({
-        queixaPrincipal: '',
-        descricaoCaso: '',
-        observacoesAdicionais: '',
-        dataInicio: new Date().toISOString().split('T')[0],
-        objetivos: {} as Record<string, number>, // category -> id
-        apinhamentos: [] as number[] // selected IDs
-    });
+    const [isLoading, setIsLoading] = useState(false);
 
     const { toast } = useToast();
 
     const loadData = async () => {
         if (!publicId) return;
-        // FIX: Using mock provider CPF until Clerk Auth is implemented
         const dentistCpf = '22222222222';
+        setIsLoading(true);
         try {
+            // First, get the patient to find the partnerPublicId
             const foundP = await patientService.findOne(publicId, dentistCpf);
             setPatient(foundP);
-            if (foundP) {
-                const partner = await partnerService.findOne(foundP.partnerPublicId);
-                setDentist(partner);
 
-                // Load treatments
-                const ts = await treatmentService.findByPatient(foundP.publicId, foundP.partnerPublicId);
-                setTreatments(ts);
-                if (ts.length > 0) {
-                    setSelectedTreatmentId(ts[0].publicId);
+            if (foundP) {
+                const partnerPublicId = foundP.partnerPublicId;
+                const [treatmentsData, dentistData] = await Promise.all([
+                    treatmentService.findByPatient(publicId, partnerPublicId),
+                    partnerService.findOne(partnerPublicId)
+                ]);
+                setTreatments(treatmentsData);
+                setDentist(dentistData);
+
+                if (treatmentsData.length > 0 && !selectedTreatmentId) {
+                    setSelectedTreatmentId(treatmentsData[0].publicId);
                 }
             }
         } catch (err) {
             console.error(err);
+            toast({ title: "Erro ao carregar dados do paciente", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -133,23 +129,9 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
         }
     };
 
-    const loadClinicalAuxData = async () => {
-        try {
-            const [objs, crows] = await Promise.all([
-                clinicalService.getTreatmentObjectives(),
-                clinicalService.getCrowdingTypes()
-            ]);
-            setClinicalObjectives(objs);
-            setCrowdingTypes(crows);
-        } catch (err) {
-            console.error("Erro ao carregar dados clínicos auxiliares", err);
-        }
-    };
-
     useEffect(() => {
         setMounted(true);
         loadData();
-        loadClinicalAuxData();
     }, [publicId]);
 
     useEffect(() => {
@@ -159,6 +141,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     }, [selectedTreatmentId]);
 
     if (!mounted) return null;
+    if (isLoading) return <div className="p-8 text-muted-foreground">Carregando...</div>;
     if (!patient) return <div className="p-8 text-muted-foreground">Paciente não encontrado.</div>;
 
     const totalValue = procedures.reduce((s, p) => s + Number(p.value || 0), 0);
@@ -218,66 +201,16 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     const handleDeclineBudget = async (bid: string) => {
         try {
             await budgetService.decline(bid);
-            toast({ title: "Orçamento declinado" });
-            if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId);
-            setViewingBudget(null);
+            toast({ title: "Orçamento declinado", variant: "destructive" });
         } catch (err) {
             toast({ title: "Erro ao declinar", variant: "destructive" });
         }
     };
 
-    const handleSaveTreatment = async () => {
-        if (!patient || !dentist) return;
-
-        // Validation: all objectives must be filled
-        const objectiveCategories = Array.from(new Set(clinicalObjectives.map(o => o.nome.split(' - ')[0])));
-        if (objectiveCategories.some(cat => !treatmentForm.objetivos[cat])) {
-            toast({ title: "Atenção", description: "Todos os objetivos de tratamento devem ser preenchidos.", variant: "destructive" });
-            return;
-        }
-
-        try {
-            await treatmentService.create({
-                queixaPrincipal: treatmentForm.queixaPrincipal,
-                descricaoCaso: treatmentForm.descricaoCaso,
-                observacoesAdicionais: treatmentForm.observacoesAdicionais,
-                dataInicio: treatmentForm.dataInicio,
-                objetivosIds: Object.values(treatmentForm.objetivos),
-                apinhamentosIds: treatmentForm.apinhamentos
-            }, patient.publicId, dentist.publicId);
-
-            toast({ title: "Tratamento criado com sucesso!" });
-            setOpenCreateTreatment(false);
-            loadData(); // Refresh treatments list
-
-            // Reset form
-            setTreatmentForm({
-                queixaPrincipal: '',
-                descricaoCaso: '',
-                observacoesAdicionais: '',
-                dataInicio: new Date().toISOString().split('T')[0],
-                objetivos: {},
-                apinhamentos: []
-            });
-        } catch (err) {
-            toast({ title: "Erro ao criar tratamento", variant: "destructive" });
-        }
+    const handleTreatmentSuccess = () => {
+        setOpenCreateTreatment(false);
+        loadData();
     };
-
-    // Grouping helper
-    const groupedObjectives = clinicalObjectives.reduce((acc, obj) => {
-        const [category, option] = obj.nome.split(' - ');
-        if (!acc[category]) acc[category] = [];
-        acc[category].push({ id: obj.id, option });
-        return acc;
-    }, {} as Record<string, { id: number, option: string }[]>);
-
-    const groupedCrowding = crowdingTypes.reduce((acc, crow) => {
-        const [category, option] = crow.nome.split(' - ');
-        if (!acc[category]) acc[category] = [];
-        acc[category].push({ id: crow.id, option });
-        return acc;
-    }, {} as Record<string, { id: number, option: string }[]>);
 
     return (
         <div className="p-8 max-w-4xl">
@@ -328,10 +261,10 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                         size="sm"
                         variant="outline"
                         onClick={() => setOpenCreateTreatment(true)}
-                        className="h-8 gap-1.5 text-xs"
+                        className="gap-1.5"
                         title="Cadastrar um novo tratamento completo para este paciente"
                     >
-                        <Stethoscope className="h-3.5 w-3.5" /> Novo Tratamento
+                        <Stethoscope className="h-4 w-4" /> Novo Tratamento
                     </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -563,145 +496,17 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                     </DialogHeader>
 
                     <div className="flex-1 overflow-y-auto min-h-0 overscroll-contain">
-                        <div className="p-6 space-y-8">
-                            {/* Básicos */}
-                            <section className="space-y-4">
-                                <h3 className="text-sm font-bold uppercase tracking-tight text-foreground/70 flex items-center gap-2">
-                                    <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                                    Informações Iniciais
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                        <Label>Data de Início Estimada</Label>
-                                        <Input
-                                            type="date"
-                                            value={treatmentForm.dataInicio}
-                                            onChange={e => setTreatmentForm(f => ({ ...f, dataInicio: e.target.value }))}
-                                        />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label>Queixa Principal</Label>
-                                        <Input
-                                            placeholder="Ex: Dentes tortos, dor, estética..."
-                                            value={treatmentForm.queixaPrincipal}
-                                            onChange={e => setTreatmentForm(f => ({ ...f, queixaPrincipal: e.target.value }))}
-                                        />
-                                    </div>
-                                    <div className="col-span-full space-y-1.5">
-                                        <Label>Descrição do Caso / Diagnóstico</Label>
-                                        <Textarea
-                                            placeholder="Descreva detalhes clínicos do caso..."
-                                            value={treatmentForm.descricaoCaso}
-                                            onChange={e => setTreatmentForm(f => ({ ...f, descricaoCaso: e.target.value }))}
-                                            rows={3}
-                                        />
-                                    </div>
-                                </div>
-                            </section>
-
-                            <Separator />
-
-                            {/* Objetivos de Tratamento */}
-                            <section className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-sm font-bold uppercase tracking-tight text-foreground/70 flex items-center gap-2">
-                                        <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                                        Objetivos de Tratamento
-                                    </h3>
-                                    <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold uppercase italic">Obrigatório escolher Manter ou Corrigir em cada item</span>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 bg-muted/30 p-4 rounded-xl border border-border/50">
-                                    {Object.entries(groupedObjectives).map(([cat, opts]) => (
-                                        <div key={cat} className="space-y-2">
-                                            <Label className="text-xs font-bold text-foreground inline-flex items-center gap-1">
-                                                {cat}
-                                                {treatmentForm.objetivos[cat] && <CheckCircle2 className="h-3 w-3 text-green-500" />}
-                                            </Label>
-                                            <RadioGroup
-                                                className="flex items-center gap-4"
-                                                value={treatmentForm.objetivos[cat]?.toString()}
-                                                onValueChange={(val) => setTreatmentForm(f => ({
-                                                    ...f,
-                                                    objetivos: { ...f.objetivos, [cat]: parseInt(val) }
-                                                }))}
-                                            >
-                                                {opts.map(opt => (
-                                                    <div key={opt.id} className="flex items-center gap-2">
-                                                        <RadioGroupItem value={opt.id.toString()} id={`obj-${opt.id}`} />
-                                                        <label htmlFor={`obj-${opt.id}`} className="text-xs cursor-pointer hover:text-primary transition-colors">{opt.option}</label>
-                                                    </div>
-                                                ))}
-                                            </RadioGroup>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-
-                            <Separator />
-
-                            {/* Apinhamento */}
-                            <section className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-sm font-bold uppercase tracking-tight text-foreground/70 flex items-center gap-2">
-                                        <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                                        Apinhamento
-                                    </h3>
-                                    <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold uppercase italic">Selecione até 3 opções por categoria</span>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    {Object.entries(groupedCrowding).map(([cat, opts]) => (
-                                        <div key={cat} className="space-y-3">
-                                            <Label className="text-xs font-bold text-foreground border-l-2 border-primary pl-2">{cat}</Label>
-                                            <div className="space-y-2 pl-2">
-                                                {opts.map(opt => (
-                                                    <div key={opt.id} className="flex items-center gap-2">
-                                                        <Checkbox
-                                                            id={`crowd-${opt.id}`}
-                                                            checked={treatmentForm.apinhamentos.includes(opt.id)}
-                                                            onCheckedChange={(checked) => {
-                                                                if (checked) {
-                                                                    // Check if already has 3 in this category
-                                                                    const countInCategory = opts.filter(o => treatmentForm.apinhamentos.includes(o.id)).length;
-                                                                    if (countInCategory >= 3) {
-                                                                        toast({ title: "Limite atingido", description: "Limite de 3 seleções por categoria.", variant: "destructive" });
-                                                                        return;
-                                                                    }
-                                                                    setTreatmentForm(f => ({ ...f, apinhamentos: [...f.apinhamentos, opt.id] }));
-                                                                } else {
-                                                                    setTreatmentForm(f => ({ ...f, apinhamentos: f.apinhamentos.filter(id => id !== opt.id) }));
-                                                                }
-                                                            }}
-                                                        />
-                                                        <label htmlFor={`crowd-${opt.id}`} className="text-xs leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">{opt.option}</label>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-
-                            <Separator />
-
-                            {/* Observações Extras */}
-                            <section className="space-y-2">
-                                <Label>Observações Adicionais</Label>
-                                <Textarea
-                                    placeholder="Qualquer outra nota relevante para o tratamento..."
-                                    value={treatmentForm.observacoesAdicionais}
-                                    onChange={e => setTreatmentForm(f => ({ ...f, observacoesAdicionais: e.target.value }))}
-                                    rows={2}
+                        <div className="p-6">
+                            {patient && dentist && (
+                                <NewTreatmentForm
+                                    patientPublicId={patient.publicId}
+                                    partnerPublicId={dentist.publicId}
+                                    onSuccess={handleTreatmentSuccess}
+                                    onCancel={() => setOpenCreateTreatment(false)}
                                 />
-                            </section>
+                            )}
                         </div>
                     </div>
-
-                    <DialogFooter className="p-6 border-t border-border bg-muted/20 flex-shrink-0">
-                        <Button variant="ghost" onClick={() => setOpenCreateTreatment(false)}>Cancelar</Button>
-                        <Button onClick={handleSaveTreatment} className="min-w-[150px]">Criar Tratamento</Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
