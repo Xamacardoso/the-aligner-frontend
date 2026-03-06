@@ -6,4 +6,5 @@ export const clinicalService = {
     getCommunicationTypes: () => apiClient<any[]>('/clinical/communication-types'),
     getTreatmentObjectives: () => apiClient<any[]>('/clinical/treatment-objectives'),
     getCrowdingTypes: () => apiClient<any[]>('/clinical/crowding-types'),
+    getDegrees: () => apiClient<any[]>('/clinical/degrees'),
 };

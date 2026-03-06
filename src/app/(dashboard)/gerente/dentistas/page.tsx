@@ -13,33 +13,15 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { PartnerListItem, PartnerDetails } from '@/lib/types';
-
-interface PartnerForm {
-    cpf: string;
-    nome: string;
-    cro: string;
-    croUf: string;
-    email: string;
-    telefone: string;
-}
-
-const emptyForm: PartnerForm = {
-    cpf: '',
-    nome: '',
-    cro: '',
-    croUf: '',
-    email: '',
-    telefone: '',
-};
+import { PartnerForm } from '@/components/partner/PartnerForm';
 
 export default function GerenteDentistasPage() {
     const { toast } = useToast();
     const [mounted, setMounted] = useState(false);
     const [dentists, setDentists] = useState<PartnerListItem[]>([]);
     const [open, setOpen] = useState(false);
-    const [form, setForm] = useState<PartnerForm>(emptyForm);
     const [isEditing, setIsEditing] = useState(false);
-    const [selectedCpf, setSelectedCpf] = useState<string | null>(null);
+    const [editData, setEditData] = useState<PartnerDetails | undefined>(undefined);
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [viewDetails, setViewDetails] = useState<PartnerDetails | null>(null);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -80,56 +62,28 @@ export default function GerenteDentistasPage() {
 
     const openCreate = () => {
         setIsEditing(false);
-        setForm(emptyForm);
+        setEditData(undefined);
         setOpen(true);
     };
 
-    const openEdit = (d: PartnerListItem) => {
+    const openEdit = async (d: PartnerListItem) => {
+        setIsLoadingDetails(true);
         setIsEditing(true);
-        setSelectedCpf(d.cpf);
-        setForm({
-            cpf: d.cpf,
-            nome: d.nome,
-            cro: d.cro,
-            croUf: d.croUf,
-            email: d.email || '',
-            telefone: d.telefone || '',
-        });
         setOpen(true);
+        try {
+            const details = await partnerService.findOne(d.publicId);
+            setEditData(details);
+        } catch (err) {
+            toast({ title: "Erro", description: "Falha ao carregar dados para edição.", variant: "destructive" });
+            setOpen(false);
+        } finally {
+            setIsLoadingDetails(false);
+        }
     };
 
-    const handleSave = async () => {
-        try {
-            if (isEditing && selectedCpf) {
-                await partnerService.update(selectedCpf, {
-                    nome: form.nome,
-                    email: form.email,
-                    telefone: form.telefone,
-                    cro: form.cro,
-                    croUf: form.croUf
-                });
-                toast({ title: "Sucesso", description: "Parceiro atualizado." });
-            } else {
-                await partnerService.create({
-                    cpf: form.cpf,
-                    nome: form.nome,
-                    cro: form.cro,
-                    croUf: form.croUf,
-                    email: form.email,
-                    telefone: form.telefone,
-                    especialidades: [] // New modeling expects array
-                });
-                toast({ title: "Sucesso", description: "Parceiro criado." });
-            }
-            await loadData();
-            setOpen(false);
-        } catch (err: any) {
-            toast({
-                title: "Erro ao salvar",
-                description: err.message || "Verifique os campos.",
-                variant: "destructive"
-            });
-        }
+    const handleFormSuccess = () => {
+        setOpen(false);
+        loadData();
     };
 
     const handleDelete = async (cpf: string) => {
@@ -407,51 +361,39 @@ export default function GerenteDentistasPage() {
 
             {/* Form Dialog */}
             <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent className="max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>{isEditing ? 'Editar Parceiro' : 'Novo Parceiro'}</DialogTitle>
+                <DialogContent className="max-w-3xl h-[85vh] flex flex-col p-0 overflow-hidden gap-0 border-none shadow-2xl">
+                    <DialogHeader className="p-6 border-b border-border bg-muted/5 flex-shrink-0">
+                        <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+                            {isEditing ? (
+                                <>
+                                    <Pencil className="h-5 w-5 text-primary" />
+                                    Editar Dentista
+                                </>
+                            ) : (
+                                <>
+                                    <Plus className="h-5 w-5 text-primary" />
+                                    Novo Cadastro de Dentista
+                                </>
+                            )}
+                        </DialogTitle>
                     </DialogHeader>
 
-                    <div className="space-y-4 py-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                                <Label>CPF *</Label>
-                                <Input
-                                    placeholder="Apenas números"
-                                    value={form.cpf}
-                                    onChange={e => setForm(f => ({ ...f, cpf: e.target.value.replace(/\D/g, '').slice(0, 11) }))}
-                                    disabled={isEditing}
+                    <div className="flex-1 overflow-y-auto min-h-0 bg-background/50">
+                        <div className="p-6">
+                            {isLoadingDetails && isEditing ? (
+                                <div className="flex flex-col items-center justify-center py-12 gap-4">
+                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                    <p className="text-sm text-muted-foreground">Carregando dados do parceiro...</p>
+                                </div>
+                            ) : (
+                                <PartnerForm
+                                    initialData={editData}
+                                    onSuccess={handleFormSuccess}
+                                    onCancel={() => setOpen(false)}
                                 />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>Nome Completo *</Label>
-                                <Input value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>E-mail *</Label>
-                                <Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>Telefone</Label>
-                                <Input value={form.telefone} onChange={e => setForm(f => ({ ...f, telefone: e.target.value }))} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>CRO *</Label>
-                                <Input value={form.cro} onChange={e => setForm(f => ({ ...f, cro: e.target.value }))} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>UF CRO *</Label>
-                                <Input maxLength={2} placeholder="Ex: SP" value={form.croUf} onChange={e => setForm(f => ({ ...f, croUf: e.target.value.toUpperCase() }))} />
-                            </div>
+                            )}
                         </div>
                     </div>
-
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-                        <Button onClick={handleSave} disabled={!form.cpf || !form.nome || !form.cro || !form.email || !form.croUf}>
-                            Salvar Parceiro
-                        </Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
