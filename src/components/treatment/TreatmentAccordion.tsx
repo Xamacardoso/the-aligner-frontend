@@ -173,7 +173,8 @@ function TreatmentItemContent({
                         {budgets.map(b => (
                             <div
                                 key={b.publicId}
-                                className="group flex flex-col md:flex-row md:items-center justify-between p-3 bg-muted/40 rounded-xl border border-border/40 hover:border-primary/30 transition-all"
+                                id={`budget-${b.publicId}`}
+                                className="group flex flex-col md:flex-row md:items-center justify-between p-3 bg-muted/40 rounded-xl border border-border/40 hover:border-primary/30 transition-all scroll-mt-20"
                             >
                                 <div className="flex items-center gap-3">
                                     <Badge className={cn("text-[8px] font-bold h-5 uppercase", statusClass[b.status])}>

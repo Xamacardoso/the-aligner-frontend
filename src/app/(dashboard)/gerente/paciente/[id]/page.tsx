@@ -20,7 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Trash2, FileText, ClipboardList, User } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, FileText, ClipboardList, User, Loader2 } from 'lucide-react';
 import { TreatmentAccordion } from '@/components/treatment/TreatmentAccordion';
 import { FileManagement } from '@/components/FileManagement';
 import { useToast } from '@/hooks/use-toast';
@@ -63,6 +63,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
     const [openBudget, setOpenBudget] = useState(false);
     const [procedures, setProcedures] = useState<{ id: string, name: string, value: number }[]>([{ id: generateId(), name: '', value: 0 }]);
     const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [viewingBudget, setViewingBudget] = useState<Budget | null>(null);
     const [observations, setObservations] = useState('');
 
@@ -89,8 +90,8 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
         }
     };
 
-    const loadTreatmentData = async (tid: string) => {
-        setIsLoadingDetails(true);
+    const loadTreatmentData = async (tid: string, silent = false) => {
+        if (!silent) setIsLoadingDetails(true);
         try {
             const details = await treatmentService.findOne(tid);
             setTreatmentDetails(details);
@@ -99,7 +100,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
         } catch (err) {
             console.error(err);
         } finally {
-            setIsLoadingDetails(false);
+            if (!silent) setIsLoadingDetails(false);
         }
     };
 
@@ -128,22 +129,53 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
 
     const handleSaveBudget = async () => {
         if (!selectedTreatmentId) return;
+
+        setIsSubmitting(true);
         let descricao = procedures.map(p => `${p.name}: R$ ${p.value}`).join('; ');
-        if (observations) descricao += `\nObs: ${observations}`;
+        if (observations) {
+            descricao += `\nObs: ${observations}`;
+        }
 
         try {
-            await budgetService.create({
+            const newBudget = await budgetService.create({
                 tratamentoPublicId: selectedTreatmentId,
                 valor: totalValue,
                 descricao: descricao.substring(0, 400)
             });
-            toast({ title: "Orçamento criado" });
-            loadTreatmentData(selectedTreatmentId);
+
+            // 1. Fechamos o modal primeiro e limpamos o formulário
             setOpenBudget(false);
             setProcedures([{ id: generateId(), name: '', value: 0 }]);
             setObservations('');
+
+            // 2. Atualização otimista e scroll
+            if (newBudget && typeof newBudget === 'object' && newBudget.publicId) {
+                setBudgets(prev => [newBudget, ...prev]);
+                toast({ title: "Orçamento criado com sucesso!" });
+
+                // 3. Foca no novo item (scroll suave) e destaca
+                setTimeout(() => {
+                    const el = document.getElementById(`budget-${newBudget.publicId}`);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        el.classList.add('ring-2', 'ring-primary', 'bg-primary/5', 'scale-[1.02]');
+                        setTimeout(() => el.classList.remove('ring-2', 'ring-primary', 'bg-primary/5', 'scale-[1.02]'), 2000);
+                    }
+                }, 450);
+            }
+
+            // 4. Sincronismo em background (SILENCIOSO)
+            loadTreatmentData(selectedTreatmentId, true);
+
         } catch (err) {
-            toast({ title: "Erro ao criar", variant: "destructive" });
+            console.error('Erro ao salvar orçamento:', err);
+            toast({
+                title: "Erro ao criar orçamento",
+                description: "Verifique os dados e tente novamente.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -258,7 +290,16 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
             {/* Budget Dialog */}
             <Dialog open={openBudget} onOpenChange={setOpenBudget}>
                 <DialogContent>
-                    <DialogHeader><DialogTitle>Novo Orçamento</DialogTitle></DialogHeader>
+                    <DialogHeader>
+                        <DialogTitle>Novo Orçamento</DialogTitle>
+                    </DialogHeader>
+
+                    {isSubmitting && (
+                        <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] flex flex-col items-center justify-center z-50 rounded-lg animate-in fade-in duration-300">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-4">Processando...</p>
+                        </div>
+                    )}
                     {/* Simplified procedure list omitted for Gerente if desired, or kept same */}
                     <div className="space-y-4 py-4 pr-2">
                         <Label>Descrição / Procedimentos</Label>
@@ -279,8 +320,8 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setOpenBudget(false)}>Cancelar</Button>
-                        <Button onClick={handleSaveBudget}>Salvar</Button>
+                        <Button variant="outline" onClick={() => setOpenBudget(false)} disabled={isSubmitting}>Cancelar</Button>
+                        <Button onClick={handleSaveBudget} loading={isSubmitting} disabled={totalValue === 0}>Salvar Orçamento</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
