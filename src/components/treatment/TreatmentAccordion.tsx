@@ -43,6 +43,13 @@ const statusClass: Record<string, string> = {
     cancelado: 'bg-gray-100 text-gray-500',
 };
 
+const formatDate = (dateValue: string | Date | undefined) => {
+    if (!dateValue) return 'Início não definido';
+    const dateStr = dateValue instanceof Date ? dateValue.toISOString() : dateValue;
+    const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
+    return `${d.toString().padStart(2, '0')}/${m.toString().padStart(2, '0')}/${y}`;
+};
+
 interface TreatmentItemContentProps {
     treatment: TreatmentListItem;
     details: TreatmentDetails;
@@ -280,7 +287,7 @@ export function TreatmentAccordion({
                                 <div className="flex items-center gap-2 mt-1">
                                     <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider h-5">
                                         <Calendar className="h-3 w-3 mr-1" />
-                                        {t.dataInicio ? new Date(t.dataInicio).toLocaleDateString('pt-BR') : 'Início não definido'}
+                                        {formatDate(t.dataInicio)}
                                     </Badge>
                                 </div>
                             </div>

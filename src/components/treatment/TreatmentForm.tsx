@@ -43,7 +43,7 @@ export function TreatmentForm({
         queixaPrincipal: initialData?.queixaPrincipal || '',
         descricaoCaso: initialData?.descricaoCaso || '',
         observacoesAdicionais: initialData?.observacoesAdicionais || '',
-        dataInicio: initialData?.dataInicio ? new Date(initialData.dataInicio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        dataInicio: initialData?.dataInicio ? initialData.dataInicio.toString().split('T')[0] : new Date().toLocaleDateString('en-CA'),
         objetivos: {} as Record<string, number>, // cat -> id
         apinhamentos: initialData?.apinhamentos?.map(a => a.id) || [] as number[]
     });
@@ -88,7 +88,7 @@ export function TreatmentForm({
                 queixaPrincipal: initialData.queixaPrincipal || '',
                 descricaoCaso: initialData.descricaoCaso || '',
                 observacoesAdicionais: initialData.observacoesAdicionais || '',
-                dataInicio: initialData.dataInicio ? new Date(initialData.dataInicio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                dataInicio: initialData.dataInicio ? initialData.dataInicio.toString().split('T')[0] : new Date().toLocaleDateString('en-CA'),
                 objetivos: mappedObjs,
                 apinhamentos: initialData.apinhamentos?.map(a => a.id) || []
             });
