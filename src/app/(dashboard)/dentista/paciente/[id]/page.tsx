@@ -28,6 +28,7 @@ import { FileManagement } from '@/components/FileManagement';
 import { Separator } from '@/components/ui/separator';
 import { TreatmentForm } from '@/components/treatment/TreatmentForm';
 import { TreatmentAccordion } from '@/components/treatment/TreatmentAccordion';
+import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
 
 const formatNestedObj = (jsonStr: string) => {
     try {
@@ -89,6 +90,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [isLoadingDetails, setIsLoadingDetails] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [budgetToDelete, setBudgetToDelete] = useState<string | null>(null);
 
     const { toast } = useToast();
 
@@ -264,15 +266,18 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
         }
     };
 
-    const handleDeleteBudget = async (bid: string) => {
+    const handleCancelBudget = async () => {
+        if (!budgetToDelete) return;
+
         setIsSubmitting(true);
         try {
-            await budgetService.cancel(bid);
+            await budgetService.cancel(budgetToDelete);
             toast({
                 title: "Orçamento cancelado",
                 description: "O orçamento foi removido com sucesso."
             });
             if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId);
+            setBudgetToDelete(null);
         } catch (err) {
             toast({ title: "Erro ao cancelar orçamento", variant: "destructive" });
         } finally {
@@ -429,7 +434,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                     onDeleteTreatment={handleDeleteTreatment}
                     onAddBudget={() => setOpenBudget(true)}
                     onViewBudget={setViewingBudget}
-                    onDeleteBudget={handleDeleteBudget}
+                    onDeleteBudget={setBudgetToDelete}
                     isLoadingDetails={isLoadingDetails}
                 />
             </div>
@@ -605,6 +610,17 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Confirmation Dialog for Budget Cancellation */}
+            <ConfirmActionDialog
+                open={!!budgetToDelete}
+                onOpenChange={(open) => !open && setBudgetToDelete(null)}
+                onConfirm={handleCancelBudget}
+                isLoading={isSubmitting}
+                title="Confirmar Cancelamento"
+                description="Tem certeza que deseja cancelar este orçamento? Esta ação removerá o orçamento da lista e não poderá ser desfeita."
+                confirmText="Confirmar Cancelamento"
+            />
         </div>
     );
 }

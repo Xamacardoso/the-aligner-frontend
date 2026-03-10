@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { FileManagement } from "@/components/FileManagement";
 import { ClinicalVisualizer } from "./ClinicalVisualizer";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
+import { ConfirmActionDialog } from "@/components/ConfirmActionDialog";
 
 /**
  * Cores e rótulos para os status de orçamento
@@ -77,9 +78,21 @@ function TreatmentItemContent({
     const [filesOpen, setFilesOpen] = React.useState(false);
     const [budgetsOpen, setBudgetsOpen] = React.useState(false);
     const [isUploading, setIsUploading] = React.useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+            <ConfirmActionDialog
+                open={isDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
+                onConfirm={() => {
+                    onDeleteTreatment(treatment.publicId);
+                    setIsDeleteDialogOpen(false);
+                }}
+                title="Excluir Tratamento"
+                description="Tem certeza que deseja excluir este tratamento permanentemente? Todos os orçamentos vinculados também serão removidos."
+                confirmText="Excluir Tratamento"
+            />
             {/* Detalhes Clínicos */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                 {details.descricaoCaso && (
@@ -108,9 +121,7 @@ function TreatmentItemContent({
                         size="sm"
                         onClick={(e) => {
                             e.stopPropagation();
-                            if (confirm("Tem certeza que deseja excluir este tratamento permanentemente? Todos os orçamentos vinculados também serão removidos.")) {
-                                onDeleteTreatment(treatment.publicId);
-                            }
+                            setIsDeleteDialogOpen(true);
                         }}
                         className="h-8 gap-1.5 font-bold uppercase text-[10px] text-destructive hover:bg-destructive/10 border-destructive/20"
                     >
@@ -212,7 +223,7 @@ function TreatmentItemContent({
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-2 mt-2 md:mt-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center gap-2 mt-2 md:mt-0">
                                     <Button
                                         variant="ghost"
                                         size="sm"

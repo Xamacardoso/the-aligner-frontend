@@ -24,6 +24,7 @@ import { ArrowLeft, Plus, Trash2, FileText, ClipboardList, User, Loader2 } from 
 import { TreatmentAccordion } from '@/components/treatment/TreatmentAccordion';
 import { FileManagement } from '@/components/FileManagement';
 import { useToast } from '@/hooks/use-toast';
+import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
 
 const statusLabel: Record<string, string> = {
     pendente: 'Pendente',
@@ -66,6 +67,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [viewingBudget, setViewingBudget] = useState<Budget | null>(null);
     const [observations, setObservations] = useState('');
+    const [budgetToDelete, setBudgetToDelete] = useState<string | null>(null);
 
     const loadData = async () => {
         if (!publicId) return;
@@ -179,15 +181,18 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
         }
     };
 
-    const handleDeleteBudget = async (bid: string) => {
+    const handleCancelBudget = async () => {
+        if (!budgetToDelete) return;
+
         setIsSubmitting(true);
         try {
-            await budgetService.cancel(bid);
+            await budgetService.cancel(budgetToDelete);
             toast({
                 title: "Orçamento cancelado",
                 description: "O orçamento foi removido com sucesso."
             });
             if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId);
+            setBudgetToDelete(null);
         } catch (err) {
             toast({ title: "Erro ao cancelar", variant: "destructive" });
         } finally {
@@ -274,7 +279,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                     onDeleteTreatment={handleDeleteTreatment}
                     onAddBudget={() => setOpenBudget(true)}
                     onViewBudget={setViewingBudget}
-                    onDeleteBudget={handleDeleteBudget}
+                    onDeleteBudget={setBudgetToDelete}
                     isLoadingDetails={isLoadingDetails}
                 />
             </div>
@@ -354,6 +359,17 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Confirmation Dialog for Budget Cancellation */}
+            <ConfirmActionDialog
+                open={!!budgetToDelete}
+                onOpenChange={(open) => !open && setBudgetToDelete(null)}
+                onConfirm={handleCancelBudget}
+                isLoading={isSubmitting}
+                title="Confirmar Cancelamento"
+                description="Tem certeza que deseja cancelar este orçamento? Esta ação removerá o orçamento da lista e não poderá ser desfeita."
+                confirmText="Confirmar Cancelamento"
+            />
         </div>
     );
 }

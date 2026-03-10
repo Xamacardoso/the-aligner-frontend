@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { PartnerListItem, PartnerDetails } from '@/lib/types';
 import { PartnerForm } from '@/components/partner/PartnerForm';
+import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
 
 export default function GerenteDentistasPage() {
     const { toast } = useToast();
@@ -410,18 +411,15 @@ export default function GerenteDentistasPage() {
             </Dialog>
 
             {/* Delete Confirm */}
-            <Dialog open={!!deleteConfirm} onOpenChange={val => !val && setDeleteConfirm(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Confirmar exclusão</DialogTitle>
-                    </DialogHeader>
-                    <p className="text-sm text-muted-foreground">Tem certeza que deseja excluir permanentemente este dentista parceiro?</p>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setDeleteConfirm(null)} disabled={isSubmitting}>Cancelar</Button>
-                        <Button variant="destructive" onClick={() => deleteConfirm && handleDelete(deleteConfirm)} loading={isSubmitting}>Excluir Parceiro</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <ConfirmActionDialog
+                open={!!deleteConfirm}
+                onOpenChange={val => !val && setDeleteConfirm(null)}
+                onConfirm={() => deleteConfirm && handleDelete(deleteConfirm)}
+                isLoading={isSubmitting}
+                title="Excluir Dentista"
+                description="Tem certeza que deseja excluir permanentemente este dentista parceiro? Esta ação não pode ser desfeita."
+                confirmText="Excluir Parceiro"
+            />
         </div>
     );
 }

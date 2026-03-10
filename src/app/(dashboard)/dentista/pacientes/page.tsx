@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Plus, Pencil, Trash2, Eye } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
+import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
 
 interface PatientForm {
     cpf: string;
@@ -259,16 +260,15 @@ export default function DentistaPatientsPage() {
             </Dialog>
 
             {/* Delete Confirm */}
-            <Dialog open={!!deleteConfirm} onOpenChange={val => !val && setDeleteConfirm(null)}>
-                <DialogContent>
-                    <DialogHeader><DialogTitle>Confirmar exclusão</DialogTitle></DialogHeader>
-                    <p className="text-sm text-muted-foreground">Tem certeza que deseja excluir permanentemente este paciente e todos os seus tratamentos?</p>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancelar</Button>
-                        <Button variant="destructive" onClick={() => deleteConfirm && handleDelete(deleteConfirm)} loading={isSubmitting}>Excluir Paciente</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <ConfirmActionDialog
+                open={!!deleteConfirm}
+                onOpenChange={val => !val && setDeleteConfirm(null)}
+                onConfirm={() => deleteConfirm && handleDelete(deleteConfirm)}
+                isLoading={isSubmitting}
+                title="Excluir Paciente"
+                description="Tem certeza que deseja excluir permanentemente este paciente e todos os seus tratamentos? Esta ação não pode ser desfeita."
+                confirmText="Excluir Paciente"
+            />
         </div>
     );
 }
