@@ -91,11 +91,19 @@ export default function GerenteDentistasPage() {
         setIsSubmitting(true);
         try {
             await partnerService.remove(cpf);
-            toast({ title: "Sucesso", description: "Parceiro removido.", variant: "destructive" });
+            toast({
+                title: "Dentista removido",
+                description: "O registro do parceiro foi excluído com sucesso.",
+                variant: "default"
+            });
             await loadData();
             setDeleteConfirm(null);
-        } catch (err) {
-            toast({ title: "Erro ao remover", variant: "destructive" });
+        } catch (err: any) {
+            toast({
+                title: "Erro ao remover",
+                description: err.message || "Não foi possível remover o parceiro.",
+                variant: "destructive"
+            });
         } finally {
             setIsSubmitting(false);
         }

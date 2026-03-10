@@ -23,7 +23,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ArrowLeft, Plus, Trash2, FileText, ClipboardList, Stethoscope, CheckCircle2, Pencil, User, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, FileText, ClipboardList, Stethoscope, CheckCircle2, Pencil, User, Loader2, AlertCircle } from 'lucide-react';
 import { FileManagement } from '@/components/FileManagement';
 import { Separator } from '@/components/ui/separator';
 import { TreatmentForm } from '@/components/treatment/TreatmentForm';
@@ -183,8 +183,26 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     }, [selectedTreatmentId]);
 
     if (!mounted) return null;
-    if (isLoading) return <div className="p-8 text-muted-foreground">Carregando...</div>;
-    if (!patient) return <div className="p-8 text-muted-foreground">Paciente não encontrado.</div>;
+
+    if (isLoading) return (
+        <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm font-medium text-muted-foreground animate-pulse uppercase tracking-widest">Carregando ficha do paciente...</p>
+        </div>
+    );
+
+    if (!patient) return (
+        <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
+            <AlertCircle className="h-10 w-10 text-destructive/50" />
+            <div className="text-center">
+                <h3 className="text-lg font-bold text-foreground">Paciente não encontrado</h3>
+                <p className="text-sm text-muted-foreground">O registro pode ter sido removido ou o ID é inválido.</p>
+            </div>
+            <Button variant="outline" onClick={() => router.push('/dentista/pacientes')}>
+                Voltar para a Lista
+            </Button>
+        </div>
+    );
 
     const totalValue = procedures.reduce((s, p) => s + Number(p.value || 0), 0);
 
@@ -250,7 +268,10 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
         setIsSubmitting(true);
         try {
             await budgetService.cancel(bid);
-            toast({ title: "Orçamento cancelado", variant: "destructive" });
+            toast({
+                title: "Orçamento cancelado",
+                description: "O orçamento foi removido com sucesso."
+            });
             if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId);
         } catch (err) {
             toast({ title: "Erro ao cancelar orçamento", variant: "destructive" });
@@ -277,11 +298,36 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
         setIsSubmitting(true);
         try {
             await budgetService.decline(bid);
-            toast({ title: "Orçamento declinado", variant: "destructive" });
+            toast({
+                title: "Orçamento declinado",
+                description: "O status do orçamento foi alterado para declinado."
+            });
             if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId);
             setViewingBudget(null);
         } catch (err) {
             toast({ title: "Erro ao declinar", variant: "destructive" });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleDeleteTreatment = async (tid: string) => {
+        setIsSubmitting(true);
+        try {
+            await treatmentService.remove(tid);
+            toast({
+                title: "Tratamento removido",
+                description: "O tratamento e seus orçamentos foram excluídos permanentemente."
+            });
+            loadData();
+            setSelectedTreatmentId(null);
+            setTreatmentDetails(null);
+        } catch (err: any) {
+            toast({
+                title: "Erro ao remover tratamento",
+                description: err.message,
+                variant: "destructive"
+            });
         } finally {
             setIsSubmitting(false);
         }
@@ -380,6 +426,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                     treatmentDetails={treatmentDetails}
                     budgets={budgets}
                     onEditTreatment={() => setOpenEditTreatment(true)}
+                    onDeleteTreatment={handleDeleteTreatment}
                     onAddBudget={() => setOpenBudget(true)}
                     onViewBudget={setViewingBudget}
                     onDeleteBudget={handleDeleteBudget}

@@ -39,6 +39,7 @@ export default function DentistaPatientsPage() {
     const [isEditing, setIsEditing] = useState(false);
     const [selectedPublicId, setSelectedPublicId] = useState<string | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         setMounted(true);
@@ -73,6 +74,7 @@ export default function DentistaPatientsPage() {
     };
 
     const handleSave = async () => {
+        setIsSubmitting(true);
         try {
             if (isEditing && selectedPublicId) {
                 // Mock dentist CPF for update logic if needed
@@ -82,35 +84,54 @@ export default function DentistaPatientsPage() {
                     cpfPaciente: form.cpf,
                     dataNascimento: form.nascimento
                 });
-                toast({ title: "Sucesso", description: "Paciente atualizado." });
+                toast({
+                    title: "Paciente atualizado",
+                    description: `${form.nome} foi atualizado com sucesso.`
+                });
             } else {
                 await patientService.create({
                     cpfPaciente: form.cpf,
                     nomePaciente: form.nome,
                     dataNascimento: form.nascimento,
                 }, dentistPublicId);
-                toast({ title: "Sucesso", description: "Paciente criado." });
+                toast({
+                    title: "Paciente cadastrado",
+                    description: `${form.nome} foi adicionado à sua lista.`
+                });
             }
             await loadData();
             setOpen(false);
         } catch (err: any) {
             toast({
                 title: "Erro ao salvar",
-                description: err.message || "Verifique os dados.",
+                description: err.message || "Verifique os dados e tente novamente.",
                 variant: "destructive"
             });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleDelete = async (pid: string) => {
+        setIsSubmitting(true);
         try {
             const dCpf = '22222222222';
             await patientService.remove(pid, dCpf);
-            toast({ title: "Sucesso", description: "Paciente removido.", variant: "destructive" });
+            toast({
+                title: "Paciente removido",
+                description: "O registro do paciente foi excluído permanentemente.",
+                variant: "default"
+            });
             await loadData();
             setDeleteConfirm(null);
-        } catch (err) {
-            toast({ title: "Erro ao remover", variant: "destructive" });
+        } catch (err: any) {
+            toast({
+                title: "Erro ao remover",
+                description: err.message || "Não foi possível remover o paciente.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -214,6 +235,8 @@ export default function DentistaPatientsPage() {
                                 value={form.cpf}
                                 onChange={e => setForm(f => ({ ...f, cpf: e.target.value.replace(/\D/g, '').slice(0, 11) }))}
                                 placeholder="Apenas números"
+                                disabled={isEditing}
+                                className={isEditing ? "bg-muted cursor-not-allowed" : ""}
                             />
                         </div>
                         <div className="space-y-1.5">
@@ -228,7 +251,7 @@ export default function DentistaPatientsPage() {
 
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-                        <Button onClick={handleSave} disabled={!form.cpf || !form.nome}>
+                        <Button onClick={handleSave} disabled={!form.cpf || !form.nome} loading={isSubmitting}>
                             Salvar Paciente
                         </Button>
                     </DialogFooter>
@@ -242,7 +265,7 @@ export default function DentistaPatientsPage() {
                     <p className="text-sm text-muted-foreground">Tem certeza que deseja excluir permanentemente este paciente e todos os seus tratamentos?</p>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancelar</Button>
-                        <Button variant="destructive" onClick={() => deleteConfirm && handleDelete(deleteConfirm)}>Excluir Paciente</Button>
+                        <Button variant="destructive" onClick={() => deleteConfirm && handleDelete(deleteConfirm)} loading={isSubmitting}>Excluir Paciente</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

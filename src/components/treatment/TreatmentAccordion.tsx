@@ -43,7 +43,7 @@ const statusClass: Record<string, string> = {
     cancelado: 'bg-gray-100 text-gray-500',
 };
 
-const formatDate = (dateValue: string | Date | undefined) => {
+const formatDate = (dateValue: string | Date | null | undefined) => {
     if (!dateValue) return 'Início não definido';
     const dateStr = dateValue instanceof Date ? dateValue.toISOString() : dateValue;
     const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
@@ -55,6 +55,7 @@ interface TreatmentItemContentProps {
     details: TreatmentDetails;
     budgets: Budget[];
     onEdit: () => void;
+    onDeleteTreatment: (id: string) => void;
     onAddBudget: () => void;
     onViewBudget: (b: Budget) => void;
     onDeleteBudget: (id: string) => void;
@@ -68,6 +69,7 @@ function TreatmentItemContent({
     details,
     budgets,
     onEdit,
+    onDeleteTreatment,
     onAddBudget,
     onViewBudget,
     onDeleteBudget
@@ -89,7 +91,7 @@ function TreatmentItemContent({
                     </div>
                 )}
 
-                <div className="flex justify-end items-start">
+                <div className="flex justify-end items-start gap-2">
                     <Button
                         variant="outline"
                         size="sm"
@@ -99,7 +101,20 @@ function TreatmentItemContent({
                         }}
                         className="h-8 gap-1.5 font-bold uppercase text-[10px]"
                     >
-                        <Pencil className="h-3.5 w-3.5" /> Editar Tratamento
+                        <Pencil className="h-3.5 w-3.5" /> Editar
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm("Tem certeza que deseja excluir este tratamento permanentemente? Todos os orçamentos vinculados também serão removidos.")) {
+                                onDeleteTreatment(treatment.publicId);
+                            }
+                        }}
+                        className="h-8 gap-1.5 font-bold uppercase text-[10px] text-destructive hover:bg-destructive/10 border-destructive/20"
+                    >
+                        <Trash2 className="h-3.5 w-3.5" /> Excluir
                     </Button>
                 </div>
             </div>
@@ -232,6 +247,7 @@ interface TreatmentAccordionProps {
     treatmentDetails: TreatmentDetails | null;
     budgets: Budget[];
     onEditTreatment: () => void;
+    onDeleteTreatment: (id: string) => void;
     onAddBudget: () => void;
     onViewBudget: (budget: Budget) => void;
     onDeleteBudget: (id: string) => void;
@@ -245,6 +261,7 @@ export function TreatmentAccordion({
     treatmentDetails,
     budgets,
     onEditTreatment,
+    onDeleteTreatment,
     onAddBudget,
     onViewBudget,
     onDeleteBudget,
@@ -305,6 +322,7 @@ export function TreatmentAccordion({
                                 details={treatmentDetails}
                                 budgets={budgets}
                                 onEdit={onEditTreatment}
+                                onDeleteTreatment={onDeleteTreatment}
                                 onAddBudget={onAddBudget}
                                 onViewBudget={onViewBudget}
                                 onDeleteBudget={onDeleteBudget}

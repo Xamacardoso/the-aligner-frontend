@@ -180,12 +180,40 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
     };
 
     const handleDeleteBudget = async (bid: string) => {
+        setIsSubmitting(true);
         try {
             await budgetService.cancel(bid);
-            toast({ title: "Orçamento cancelado" });
+            toast({
+                title: "Orçamento cancelado",
+                description: "O orçamento foi removido com sucesso."
+            });
             if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId);
         } catch (err) {
             toast({ title: "Erro ao cancelar", variant: "destructive" });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleDeleteTreatment = async (tid: string) => {
+        setIsSubmitting(true);
+        try {
+            await treatmentService.remove(tid);
+            toast({
+                title: "Tratamento removido",
+                description: "O tratamento e seus orçamentos foram excluídos com sucesso."
+            });
+            loadData();
+            setSelectedTreatmentId(null);
+            setTreatmentDetails(null);
+        } catch (err: any) {
+            toast({
+                title: "Erro ao remover tratamento",
+                description: err.message,
+                variant: "destructive"
+            });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -242,7 +270,8 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                     onSelect={setSelectedTreatmentId}
                     treatmentDetails={treatmentDetails}
                     budgets={budgets}
-                    onEditTreatment={() => { }} // Gerente não edita tratamento
+                    onEditTreatment={() => { }} // Gerente não edita tratamento por enquanto
+                    onDeleteTreatment={handleDeleteTreatment}
                     onAddBudget={() => setOpenBudget(true)}
                     onViewBudget={setViewingBudget}
                     onDeleteBudget={handleDeleteBudget}

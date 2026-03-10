@@ -165,13 +165,13 @@ export function FileManagement({
                         <Button
                             size="sm"
                             variant="outline"
-                            className="h-8 gap-1.5 text-[10px] font-bold uppercase"
-                            disabled={isUploading}
+                            className="h-8 gap-1.5 text-[10px] font-bold uppercase transition-all"
+                            loading={isUploading}
                             onClick={() => document.getElementById(inputId)?.click()}
                             title="Fazer upload de novo arquivo"
                         >
-                            {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <UploadCloud className="h-3 w-3" />}
-                            {isUploading ? 'Enviando...' : 'Upload'}
+                            <UploadCloud className="h-3 w-3" />
+                            Upload
                         </Button>
                     </div>
                 </div>
