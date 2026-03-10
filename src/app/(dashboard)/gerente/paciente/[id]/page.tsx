@@ -33,7 +33,7 @@ const statusLabel: Record<string, string> = {
     cancelado: 'Cancelado',
 };
 const statusClass: Record<string, string> = {
-    pendente: 'bg-muted text-muted-foreground',
+    pendente: 'bg-yellow-100 text-yellow-700',
     aprovado: 'bg-green-100 text-green-700',
     declinado: 'bg-red-100 text-red-700',
     cancelado: 'bg-gray-100 text-gray-500',
@@ -93,6 +93,13 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
     };
 
     const loadTreatmentData = async (tid: string, silent = false) => {
+        if (!tid) return;
+
+        // Se já temos os detalhes e não é um refresh forçado (silent), evitamos o fetch redundante
+        if (!silent && treatmentDetails?.publicId === tid) {
+            return;
+        }
+
         if (!silent) setIsLoadingDetails(true);
         try {
             const details = await treatmentService.findOne(tid);
@@ -191,7 +198,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                 title: "Orçamento cancelado",
                 description: "O orçamento foi removido com sucesso."
             });
-            if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId);
+            if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId, true);
             setBudgetToDelete(null);
         } catch (err) {
             toast({ title: "Erro ao cancelar", variant: "destructive" });

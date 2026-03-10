@@ -290,7 +290,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
         try {
             await budgetService.approve(bid);
             toast({ title: "Orçamento aprovado!" });
-            if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId);
+            if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId, true);
             setViewingBudget(null);
         } catch (err) {
             toast({ title: "Erro ao aprovar", variant: "destructive" });
@@ -307,7 +307,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                 title: "Orçamento declinado",
                 description: "O status do orçamento foi alterado para declinado."
             });
-            if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId);
+            if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId, true);
             setViewingBudget(null);
         } catch (err) {
             toast({ title: "Erro ao declinar", variant: "destructive" });

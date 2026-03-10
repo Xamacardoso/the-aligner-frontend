@@ -56,11 +56,12 @@ export function ConfirmActionDialog({
                 </AlertDialogHeader>
                 <AlertDialogFooter className="gap-2">
                     <AlertDialogCancel asChild>
-                        <Button variant="outline" disabled={isLoading}>
+                        <Button type="button" variant="outline" disabled={isLoading}>
                             {cancelText}
                         </Button>
                     </AlertDialogCancel>
                     <Button
+                        type="button"
                         variant={variant === "destructive" ? "destructive" : "default"}
                         onClick={(e) => {
                             e.preventDefault();

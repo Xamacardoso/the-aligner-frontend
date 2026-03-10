@@ -38,7 +38,7 @@ const statusLabel: Record<string, string> = {
 };
 
 const statusClass: Record<string, string> = {
-    pendente: 'bg-muted text-muted-foreground',
+    pendente: 'bg-yellow-100 text-yellow-700',
     aprovado: 'bg-green-100 text-green-700',
     declinado: 'bg-red-100 text-red-700',
     cancelado: 'bg-gray-100 text-gray-500',
