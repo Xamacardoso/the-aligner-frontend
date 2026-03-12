@@ -6,8 +6,9 @@ const publicPaths = ['/sign-in', '/'];
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // Verificar se o caminho é público
-    const isPublicPath = publicPaths.some(path => pathname === path || pathname.startsWith('/public'));
+    // Verificar se o caminho é público ou é um arquivo estático (imagens, fonts, etc)
+    const isPublicPath = publicPaths.some(path => pathname === path || pathname.startsWith('/public')) || 
+                        /\.(jpe?g|png|svg|gif|webp|ico)$/i.test(pathname);
 
     // Peguntar pelo token nos cookies
     const token = request.cookies.get('auth_token')?.value;

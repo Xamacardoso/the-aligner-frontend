@@ -16,8 +16,8 @@ export default function Home() {
   return (
     <div className="flex bg-secondary min-h-screen items-center justify-center">
       <div className="animate-pulse flex flex-col items-center">
-        <div className="relative w-14 h-14 mb-4">
-          <Image src="/thealign_logo2.jpeg" alt="Logo" fill className="object-contain" />
+        <div className="flex items-center justify-center w-14 h-14 mb-4">
+          <Image src="/thealign_logo2.jpeg" alt="Logo" width={64} height={64} className="object-contain" />
         </div>
         <p className="text-muted-foreground font-medium text-sm">Carregando TheAligner...</p>
       </div>

@@ -48,10 +48,10 @@ export default function SignInPage() {
             } else {
                 router.push("/dentista/pacientes");
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             toast({
                 title: "Erro no login",
-                description: error.message,
+                description: error instanceof Error ? error.message : "Erro ao realizar login",
                 variant: "destructive",
             });
         } finally {
@@ -64,8 +64,8 @@ export default function SignInPage() {
             <div className="w-full max-w-md">
                 <div className="flex justify-center mb-8">
                     <div className="flex items-center gap-3">
-                        <div className="relative w-12 h-12 flex-shrink-0">
-                            <Image src="/thealign_logo2.jpeg" alt="The Aligner" fill className="object-contain" />
+                        <div className="flex items-center justify-center w-12 h-12 flex-shrink-0">
+                            <Image src="/thealign_logo2.jpeg" alt="The Aligner" width={48} height={48} className="object-contain" unoptimized />
                         </div>
                         <h1 className="text-3xl font-bold text-slate-900 tracking-tight">TheAligner</h1>
                     </div>
