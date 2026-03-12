@@ -82,8 +82,7 @@ export default function DentistaPatientsPage() {
         setIsSubmitting(true);
         try {
             if (isEditing && selectedPublicId) {
-                const dCpf = user?.id || '';
-                await patientService.update(selectedPublicId, dCpf, {
+                await patientService.update(selectedPublicId, {
                     nomePaciente: form.nome,
                     cpfPaciente: form.cpf,
                     dataNascimento: form.nascimento
@@ -119,8 +118,7 @@ export default function DentistaPatientsPage() {
     const handleDelete = async (pid: string) => {
         setIsSubmitting(true);
         try {
-            const dCpf = user?.id || '';
-            await patientService.remove(pid, dCpf, token || undefined);
+            await patientService.remove(pid, token || undefined);
             toast({
                 title: "Paciente removido",
                 description: "O registro do paciente foi excluído permanentemente.",

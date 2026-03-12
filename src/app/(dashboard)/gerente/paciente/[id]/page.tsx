@@ -74,8 +74,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
     const loadData = async () => {
         if (!isLoaded || !token || !publicId) return;
         try {
-            const pCpf = searchParams.get('partnerCpf') || '';
-            const foundP = await patientService.findOne(publicId, pCpf, token);
+            const foundP = await patientService.findOne(publicId, token);
             setPatient(foundP);
             if (foundP) {
                 const partner = await partnerService.findOne(foundP.partnerPublicId, token || undefined);

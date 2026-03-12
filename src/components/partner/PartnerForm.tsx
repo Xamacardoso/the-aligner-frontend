@@ -28,7 +28,7 @@ export function PartnerForm({
     onCancel
 }: PartnerFormProps) {
     const { toast } = useToast();
-    const { token } = useAppAuth();
+    const { token, isLoaded } = useAppAuth();
     const [loading, setLoading] = useState(false);
     const [ufs, setUfs] = useState<{ id: number, nome: string, sigla: string }[]>([]);
     const [specialties, setSpecialties] = useState<{ id: number, nome: string }[]>([]);
@@ -63,12 +63,14 @@ export function PartnerForm({
 
     useEffect(() => {
         async function loadAuxData() {
+            if (!isLoaded || !token) return;
+            
             try {
                 const [ufsRes, specRes, degRes, commRes] = await Promise.all([
-                    clinicalService.getUfs(),
-                    clinicalService.getSpecialties(),
-                    clinicalService.getDegrees(),
-                    clinicalService.getCommunicationTypes()
+                    clinicalService.getUfs(token),
+                    clinicalService.getSpecialties(token),
+                    clinicalService.getDegrees(token),
+                    clinicalService.getCommunicationTypes(token)
                 ]);
                 setUfs(ufsRes);
                 setSpecialties(specRes);
@@ -97,7 +99,7 @@ export function PartnerForm({
             }
         }
         loadAuxData();
-    }, [initialData]);
+    }, [isLoaded, token, initialData]);
 
     const handleSave = async () => {
         // Basic validation
@@ -127,7 +129,7 @@ export function PartnerForm({
             if (isEditing) {
                 // Remove password if not changing
                 if (!form.senha) delete (payload as any).senha;
-                await partnerService.update(form.cpf, payload, token || undefined);
+                await partnerService.update(initialData!.publicId, payload, token || undefined);
                 toast({ title: "Parceiro atualizado com sucesso!" });
             } else {
                 await partnerService.create(payload, token || undefined);

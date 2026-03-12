@@ -101,7 +101,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
         if (!silent) setIsLoading(true);
         try {
             // First, get the patient to find the partnerPublicId
-            const foundP = await patientService.findOne(publicId, activeUser?.id || '', token);
+            const foundP = await patientService.findOne(publicId, token);
             setPatient(foundP);
 
             if (foundP) {

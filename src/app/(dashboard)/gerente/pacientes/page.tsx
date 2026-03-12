@@ -95,7 +95,7 @@ export default function GerentePacientesPage() {
                             patients.map(p => (
                                 <button
                                     key={p.publicId}
-                                    onClick={() => router.push(`/gerente/paciente/${p.publicId}?partnerCpf=${selectedDentist?.cpf || ''}`)}
+                                    onClick={() => router.push(`/gerente/paciente/${p.publicId}`)}
                                     className="w-full text-left px-4 py-3 border-b border-border last:border-b-0 flex items-center justify-between hover:bg-muted transition-colors"
                                     title="Ver detalhes do paciente"
                                 >

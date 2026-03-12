@@ -63,11 +63,11 @@ export default function SignInPage() {
         <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
             <div className="w-full max-w-md">
                 <div className="flex justify-center mb-8">
-                    <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg">
-                            <span className="text-white font-bold text-xl">A</span>
+                    <div className="flex items-center gap-3">
+                        <div className="relative w-12 h-12 flex-shrink-0">
+                            <Image src="/thealign_logo2.jpeg" alt="The Aligner" fill className="object-contain" />
                         </div>
-                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">TheAligner</h1>
+                        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">TheAligner</h1>
                     </div>
                 </div>
 

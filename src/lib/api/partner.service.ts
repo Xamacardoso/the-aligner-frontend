@@ -14,8 +14,8 @@ export const partnerService = {
             body: JSON.stringify(data),
         }, token),
 
-    update: (cpf: string, data: any, token?: string) =>
-        apiClient<PartnerDetails>(`/partners/${cpf}`, {
+    update: (publicId: string, data: any, token?: string) =>
+        apiClient<PartnerDetails>(`/partners/${publicId}`, {
             method: 'PUT',
             body: JSON.stringify(data),
         }, token),

@@ -8,8 +8,8 @@ export const patientService = {
     findMyPatients: (token?: string) =>
         apiClient<PatientListItem[]>(`/patients/my-patients`, {}, token),
 
-    findOne: (publicId: string, partnerCpf: string, token?: string) =>
-        apiClient<PatientDetails>(`/patients/${publicId}?partnerCpf=${partnerCpf}`, {}, token),
+    findOne: (publicId: string, token?: string) =>
+        apiClient<PatientDetails>(`/patients/${publicId}`, {}, token),
 
     create: (data: any, partnerPublicId: string, token?: string) =>
         apiClient<PatientDetails>(`/patients?partnerPublicId=${partnerPublicId}`, {
@@ -17,14 +17,14 @@ export const patientService = {
             body: JSON.stringify(data),
         }, token),
 
-    update: (publicId: string, partnerCpf: string, data: any, token?: string) =>
-        apiClient<PatientDetails>(`/patients/${publicId}?partnerCpf=${partnerCpf}`, {
+    update: (publicId: string, data: any, token?: string) =>
+        apiClient<PatientDetails>(`/patients/${publicId}`, {
             method: 'PATCH',
             body: JSON.stringify(data),
         }, token),
 
-    remove: (publicId: string, partnerCpf: string, token?: string) =>
-        apiClient<void>(`/patients/${publicId}?partnerCpf=${partnerCpf}`, {
+    remove: (publicId: string, token?: string) =>
+        apiClient<void>(`/patients/${publicId}`, {
             method: 'DELETE',
         }, token),
 };

@@ -35,7 +35,7 @@ export function TreatmentForm({
     onCancel
 }: TreatmentFormProps) {
     const { toast } = useToast();
-    const { token } = useAppAuth();
+    const { token, isLoaded } = useAppAuth();
     const [loading, setLoading] = useState(false);
     const [clinicalObjectives, setClinicalObjectives] = useState<{ id: number, nome: string }[]>([]);
     const [crowdingTypes, setCrowdingTypes] = useState<{ id: number, nome: string }[]>([]);
@@ -52,10 +52,12 @@ export function TreatmentForm({
 
     useEffect(() => {
         async function loadAuxData() {
+            if (!isLoaded || !token) return;
+
             try {
                 const [objs, crows] = await Promise.all([
-                    clinicalService.getTreatmentObjectives(token || undefined),
-                    clinicalService.getCrowdingTypes(token || undefined)
+                    clinicalService.getTreatmentObjectives(token),
+                    clinicalService.getCrowdingTypes(token)
                 ]);
                 setClinicalObjectives(objs);
                 setCrowdingTypes(crows);
@@ -74,7 +76,7 @@ export function TreatmentForm({
             }
         }
         loadAuxData();
-    }, []); // Only on mount
+    }, [isLoaded, token, initialData]); 
 
     useEffect(() => {
         if (initialData) {

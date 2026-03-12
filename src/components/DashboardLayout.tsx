@@ -49,8 +49,8 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
                 {/* Logo */}
                 <div className="px-5 py-5 border-b border-border">
                     <div className="flex items-center gap-2">
-                        <div className="relative w-7 h-7 flex-shrink-0 overflow-hidden">
-                            <Image src="/thealign_logo2.jpeg" alt="The Aligner" fill className="object-cover" />
+                        <div className="relative w-7 h-7 flex-shrink-0">
+                            <Image src="/thealign_logo2.jpeg" alt="The Aligner" fill className="object-contain" />
                         </div>
                         <span className="font-bold text-foreground">TheAligner</span>
                     </div>
