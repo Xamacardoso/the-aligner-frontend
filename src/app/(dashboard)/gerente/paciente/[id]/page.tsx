@@ -52,7 +52,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
     const searchParams = useSearchParams();
     const { id: publicId } = use(params);
     const { toast } = useToast();
-    const { token } = useAppAuth();
+    const { token, isLoaded } = useAppAuth();
 
     // In gerente view, we might need the partner CPF from somewhere or discover it
     const [patient, setPatient] = useState<PatientDetails | null>(null);
@@ -72,10 +72,10 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
     const [budgetToDelete, setBudgetToDelete] = useState<string | null>(null);
 
     const loadData = async () => {
-        if (!publicId) return;
+        if (!isLoaded || !token || !publicId) return;
         try {
             const pCpf = searchParams.get('partnerCpf') || '';
-            const foundP = await patientService.findOne(publicId, pCpf, token || undefined);
+            const foundP = await patientService.findOne(publicId, pCpf, token);
             setPatient(foundP);
             if (foundP) {
                 const partner = await partnerService.findOne(foundP.partnerPublicId, token || undefined);
@@ -113,7 +113,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
 
     useEffect(() => {
         loadData();
-    }, [publicId]);
+    }, [publicId, isLoaded, token]);
 
     useEffect(() => {
         if (selectedTreatmentId) {
