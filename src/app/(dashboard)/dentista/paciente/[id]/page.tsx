@@ -29,6 +29,7 @@ import { Separator } from '@/components/ui/separator';
 import { TreatmentForm } from '@/components/treatment/TreatmentForm';
 import { TreatmentAccordion } from '@/components/treatment/TreatmentAccordion';
 import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
+import { useAppAuth } from '@/hooks/use-app-auth';
 
 const formatNestedObj = (jsonStr: string) => {
     try {
@@ -93,21 +94,21 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     const [budgetToDelete, setBudgetToDelete] = useState<string | null>(null);
 
     const { toast } = useToast();
+    const { token, user: activeUser, isLoaded } = useAppAuth();
 
     const loadData = async (silent = false) => {
-        if (!publicId) return;
-        const dentistCpf = '22222222222';
+        if (!publicId || !isLoaded || !token) return;
         if (!silent) setIsLoading(true);
         try {
             // First, get the patient to find the partnerPublicId
-            const foundP = await patientService.findOne(publicId, dentistCpf);
+            const foundP = await patientService.findOne(publicId, activeUser?.id || '', token);
             setPatient(foundP);
 
             if (foundP) {
                 const partnerPublicId = foundP.partnerPublicId;
                 const [treatmentsData, dentistData] = await Promise.all([
-                    treatmentService.findByPatient(publicId, partnerPublicId),
-                    partnerService.findOne(partnerPublicId)
+                    treatmentService.findByPatient(publicId, partnerPublicId, token || undefined),
+                    partnerService.findOne(partnerPublicId, token || undefined)
                 ]);
                 setTreatments(treatmentsData);
                 setDentist(dentistData);
@@ -125,22 +126,18 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     };
 
     const loadTreatmentData = async (treatmentId: string, silent = false) => {
-        if (!treatmentId || typeof treatmentId !== 'string' || treatmentId.trim() === '') {
-            console.warn('[DEBUG] loadTreatmentData ignorado: ID vazio ou inválido', treatmentId);
+        if (!treatmentId || !token) {
             return;
         }
 
         // Se já temos os detalhes e não é um refresh forçado (silent), evitamos o fetch redundante
         if (!silent && treatmentDetails?.publicId === treatmentId) {
-            console.log('[DEBUG] loadTreatmentData ignorado: Já carregado', treatmentId);
             return;
         }
 
-        console.log(`[DEBUG] Executando fetch de detalhes para: "${treatmentId}" (silent: ${silent})`);
-
         if (!silent) setIsLoadingDetails(true);
         try {
-            const details = await treatmentService.findOne(treatmentId);
+            const details = await treatmentService.findOne(treatmentId, token);
 
             if (!details || !details.publicId) {
                 console.error('[ERROR] Detalhes inválidos retornados pela API:', details);
@@ -148,7 +145,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
             }
 
             setTreatmentDetails(details);
-            const b = await budgetService.findByTreatment(treatmentId);
+            const b = await budgetService.findByTreatment(treatmentId, token || undefined);
             setBudgets(b);
         } catch (err: any) {
             console.error(`[ERROR] Falha ao carregar tratamento "${treatmentId}":`, err);
@@ -171,9 +168,11 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     };
 
     useEffect(() => {
-        setMounted(true);
-        loadData();
-    }, [publicId]);
+        if (isLoaded && token) {
+            setMounted(true);
+            loadData();
+        }
+    }, [publicId, isLoaded, token]);
 
     useEffect(() => {
         if (selectedTreatmentId) {
@@ -228,7 +227,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                 tratamentoPublicId: selectedTreatmentId,
                 valor: totalValue,
                 descricao: descricao.substring(0, 400)
-            });
+            }, token || undefined);
 
             // 1. Fechamos o modal primeiro para garantir a UI fluida e limpar estado
             setOpenBudget(false);
@@ -271,7 +270,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
 
         setIsSubmitting(true);
         try {
-            await budgetService.cancel(budgetToDelete);
+            await budgetService.cancel(budgetToDelete, token || undefined);
             toast({
                 title: "Orçamento cancelado",
                 description: "O orçamento foi removido com sucesso."
@@ -288,7 +287,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     const handleApproveBudget = async (bid: string) => {
         setIsSubmitting(true);
         try {
-            await budgetService.approve(bid);
+            await budgetService.approve(bid, token || undefined);
             toast({ title: "Orçamento aprovado!" });
             if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId, true);
             setViewingBudget(null);
@@ -302,7 +301,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     const handleDeclineBudget = async (bid: string) => {
         setIsSubmitting(true);
         try {
-            await budgetService.decline(bid);
+            await budgetService.decline(bid, token || undefined);
             toast({
                 title: "Orçamento declinado",
                 description: "O status do orçamento foi alterado para declinado."
@@ -319,7 +318,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     const handleDeleteTreatment = async (tid: string) => {
         setIsSubmitting(true);
         try {
-            await treatmentService.remove(tid);
+            await treatmentService.remove(tid, token || undefined);
             toast({
                 title: "Tratamento removido",
                 description: "O tratamento e seus orçamentos foram excluídos permanentemente."

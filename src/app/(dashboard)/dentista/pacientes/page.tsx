@@ -13,6 +13,7 @@ import { Plus, Pencil, Trash2, Eye } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
+import { useAppAuth } from '@/hooks/use-app-auth';
 
 interface PatientForm {
     cpf: string;
@@ -30,8 +31,8 @@ export default function DentistaPatientsPage() {
     const router = useRouter();
     const { toast } = useToast();
 
-    // FIX: Mock dentist ID until Clerk Auth
-    const dentistPublicId = '05c99d96-f9c7-4a63-8b31-77a7710fd1a2';
+    const { user, token, isLoaded } = useAppAuth();
+    const dentistPublicId = user?.id; // Usando o ID (CPF) do usuário logado
 
     const [mounted, setMounted] = useState(false);
     const [patients, setPatients] = useState<PatientListItem[]>([]);
@@ -43,13 +44,16 @@ export default function DentistaPatientsPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        setMounted(true);
-        loadData();
-    }, [dentistPublicId]);
+        if (isLoaded && token && user?.publicId) {
+            setMounted(true);
+            loadData();
+        }
+    }, [isLoaded, token, user?.publicId]);
 
     const loadData = async () => {
         try {
-            const data = await patientService.findByPartner(dentistPublicId);
+            if (!user?.publicId || !token) return;
+            const data = await patientService.findByPartner(user.publicId, token);
             setPatients(data);
         } catch (err) {
             console.error(err);
@@ -78,13 +82,12 @@ export default function DentistaPatientsPage() {
         setIsSubmitting(true);
         try {
             if (isEditing && selectedPublicId) {
-                // Mock dentist CPF for update logic if needed
-                const dCpf = '22222222222';
+                const dCpf = user?.id || '';
                 await patientService.update(selectedPublicId, dCpf, {
                     nomePaciente: form.nome,
                     cpfPaciente: form.cpf,
                     dataNascimento: form.nascimento
-                });
+                }, token || undefined);
                 toast({
                     title: "Paciente atualizado",
                     description: `${form.nome} foi atualizado com sucesso.`
@@ -94,7 +97,7 @@ export default function DentistaPatientsPage() {
                     cpfPaciente: form.cpf,
                     nomePaciente: form.nome,
                     dataNascimento: form.nascimento,
-                }, dentistPublicId);
+                }, user?.publicId || '', token || undefined);
                 toast({
                     title: "Paciente cadastrado",
                     description: `${form.nome} foi adicionado à sua lista.`
@@ -116,8 +119,8 @@ export default function DentistaPatientsPage() {
     const handleDelete = async (pid: string) => {
         setIsSubmitting(true);
         try {
-            const dCpf = '22222222222';
-            await patientService.remove(pid, dCpf);
+            const dCpf = user?.id || '';
+            await patientService.remove(pid, dCpf, token || undefined);
             toast({
                 title: "Paciente removido",
                 description: "O registro do paciente foi excluído permanentemente.",

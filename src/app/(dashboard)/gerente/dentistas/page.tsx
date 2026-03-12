@@ -15,9 +15,11 @@ import { Separator } from '@/components/ui/separator';
 import { PartnerListItem, PartnerDetails } from '@/lib/types';
 import { PartnerForm } from '@/components/partner/PartnerForm';
 import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
+import { useAppAuth } from '@/hooks/use-app-auth';
 
 export default function GerenteDentistasPage() {
     const { toast } = useToast();
+    const { token, isLoaded } = useAppAuth();
     const [mounted, setMounted] = useState(false);
     const [dentists, setDentists] = useState<PartnerListItem[]>([]);
     const [open, setOpen] = useState(false);
@@ -30,8 +32,9 @@ export default function GerenteDentistasPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const loadData = async () => {
+        if (!isLoaded || !token) return;
         try {
-            const data = await partnerService.findAll();
+            const data = await partnerService.findAll(token);
             setDentists(data);
         } catch (err) {
             console.error(err);
@@ -42,7 +45,7 @@ export default function GerenteDentistasPage() {
         setIsLoadingDetails(true);
         setIsDetailsOpen(true);
         try {
-            const details = await partnerService.findOne(d.publicId);
+            const details = await partnerService.findOne(d.publicId, token || undefined);
             setViewDetails(details);
         } catch (err) {
             console.error(err);
@@ -58,9 +61,11 @@ export default function GerenteDentistasPage() {
     };
 
     useEffect(() => {
-        setMounted(true);
-        loadData();
-    }, []);
+        if (isLoaded && token) {
+            setMounted(true);
+            loadData();
+        }
+    }, [isLoaded, token]);
 
     const openCreate = () => {
         setIsEditing(false);
@@ -73,7 +78,7 @@ export default function GerenteDentistasPage() {
         setIsEditing(true);
         setOpen(true);
         try {
-            const details = await partnerService.findOne(d.publicId);
+            const details = await partnerService.findOne(d.publicId, token || undefined);
             setEditData(details);
         } catch (err) {
             toast({ title: "Erro", description: "Falha ao carregar dados para edição.", variant: "destructive" });
@@ -91,7 +96,7 @@ export default function GerenteDentistasPage() {
     const handleDelete = async (cpf: string) => {
         setIsSubmitting(true);
         try {
-            await partnerService.remove(cpf);
+            await partnerService.remove(cpf, token || undefined);
             toast({
                 title: "Dentista removido",
                 description: "O registro do parceiro foi excluído com sucesso.",

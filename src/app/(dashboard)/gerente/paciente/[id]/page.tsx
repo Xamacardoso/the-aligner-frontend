@@ -25,6 +25,7 @@ import { TreatmentAccordion } from '@/components/treatment/TreatmentAccordion';
 import { FileManagement } from '@/components/FileManagement';
 import { useToast } from '@/hooks/use-toast';
 import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
+import { useAppAuth } from '@/hooks/use-app-auth';
 
 const statusLabel: Record<string, string> = {
     pendente: 'Pendente',
@@ -51,6 +52,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
     const searchParams = useSearchParams();
     const { id: publicId } = use(params);
     const { toast } = useToast();
+    const { token } = useAppAuth();
 
     // In gerente view, we might need the partner CPF from somewhere or discover it
     const [patient, setPatient] = useState<PatientDetails | null>(null);
@@ -72,18 +74,14 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
     const loadData = async () => {
         if (!publicId) return;
         try {
-            // Managers might not have a "partnerCpf" in their context, but we can try to find it
-            // For now, assume it's passed or we use a discovery method.
-            // Using a mock or discovering via some other API if needed.
-            // Let's try to fetch with a broad context if backend allows or just use a param.
-            const pCpf = searchParams.get('partnerCpf') || '22222222222';
-            const foundP = await patientService.findOne(publicId, pCpf);
+            const pCpf = searchParams.get('partnerCpf') || '';
+            const foundP = await patientService.findOne(publicId, pCpf, token || undefined);
             setPatient(foundP);
             if (foundP) {
-                const partner = await partnerService.findOne(foundP.partnerPublicId);
+                const partner = await partnerService.findOne(foundP.partnerPublicId, token || undefined);
                 setDentist(partner);
 
-                const ts = await treatmentService.findByPatient(foundP.publicId, foundP.partnerPublicId);
+                const ts = await treatmentService.findByPatient(foundP.publicId, foundP.partnerPublicId, token || undefined);
                 setTreatments(ts);
                 if (ts.length > 0) setSelectedTreatmentId(ts[0].publicId);
             }
@@ -102,9 +100,9 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
 
         if (!silent) setIsLoadingDetails(true);
         try {
-            const details = await treatmentService.findOne(tid);
+            const details = await treatmentService.findOne(tid, token || undefined);
             setTreatmentDetails(details);
-            const b = await budgetService.findByTreatment(tid);
+            const b = await budgetService.findByTreatment(tid, token || undefined);
             setBudgets(b);
         } catch (err) {
             console.error(err);
@@ -150,7 +148,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                 tratamentoPublicId: selectedTreatmentId,
                 valor: totalValue,
                 descricao: descricao.substring(0, 400)
-            });
+            }, token || undefined);
 
             // 1. Fechamos o modal primeiro e limpamos o formulário
             setOpenBudget(false);
@@ -193,7 +191,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
 
         setIsSubmitting(true);
         try {
-            await budgetService.cancel(budgetToDelete);
+            await budgetService.cancel(budgetToDelete, token || undefined);
             toast({
                 title: "Orçamento cancelado",
                 description: "O orçamento foi removido com sucesso."
@@ -210,7 +208,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
     const handleDeleteTreatment = async (tid: string) => {
         setIsSubmitting(true);
         try {
-            await treatmentService.remove(tid);
+            await treatmentService.remove(tid, token || undefined);
             toast({
                 title: "Tratamento removido",
                 description: "O tratamento e seus orçamentos foram excluídos com sucesso."

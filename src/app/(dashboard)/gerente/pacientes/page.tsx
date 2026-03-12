@@ -5,30 +5,34 @@ import { useRouter } from 'next/navigation';
 import { partnerService, patientService } from '@/lib/api';
 import { PartnerListItem, PatientListItem } from '@/lib/types';
 import { ChevronRight } from 'lucide-react';
+import { useAppAuth } from '@/hooks/use-app-auth';
 
 export default function GerentePacientesPage() {
     const router = useRouter();
     const [dentists, setDentists] = useState<PartnerListItem[]>([]);
     const [selectedDentist, setSelectedDentist] = useState<PartnerListItem | null>(null);
     const [patients, setPatients] = useState<PatientListItem[]>([]);
+    const { token, isLoaded } = useAppAuth();
 
     useEffect(() => {
         const load = async () => {
+            if (!isLoaded || !token) return;
             try {
-                const data = await partnerService.findAll();
+                const data = await partnerService.findAll(token);
                 setDentists(data);
             } catch (err) {
                 console.error(err);
             }
         };
         load();
-    }, []);
+    }, [isLoaded, token]);
 
     useEffect(() => {
         const loadPatients = async () => {
+            if (!isLoaded || !token) return;
             try {
                 if (selectedDentist) {
-                    const data = await patientService.findByPartner(selectedDentist.publicId);
+                    const data = await patientService.findByPartner(selectedDentist.publicId, token);
                     setPatients(data);
                 } else {
                     setPatients([]);
@@ -38,7 +42,7 @@ export default function GerentePacientesPage() {
             }
         };
         loadPatients();
-    }, [selectedDentist]);
+    }, [selectedDentist, isLoaded, token]);
 
     return (
         <div className="p-8">

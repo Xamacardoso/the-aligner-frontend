@@ -7,8 +7,8 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // For now we will mock the redirect to the gerente screen
-    // Later when Clerk is added, this will check the role from user metadata
+    // Redireciona para a tela inicial do sistema
+    // O middleware cuidará da proteção de rotas
     router.replace("/gerente/dentistas");
   }, [router]);
 

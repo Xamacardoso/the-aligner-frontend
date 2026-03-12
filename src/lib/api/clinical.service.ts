@@ -1,10 +1,10 @@
 import { apiClient } from './client';
 
 export const clinicalService = {
-    getUfs: () => apiClient<any[]>('/clinical/ufs'),
-    getSpecialties: () => apiClient<any[]>('/clinical/specialties'),
-    getCommunicationTypes: () => apiClient<any[]>('/clinical/communication-types'),
-    getTreatmentObjectives: () => apiClient<any[]>('/clinical/treatment-objectives'),
-    getCrowdingTypes: () => apiClient<any[]>('/clinical/crowding-types'),
-    getDegrees: () => apiClient<any[]>('/clinical/degrees'),
+    getUfs: (token?: string) => apiClient<any[]>('/clinical/ufs', {}, token),
+    getSpecialties: (token?: string) => apiClient<any[]>('/clinical/specialties', {}, token),
+    getCommunicationTypes: (token?: string) => apiClient<any[]>('/clinical/communication-types', {}, token),
+    getTreatmentObjectives: (token?: string) => apiClient<any[]>('/clinical/treatment-objectives', {}, token),
+    getCrowdingTypes: (token?: string) => apiClient<any[]>('/clinical/crowding-types', {}, token),
+    getDegrees: (token?: string) => apiClient<any[]>('/clinical/degrees', {}, token),
 };

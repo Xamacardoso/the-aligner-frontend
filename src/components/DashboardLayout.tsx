@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { LogOut, Users, UserCheck } from 'lucide-react';
 import { UserRole } from '@/lib/types';
+import { useAppAuth } from '@/hooks/use-app-auth';
 
 interface NavItem {
     label: string;
@@ -36,6 +37,7 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
         setTimeout(() => setMounted(true), 0);
     }, []);
 
+    const { user, signOut } = useAppAuth();
     const navItems = role === 'gerente' ? gerenteNav : dentistaNav;
 
     if (!mounted) return null;
@@ -76,11 +78,28 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
 
                 {/* User info + logout */}
                 <div className="px-4 py-4 border-t border-border">
-                    <p className="text-xs font-medium text-foreground truncate">{role === 'gerente' ? 'Gerente Teste' : 'Dentista Teste'}</p>
-                    <p className="text-xs text-muted-foreground capitalize mb-3">{role}</p>
-                    <Button variant="outline" size="sm" className="w-full gap-1.5">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
+                            {user?.fullName?.charAt(0) || 'U'}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                            <p className="text-xs font-semibold text-foreground truncate">
+                                {user?.fullName || 'Usuário'}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground capitalize">
+                                {role}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full gap-1.5 text-xs h-8"
+                        onClick={() => signOut()}
+                    >
                         <LogOut className="h-3.5 w-3.5" />
-                        Sair (Desativado)
+                        Sair
                     </Button>
                 </div>
             </aside>

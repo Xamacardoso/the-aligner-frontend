@@ -5,7 +5,7 @@ import {
     treatmentService,
     clinicalService
 } from "@/lib/api";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle2 } from "lucide-react";
 import { FormSection } from "@/components/forms/FormSection";
 import { cn } from "@/lib/utils";
+import { useAppAuth } from "@/hooks/use-app-auth";
 
 import { TreatmentDetails } from "@/lib/types";
 
@@ -34,6 +35,7 @@ export function TreatmentForm({
     onCancel
 }: TreatmentFormProps) {
     const { toast } = useToast();
+    const { token } = useAppAuth();
     const [loading, setLoading] = useState(false);
     const [clinicalObjectives, setClinicalObjectives] = useState<{ id: number, nome: string }[]>([]);
     const [crowdingTypes, setCrowdingTypes] = useState<{ id: number, nome: string }[]>([]);
@@ -52,8 +54,8 @@ export function TreatmentForm({
         async function loadAuxData() {
             try {
                 const [objs, crows] = await Promise.all([
-                    clinicalService.getTreatmentObjectives(),
-                    clinicalService.getCrowdingTypes()
+                    clinicalService.getTreatmentObjectives(token || undefined),
+                    clinicalService.getCrowdingTypes(token || undefined)
                 ]);
                 setClinicalObjectives(objs);
                 setCrowdingTypes(crows);
@@ -131,10 +133,10 @@ export function TreatmentForm({
 
             let response;
             if (initialData) {
-                response = await treatmentService.update(initialData.publicId, payload);
+                response = await treatmentService.update(initialData.publicId, payload, token || undefined);
                 toast({ title: "Tratamento atualizado com sucesso!" });
             } else {
-                response = await treatmentService.create(payload, patientPublicId, partnerPublicId);
+                response = await treatmentService.create(payload, patientPublicId, partnerPublicId, token || undefined);
                 toast({
                     title: "Tratamento criado com sucesso!",
                     description: "O novo tratamento já está disponível na lista."

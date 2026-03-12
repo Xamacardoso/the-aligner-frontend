@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { FormSection } from "@/components/forms/FormSection";
 import { PartnerDetails } from "@/lib/types";
 import { Loader2, User, Building, Award, Phone } from "lucide-react";
+import { useAppAuth } from "@/hooks/use-app-auth";
 
 interface PartnerFormProps {
     initialData?: PartnerDetails;
@@ -27,6 +28,7 @@ export function PartnerForm({
     onCancel
 }: PartnerFormProps) {
     const { toast } = useToast();
+    const { token } = useAppAuth();
     const [loading, setLoading] = useState(false);
     const [ufs, setUfs] = useState<{ id: number, nome: string, sigla: string }[]>([]);
     const [specialties, setSpecialties] = useState<{ id: number, nome: string }[]>([]);
@@ -125,10 +127,10 @@ export function PartnerForm({
             if (isEditing) {
                 // Remove password if not changing
                 if (!form.senha) delete (payload as any).senha;
-                await partnerService.update(form.cpf, payload);
+                await partnerService.update(form.cpf, payload, token || undefined);
                 toast({ title: "Parceiro atualizado com sucesso!" });
             } else {
-                await partnerService.create(payload);
+                await partnerService.create(payload, token || undefined);
                 toast({ title: "Parceiro criado com sucesso!" });
             }
 

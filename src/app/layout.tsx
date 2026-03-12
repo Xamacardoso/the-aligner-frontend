@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,8 +17,6 @@ export const metadata: Metadata = {
   title: "TheAligner",
   description: "MVP do sistema odontológico",
 };
-
-import { Toaster } from "@/components/ui/toaster";
 
 export default function RootLayout({
   children,

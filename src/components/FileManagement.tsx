@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { File, Download, UploadCloud, Loader2, Eye, Box, Trash2 } from 'lucide-react';
 import { useId } from 'react';
 import { cn } from "@/lib/utils";
+import { useAppAuth } from '@/hooks/use-app-auth';
 
 interface FileManagementProps {
     patientCpf: string; // Keeping name for compatibility but it should be treatmentPublicId now
@@ -28,6 +29,7 @@ export function FileManagement({
     const [isUploading, setIsUploading] = useState(false);
     const [deletingKey, setDeletingKey] = useState<string | null>(null);
     const { toast } = useToast();
+    const { token } = useAppAuth();
 
     useEffect(() => {
         if (onUploadingChange) {
@@ -39,7 +41,7 @@ export function FileManagement({
         if (!treatmentPublicId) return;
         setIsLoading(true);
         try {
-            const docs = await treatmentService.getFiles(treatmentPublicId);
+            const docs = await treatmentService.getFiles(treatmentPublicId, token || undefined);
             setDocuments(docs);
         } catch (err) {
             console.error(err);
@@ -64,7 +66,7 @@ export function FileManagement({
             const data = await treatmentService.requestUpload(treatmentPublicId, {
                 fileName: file.name,
                 contentType: fileType
-            });
+            }, token || undefined);
 
             if (!data) throw new Error("Falha ao obter URL de upload");
 
@@ -87,7 +89,7 @@ export function FileManagement({
                 nomeOriginal: file.name,
                 r2key,
                 formato: format
-            });
+            }, token || undefined);
 
             toast({ title: "Arquivo enviado com sucesso!", description: file.name });
             loadDocuments();
@@ -108,7 +110,7 @@ export function FileManagement({
     const handleDelete = async (r2key: string) => {
         setDeletingKey(r2key);
         try {
-            await treatmentService.deleteFile(r2key);
+            await treatmentService.deleteFile(r2key, token || undefined);
             toast({ title: "Arquivo excluído" });
             loadDocuments();
         } catch (err) {
