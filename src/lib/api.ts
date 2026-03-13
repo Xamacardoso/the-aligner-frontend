@@ -15,7 +15,8 @@ export * from './api/clinical.service';
 // These will help the app continue working while we update the components one by one
 
 export async function fetchDentists(): Promise<any[]> {
-    return partnerService.findAll();
+    const data = await partnerService.findAll();
+    return data.items;
 }
 
 export async function createDentist(data: any) {
@@ -32,7 +33,8 @@ export async function removeDentist(cpf: string) {
 
 export async function fetchPatients(partnerPublicId?: string): Promise<any[]> {
     if (!partnerPublicId) return [];
-    return patientService.findByPartner(partnerPublicId);
+    const data = await patientService.findByPartner(partnerPublicId);
+    return data.items;
 }
 
 export async function fetchPatient(publicId: string, partnerCpf: string) {

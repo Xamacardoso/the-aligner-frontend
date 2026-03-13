@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Eye, User, Phone, Mail, Award, MapPin, Building, MessageSquare, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, User, Phone, Mail, Award, MapPin, Building, MessageSquare, Loader2, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +16,14 @@ import { PartnerListItem, PartnerDetails } from '@/lib/types';
 import { PartnerForm } from '@/components/partner/PartnerForm';
 import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
 import { useAppAuth } from '@/hooks/use-app-auth';
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
 
 export default function GerenteDentistasPage() {
     const { toast } = useToast();
@@ -30,12 +38,17 @@ export default function GerenteDentistasPage() {
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [isLoadingDetails, setIsLoadingDetails] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const [searchTerm, setSearchTerm] = useState('');
+    const itemsPerPage = 8;
 
-    const loadData = async () => {
+    const loadData = async (page: number = currentPage, search: string = searchTerm) => {
         if (!isLoaded || !token) return;
         try {
-            const data = await partnerService.findAll(token);
-            setDentists(data);
+            const data = await partnerService.findAll(page, itemsPerPage, search, token);
+            setDentists(data.items);
+            setTotalItems(data.total);
         } catch (err) {
             console.error(err);
         }
@@ -63,9 +76,17 @@ export default function GerenteDentistasPage() {
     useEffect(() => {
         if (isLoaded && token) {
             setMounted(true);
-            loadData();
+            const debounceTimer = setTimeout(() => {
+                loadData(currentPage, searchTerm);
+            }, 300);
+            return () => clearTimeout(debounceTimer);
         }
-    }, [isLoaded, token]);
+    }, [isLoaded, token, currentPage, searchTerm]);
+
+    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(e.target.value);
+        setCurrentPage(1); // Reset to first page on search
+    };
 
     const openCreate = () => {
         setIsEditing(false);
@@ -124,9 +145,20 @@ export default function GerenteDentistasPage() {
                     <h1 className="text-xl font-semibold text-foreground">Dentistas Parceiros</h1>
                     <p className="text-sm text-muted-foreground">Gerencie os dentistas parceiros e seus estabelecimentos</p>
                 </div>
-                <Button size="sm" onClick={openCreate} className="gap-1.5" title="Cadastrar um novo dentista parceiro">
-                    <Plus className="h-4 w-4" /> Novo Parceiro
-                </Button>
+                <div className="flex items-center gap-3">
+                    <div className="relative w-72">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Buscar por nome ou CPF..."
+                            value={searchTerm}
+                            onChange={handleSearch}
+                            className="pl-9 h-9"
+                        />
+                    </div>
+                    <Button size="sm" onClick={openCreate} className="gap-1.5" title="Cadastrar um novo dentista parceiro">
+                        <Plus className="h-4 w-4" /> Novo Parceiro
+                    </Button>
+                </div>
             </div>
 
             <div className="bg-card rounded-lg border border-border overflow-hidden flex-1 flex flex-col min-h-0">
@@ -203,6 +235,48 @@ export default function GerenteDentistasPage() {
                         </TableBody>
                     </Table>
                 </ScrollArea>
+                {totalItems > itemsPerPage && (
+                    <div className="p-4 border-t border-border flex justify-center bg-card">
+                        <Pagination>
+                            <PaginationContent>
+                                <PaginationItem>
+                                    <PaginationPrevious
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            if (currentPage > 1) setCurrentPage(p => p - 1);
+                                        }}
+                                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    />
+                                </PaginationItem>
+                                {Array.from({ length: Math.ceil(totalItems / itemsPerPage) }).map((_, i) => (
+                                    <PaginationItem key={i}>
+                                        <PaginationLink
+                                            href="#"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setCurrentPage(i + 1);
+                                            }}
+                                            isActive={currentPage === i + 1}
+                                        >
+                                            {i + 1}
+                                        </PaginationLink>
+                                    </PaginationItem>
+                                ))}
+                                <PaginationItem>
+                                    <PaginationNext
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            if (currentPage < Math.ceil(totalItems / itemsPerPage)) setCurrentPage(p => p + 1);
+                                        }}
+                                        className={currentPage === Math.ceil(totalItems / itemsPerPage) ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    />
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
+                    </div>
+                )}
             </div>
 
             {/* Details Modal */}

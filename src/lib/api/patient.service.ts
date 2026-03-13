@@ -2,11 +2,25 @@ import { apiClient } from './client';
 import { PatientListItem, PatientDetails } from '../types';
 
 export const patientService = {
-    findByPartner: (partnerPublicId: string, token?: string) =>
-        apiClient<PatientListItem[]>(`/patients/partner/${partnerPublicId}`, {}, token),
+    findByPartner: (partnerPublicId: string, page: number = 1, limit: number = 10, search?: string, token?: string) => {
+        const queryParams = new URLSearchParams();
+        queryParams.append('page', page.toString());
+        queryParams.append('limit', limit.toString());
+        if (search) {
+            queryParams.append('search', search);
+        }
+        return apiClient<{ items: PatientListItem[], total: number }>(`/patients/partner/${partnerPublicId}?${queryParams.toString()}`, {}, token);
+    },
 
-    findMyPatients: (token?: string) =>
-        apiClient<PatientListItem[]>(`/patients/my-patients`, {}, token),
+    findMyPatients: (page: number = 1, limit: number = 10, search?: string, token?: string) => {
+        const queryParams = new URLSearchParams();
+        queryParams.append('page', page.toString());
+        queryParams.append('limit', limit.toString());
+        if (search) {
+            queryParams.append('search', search);
+        }
+        return apiClient<{ items: PatientListItem[], total: number }>(`/patients/my-patients?${queryParams.toString()}`, {}, token);
+    },
 
     findOne: (publicId: string, token?: string) =>
         apiClient<PatientDetails>(`/patients/${publicId}`, {}, token),

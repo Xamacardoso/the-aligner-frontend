@@ -9,10 +9,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Eye } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
 import { useAppAuth } from '@/hooks/use-app-auth';
 
 interface PatientForm {
@@ -41,20 +49,33 @@ export default function DentistaPatientsPage() {
     const [isEditing, setIsEditing] = useState(false);
     const [selectedPublicId, setSelectedPublicId] = useState<string | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+    const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [searchTerm, setSearchTerm] = useState('');
+    const itemsPerPage = 10;
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         if (isLoaded && token && user?.publicId) {
             setMounted(true);
-            loadData();
+            const debounceTimer = setTimeout(() => {
+                loadData(currentPage, searchTerm);
+            }, 300);
+            return () => clearTimeout(debounceTimer);
         }
-    }, [isLoaded, token, user?.publicId]);
+    }, [isLoaded, token, user?.publicId, currentPage, searchTerm]);
 
-    const loadData = async () => {
+    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(e.target.value);
+        setCurrentPage(1); // Reset to first page on search
+    };
+
+    const loadData = async (page: number = currentPage, search: string = searchTerm) => {
         try {
             if (!user?.publicId || !token) return;
-            const data = await patientService.findByPartner(user.publicId, token);
-            setPatients(data);
+            const data = await patientService.findMyPatients(page, itemsPerPage, search, token);
+            setPatients(data.items);
+            setTotalItems(data.total);
         } catch (err) {
             console.error(err);
         }
@@ -102,7 +123,7 @@ export default function DentistaPatientsPage() {
                     description: `${form.nome} foi adicionado à sua lista.`
                 });
             }
-            await loadData();
+            await loadData(currentPage);
             setOpen(false);
         } catch (err: any) {
             toast({
@@ -124,7 +145,7 @@ export default function DentistaPatientsPage() {
                 description: "O registro do paciente foi excluído permanentemente.",
                 variant: "default"
             });
-            await loadData();
+            await loadData(currentPage);
             setDeleteConfirm(null);
         } catch (err: any) {
             toast({
@@ -146,9 +167,20 @@ export default function DentistaPatientsPage() {
                     <h1 className="text-xl font-semibold text-foreground">Meus Pacientes</h1>
                     <p className="text-sm text-muted-foreground">Gerencie os pacientes vinculados a você</p>
                 </div>
-                <Button size="sm" onClick={openCreate} className="gap-1.5">
-                    <Plus className="h-4 w-4" /> Novo Paciente
-                </Button>
+                <div className="flex items-center gap-3">
+                    <div className="relative w-72">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Buscar por nome ou CPF..."
+                            value={searchTerm}
+                            onChange={handleSearch}
+                            className="pl-9 h-9"
+                        />
+                    </div>
+                    <Button size="sm" onClick={openCreate} className="gap-1.5">
+                        <Plus className="h-4 w-4" /> Novo Paciente
+                    </Button>
+                </div>
             </div>
 
             <div className="bg-card rounded-lg border border-border overflow-hidden flex-1 flex flex-col min-h-0">
@@ -221,6 +253,48 @@ export default function DentistaPatientsPage() {
                         </TableBody>
                     </Table>
                 </ScrollArea>
+                {totalItems > itemsPerPage && (
+                    <div className="p-4 border-t border-border flex justify-center bg-card">
+                        <Pagination>
+                            <PaginationContent>
+                                <PaginationItem>
+                                    <PaginationPrevious
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            if (currentPage > 1) setCurrentPage(p => p - 1);
+                                        }}
+                                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    />
+                                </PaginationItem>
+                                {Array.from({ length: Math.ceil(totalItems / itemsPerPage) }).map((_, i) => (
+                                    <PaginationItem key={i}>
+                                        <PaginationLink
+                                            href="#"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setCurrentPage(i + 1);
+                                            }}
+                                            isActive={currentPage === i + 1}
+                                        >
+                                            {i + 1}
+                                        </PaginationLink>
+                                    </PaginationItem>
+                                ))}
+                                <PaginationItem>
+                                    <PaginationNext
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            if (currentPage < Math.ceil(totalItems / itemsPerPage)) setCurrentPage(p => p + 1);
+                                        }}
+                                        className={currentPage === Math.ceil(totalItems / itemsPerPage) ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    />
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
+                    </div>
+                )}
             </div>
 
             {/* Patient Form Dialog */}
