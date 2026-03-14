@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "TheAligner",
   description: "MVP do sistema odontológico",
+  icons: {
+    icon: "/thealign_logo2.jpeg",
+  },
 };
 
 export default function RootLayout({

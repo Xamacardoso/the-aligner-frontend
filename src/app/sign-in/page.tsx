@@ -92,10 +92,7 @@ export default function SignInPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <Label htmlFor="password">Senha</Label>
-                                    <a href="#" className="text-sm text-blue-600 hover:underline">Esqueceu a senha?</a>
-                                </div>
+                                <Label htmlFor="password">Senha</Label>
                                 <Input 
                                     id="password" 
                                     type="password" 
@@ -114,10 +111,7 @@ export default function SignInPage() {
                             >
                                 {isLoading ? "Entrando..." : "Entrar"}
                             </Button>
-                            <p className="mt-4 text-center text-sm text-slate-600">
-                                Não tem uma conta?{" "}
-                                <a href="#" className="font-medium text-blue-600 hover:underline">Fale com o gerente</a>
-                            </p>
+
                         </CardFooter>
                     </form>
                 </Card>
