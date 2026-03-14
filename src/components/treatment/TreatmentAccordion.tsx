@@ -79,6 +79,9 @@ function TreatmentItemContent({
     const [budgetsOpen, setBudgetsOpen] = React.useState(false);
     const [isUploading, setIsUploading] = React.useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+    const [statusFilter, setStatusFilter] = React.useState<'todos' | 'pendente' | 'aprovado' | 'declinado' | 'cancelado'>('todos');
+
+    const filteredBudgets = budgets.filter(b => statusFilter === 'todos' || b.status === statusFilter);
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -197,13 +200,35 @@ function TreatmentItemContent({
                     </Button>
                 }
             >
-                {budgets.length === 0 ? (
+                {budgets.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4 pb-2 border-b border-border/50">
+                        {(['todos', 'pendente', 'aprovado', 'declinado', 'cancelado'] as const).map((s) => (
+                            <button
+                                key={s}
+                                onClick={() => setStatusFilter(s)}
+                                className={cn(
+                                    "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border",
+                                    statusFilter === s
+                                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                        : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
+                                )}
+                            >
+                                {s === 'todos' ? 'Todos' : statusLabel[s]}
+                                {s !== 'todos' && ` (${budgets.filter(b => b.status === s).length})`}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {filteredBudgets.length === 0 ? (
                     <p className="text-xs text-muted-foreground italic bg-muted/20 p-4 rounded-lg border border-dashed text-center">
-                        Nenhum orçamento para este tratamento.
+                        {statusFilter === 'todos' 
+                            ? "Nenhum orçamento para este tratamento." 
+                            : `Nenhum orçamento com status "${statusLabel[statusFilter]}" encontrado.`}
                     </p>
                 ) : (
                     <div className="grid grid-cols-1 gap-2">
-                        {budgets.map(b => (
+                        {filteredBudgets.map(b => (
                             <div
                                 key={b.publicId}
                                 id={`budget-${b.publicId}`}

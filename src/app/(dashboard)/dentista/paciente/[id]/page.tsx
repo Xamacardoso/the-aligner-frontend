@@ -273,7 +273,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
             await budgetService.cancel(budgetToDelete, token || undefined);
             toast({
                 title: "Orçamento cancelado",
-                description: "O orçamento foi removido com sucesso."
+                description: "O status do orçamento foi alterado para cancelado."
             });
             if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId);
             setBudgetToDelete(null);
@@ -617,8 +617,8 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                 onConfirm={handleCancelBudget}
                 isLoading={isSubmitting}
                 title="Confirmar Cancelamento"
-                description="Tem certeza que deseja cancelar este orçamento? Esta ação removerá o orçamento da lista e não poderá ser desfeita."
-                confirmText="Confirmar Cancelamento"
+                description="Tem certeza que deseja cancelar este orçamento? O status será alterado para 'Cancelado', permitindo filtragem posterior."
+                confirmText="Confirmar"
             />
         </div>
     );
