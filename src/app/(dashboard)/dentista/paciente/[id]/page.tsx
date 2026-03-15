@@ -496,9 +496,9 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                             />
                         </div>
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setOpenBudget(false)} disabled={isSubmitting}>Cancelar</Button>
-                        <Button onClick={handleSaveBudget} loading={isSubmitting} disabled={procedures.length === 0 || procedures.some(p => !p.name || !p.value)}>Salvar Orçamento</Button>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" onClick={() => setOpenBudget(false)} disabled={isSubmitting} className="h-11 px-8">Cancelar</Button>
+                        <Button onClick={handleSaveBudget} loading={isSubmitting} disabled={procedures.length === 0 || procedures.some(p => !p.name || !p.value)} className="h-11 px-8">Salvar Orçamento</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -555,7 +555,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                         </div>
                     )}
                     <DialogFooter>
-                        <Button variant="secondary" onClick={() => setViewingBudget(null)}>Fechar</Button>
+                        <Button variant="secondary" onClick={() => setViewingBudget(null)} className="h-11 px-10 font-bold uppercase text-xs tracking-widest">Fechar</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

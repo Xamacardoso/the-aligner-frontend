@@ -257,15 +257,17 @@ function TreatmentItemContent({
                                     >
                                         Visualizar
                                     </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => onDeleteBudget(b.publicId)}
-                                        className="h-7 w-7 text-destructive hover:bg-destructive/10 transition-colors"
-                                        title="Cancelar orçamento"
-                                    >
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
+                                     {b.status === 'pendente' && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => onDeleteBudget(b.publicId)}
+                                            className="h-7 w-7 text-destructive hover:bg-destructive/10 transition-colors"
+                                            title="Cancelar orçamento"
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         ))}

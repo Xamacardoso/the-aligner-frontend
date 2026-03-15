@@ -20,8 +20,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Trash2, FileText, ClipboardList, User, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, FileText, ClipboardList, User, Loader2, Pencil, Calendar } from 'lucide-react';
 import { TreatmentAccordion } from '@/components/treatment/TreatmentAccordion';
+import { TreatmentForm } from '@/components/treatment/TreatmentForm';
 import { FileManagement } from '@/components/FileManagement';
 import { useToast } from '@/hooks/use-toast';
 import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
@@ -70,6 +71,10 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
     const [viewingBudget, setViewingBudget] = useState<Budget | null>(null);
     const [observations, setObservations] = useState('');
     const [budgetToDelete, setBudgetToDelete] = useState<string | null>(null);
+
+    const [openEditTreatment, setOpenEditTreatment] = useState(false);
+    const [openEditPatient, setOpenEditPatient] = useState(false);
+    const [patientForm, setPatientForm] = useState({ cpf: '', nome: '', nascimento: '' });
 
     const loadData = async () => {
         if (!isLoaded || !token || !publicId) return;
@@ -226,6 +231,56 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
         }
     };
 
+    const handleTreatmentSuccess = (data: any) => {
+        const actualTreatment = data?.treatment ? data.treatment : data;
+        setOpenEditTreatment(false);
+
+        if (!actualTreatment || !actualTreatment.publicId) {
+            loadData();
+            return;
+        }
+
+        setTreatments(prev => prev.map(t => t.publicId === actualTreatment.publicId ? actualTreatment : t));
+        setTreatmentDetails(actualTreatment);
+        
+        loadData();
+        loadTreatmentData(actualTreatment.publicId, true);
+    };
+
+    const openEditPatientModal = () => {
+        if (!patient) return;
+        setPatientForm({
+            cpf: patient.cpf,
+            nome: patient.nome,
+            nascimento: patient.nascimento ? new Date(patient.nascimento).toISOString().split('T')[0] : ''
+        });
+        setOpenEditPatient(true);
+    };
+
+    const handleSavePatient = async () => {
+        if (!publicId || !token) return;
+        setIsSubmitting(true);
+        try {
+            await patientService.update(publicId, {
+                nomePaciente: patientForm.nome,
+                cpfPaciente: patientForm.cpf,
+                dataNascimento: patientForm.nascimento
+            }, token);
+            
+            toast({ title: "Paciente atualizado com sucesso!" });
+            setOpenEditPatient(false);
+            loadData();
+        } catch (err: any) {
+            toast({
+                title: "Erro ao atualizar paciente",
+                description: err.message,
+                variant: "destructive"
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     return (
         <div className="p-8 max-w-4xl">
             <button
@@ -249,8 +304,18 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
             </div>
 
             {/* Identity */}
-            <div className="bg-card rounded-lg border border-border p-5 mb-6">
-                <h2 className="text-sm font-semibold text-foreground mb-4">Identificação do Paciente</h2>
+            <div className="bg-card rounded-lg border border-border p-5 mb-6 relative group">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-sm font-semibold text-foreground">Identificação do Paciente</h2>
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={openEditPatientModal}
+                        className="h-8 gap-2 text-[10px] font-bold uppercase"
+                    >
+                        <Pencil className="h-3.5 w-3.5" /> Editar Dados
+                    </Button>
+                </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                     {[
                         ['CPF', patient.cpf],
@@ -279,7 +344,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                     onSelect={setSelectedTreatmentId}
                     treatmentDetails={treatmentDetails}
                     budgets={budgets}
-                    onEditTreatment={() => { }} // Gerente não edita tratamento por enquanto
+                    onEditTreatment={() => setOpenEditTreatment(true)}
                     onDeleteTreatment={handleDeleteTreatment}
                     onAddBudget={() => setOpenBudget(true)}
                     onViewBudget={setViewingBudget}
@@ -371,9 +436,86 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                 onConfirm={handleCancelBudget}
                 isLoading={isSubmitting}
                 title="Confirmar Cancelamento"
-                description="Tem certeza que deseja cancelar este orçamento? Esta ação removerá o orçamento da lista e não poderá ser desfeita."
-                confirmText="Confirmar Cancelamento"
+                description="Tem certeza que deseja cancelar este orçamento? O status será alterado para 'Cancelado', permitindo filtragem posterior."
+                confirmText="Confirmar"
             />
+
+            {/* Edit Treatment Dialog */}
+            <Dialog open={openEditTreatment} onOpenChange={setOpenEditTreatment}>
+                <DialogContent className="max-w-3xl h-[80vh] flex flex-col p-0 overflow-hidden gap-0">
+                    <DialogHeader className="p-6 border-b border-border flex-shrink-0">
+                        <DialogTitle className="flex items-center gap-2">
+                            <Pencil className="h-5 w-5 text-primary" />
+                            Editar Tratamento Clínico
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="flex-1 overflow-y-auto min-h-0 overscroll-contain">
+                        <div className="p-6">
+                            {patient && dentist && treatmentDetails && (
+                                <TreatmentForm
+                                    patientPublicId={patient.publicId}
+                                    partnerPublicId={dentist.publicId}
+                                    initialData={treatmentDetails}
+                                    onSuccess={handleTreatmentSuccess}
+                                    onCancel={() => setOpenEditTreatment(false)}
+                                />
+                            )}
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Patient Dialog */}
+            <Dialog open={openEditPatient} onOpenChange={setOpenEditPatient}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <User className="h-5 w-5 text-primary" />
+                            Editar Identificação do Paciente
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="py-6 space-y-4">
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">CPF *</Label>
+                            <Input
+                                value={patientForm.cpf}
+                                onChange={e => setPatientForm(f => ({ ...f, cpf: e.target.value.replace(/\D/g, '').slice(0, 11) }))}
+                                placeholder="Apenas números"
+                                disabled
+                                className="bg-muted cursor-not-allowed h-11"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nome Completo *</Label>
+                            <Input 
+                                value={patientForm.nome} 
+                                onChange={e => setPatientForm(f => ({ ...f, nome: e.target.value }))}
+                                className="h-11"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Data de Nascimento</Label>
+                            <div className="relative">
+                                <Input 
+                                    type="date" 
+                                    value={patientForm.nascimento} 
+                                    onChange={e => setPatientForm(f => ({ ...f, nascimento: e.target.value }))}
+                                    className="h-11"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" onClick={() => setOpenEditPatient(false)} className="h-11 px-8">Cancelar</Button>
+                        <Button onClick={handleSavePatient} disabled={!patientForm.nome} loading={isSubmitting} className="h-11 px-8">
+                            Atualizar Dados
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

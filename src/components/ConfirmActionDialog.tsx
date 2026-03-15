@@ -54,9 +54,9 @@ export function ConfirmActionDialog({
                         {description}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter className="gap-2">
+                <AlertDialogFooter className="gap-2 sm:gap-3">
                     <AlertDialogCancel asChild>
-                        <Button type="button" variant="outline" disabled={isLoading}>
+                        <Button type="button" variant="outline" disabled={isLoading} className="h-11 px-6 min-w-[100px]">
                             {cancelText}
                         </Button>
                     </AlertDialogCancel>
@@ -68,7 +68,7 @@ export function ConfirmActionDialog({
                             onConfirm();
                         }}
                         disabled={isLoading}
-                        className="min-w-[100px]"
+                        className="h-11 px-6 min-w-[120px]"
                     >
                         {isLoading ? (
                             <>
