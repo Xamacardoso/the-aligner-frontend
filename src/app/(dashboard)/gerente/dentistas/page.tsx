@@ -453,7 +453,7 @@ export default function GerenteDentistasPage() {
 
             {/* Form Dialog */}
             <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent className="max-w-3xl h-[85vh] flex flex-col p-0 overflow-hidden gap-0 border-none shadow-2xl">
+                <DialogContent className="max-w-[95vw] md:max-w-7xl h-[92vh] flex flex-col p-0 overflow-hidden gap-0 border-none shadow-2xl">
                     <DialogHeader className="p-6 border-b border-border bg-muted/5 flex-shrink-0">
                         <DialogTitle className="flex items-center gap-2 text-xl font-bold">
                             {isEditing ? (

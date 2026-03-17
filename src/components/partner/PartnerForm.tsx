@@ -151,47 +151,52 @@ export function PartnerForm({
     return (
         <div className="space-y-8">
             <FormSection title="Dados Pessoais e Acesso">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                        <Label>CPF *</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">CPF *</Label>
                         <Input
-                            placeholder="Apenas números"
+                            placeholder="000.000.000-00"
                             value={form.cpf}
+                            className="h-11 border-primary/10 focus:border-primary transition-all font-mono font-bold"
                             onChange={e => setForm(f => ({ ...f, cpf: e.target.value.replace(/\D/g, '').slice(0, 11) }))}
                             disabled={isEditing}
                         />
                     </div>
-                    <div className="space-y-1.5">
-                        <Label>Nome Completo *</Label>
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Nome Completo *</Label>
                         <Input
-                            placeholder="Nome do dentista parceiro"
+                            placeholder="Nome civil do dentista"
                             value={form.nome}
+                            className="h-11 border-primary/10 focus:border-primary transition-all font-medium"
                             onChange={e => setForm(f => ({ ...f, nome: e.target.value }))}
                         />
                     </div>
-                    <div className="space-y-1.5">
-                        <Label>E-mail *</Label>
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">E-mail de Acesso *</Label>
                         <Input
                             type="email"
                             placeholder="email@exemplo.com"
                             value={form.email}
+                            className="h-11 border-primary/10 focus:border-primary transition-all font-medium"
                             onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                         />
                     </div>
-                    <div className="space-y-1.5">
-                        <Label>{isEditing ? 'Nova Senha (deixe vazio para não alterar)' : 'Senha de Acesso *'}</Label>
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{isEditing ? 'Nova Senha' : 'Senha Provisória *'}</Label>
                         <Input
                             type="password"
-                            placeholder="Mínimo 6 caracteres"
+                            placeholder={isEditing ? "(Opcional)" : "Mínimo 6 caracteres"}
                             value={form.senha}
+                            className="h-11 border-primary/10 focus:border-primary transition-all"
                             onChange={e => setForm(f => ({ ...f, senha: e.target.value }))}
                         />
                     </div>
-                    <div className="space-y-1.5">
-                        <Label>Telefone Pessoal</Label>
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Telefone de Contato</Label>
                         <Input
-                            placeholder="DDD + Número"
+                            placeholder="(00) 00000-0000"
                             value={form.telefone}
+                            className="h-11 border-primary/10 focus:border-primary transition-all font-medium"
                             onChange={e => setForm(f => ({ ...f, telefone: e.target.value.replace(/\D/g, '').slice(0, 11) }))}
                         />
                     </div>
@@ -199,19 +204,20 @@ export function PartnerForm({
             </FormSection>
 
             <FormSection title="Registro Profissional">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-1.5">
-                        <Label>CRO *</Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Número do CRO *</Label>
                         <Input
-                            placeholder="Número do registro"
+                            placeholder="Ex: 12345"
                             value={form.cro}
+                            className="h-11 border-primary/10 focus:border-primary transition-all font-bold"
                             onChange={e => setForm(f => ({ ...f, cro: e.target.value }))}
                         />
                     </div>
-                    <div className="space-y-1.5">
-                        <Label>UF do CRO *</Label>
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">UF do CRO *</Label>
                         <select
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex h-11 w-full rounded-md border border-primary/10 bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all font-medium"
                             value={form.croUf}
                             onChange={e => setForm(f => ({ ...f, croUf: e.target.value }))}
                         >
@@ -225,93 +231,108 @@ export function PartnerForm({
             </FormSection>
 
             <FormSection
-                title="Titulação Principal"
-                description="Escolha sua maior titulação *"
+                title="Qualificação e Especialidade"
+                description="Selecione sua formação principal e outras áreas de atuação"
             >
-                <RadioGroup
-                    className="grid grid-cols-1 md:grid-cols-3 gap-4"
-                    value={form.titulacaoId.toString()}
-                    onValueChange={val => setForm(f => ({ ...f, titulacaoId: parseInt(val) }))}
-                >
-                    {degrees.map(deg => (
-                        <div key={deg.id} className="flex items-center space-x-2 bg-background/50 p-2 rounded-lg border border-border/40 hover:border-primary/50 transition-colors">
-                            <RadioGroupItem value={deg.id.toString()} id={`deg-${deg.id}`} />
-                            <Label htmlFor={`deg-${deg.id}`} className="flex-1 cursor-pointer text-xs font-medium">{deg.nome}</Label>
-                        </div>
-                    ))}
-                </RadioGroup>
-            </FormSection>
+                <div className="space-y-6">
+                    <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-primary">Titulação Máxima *</Label>
+                        <RadioGroup
+                            className="flex flex-wrap gap-4"
+                            value={form.titulacaoId.toString()}
+                            onValueChange={val => setForm(f => ({ ...f, titulacaoId: parseInt(val) }))}
+                        >
+                            {degrees.map(deg => (
+                                <div key={deg.id} className="flex items-center space-x-3 bg-muted/10 px-4 py-2.5 rounded-full border border-border/40 hover:border-primary/50 transition-all cursor-pointer shadow-sm">
+                                    <RadioGroupItem value={deg.id.toString()} id={`deg-${deg.id}`} />
+                                    <Label htmlFor={`deg-${deg.id}`} className="cursor-pointer text-xs font-bold uppercase tracking-tight">{deg.nome}</Label>
+                                </div>
+                            ))}
+                        </RadioGroup>
+                    </div>
 
-            <FormSection
-                title="Especialidades"
-                description="Selecione todas que se aplicam"
-            >
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {specialties.map(spec => (
-                        <div key={spec.id} className="flex items-center space-x-2 bg-background/50 p-2 rounded-lg border border-border/40 hover:border-primary/50 transition-colors">
-                            <Checkbox
-                                id={`spec-${spec.id}`}
-                                checked={form.especialidadesIds.includes(spec.id)}
-                                onCheckedChange={(checked) => {
-                                    if (checked) {
-                                        setForm(f => ({ ...f, especialidadesIds: [...f.especialidadesIds, spec.id] }));
-                                    } else {
-                                        setForm(f => ({ ...f, especialidadesIds: f.especialidadesIds.filter(id => id !== spec.id) }));
-                                    }
-                                }}
-                            />
-                            <Label htmlFor={`spec-${spec.id}`} className="flex-1 cursor-pointer text-[10px] font-semibold uppercase tracking-tight">{spec.nome}</Label>
+                    <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-primary">Especialidades</Label>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                            {specialties.map(spec => (
+                                <div key={spec.id} className="flex items-center space-x-3 bg-muted/10 p-3 rounded-xl border border-border/40 hover:border-primary/30 hover:bg-muted/20 transition-all shadow-sm">
+                                    <Checkbox
+                                        id={`spec-${spec.id}`}
+                                        checked={form.especialidadesIds.includes(spec.id)}
+                                        onCheckedChange={(checked) => {
+                                            if (checked) {
+                                                setForm(f => ({ ...f, especialidadesIds: [...f.especialidadesIds, spec.id] }));
+                                            } else {
+                                                setForm(f => ({ ...f, especialidadesIds: f.especialidadesIds.filter(id => id !== spec.id) }));
+                                            }
+                                        }}
+                                    />
+                                    <Label htmlFor={`spec-${spec.id}`} className="cursor-pointer text-[10px] font-bold uppercase tracking-tighter leading-tight select-none">{spec.nome}</Label>
+                                </div>
+                            ))}
                         </div>
-                    ))}
+                    </div>
                 </div>
             </FormSection>
 
             <FormSection title="Dados do Estabelecimento / Clínica">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                        <Label>Razão Social</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Razão Social / Nome da Clínica</Label>
                         <Input
-                            placeholder="Nome da clínica"
+                            placeholder="Ex: Clínica Odontológica Sorriso"
                             value={form.razaoSocial}
+                            className="h-11 border-primary/10 focus:border-primary transition-all font-medium"
                             onChange={e => setForm(f => ({ ...f, razaoSocial: e.target.value }))}
                         />
                     </div>
-                    <div className="space-y-1.5">
-                        <Label>CNPJ</Label>
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">CNPJ</Label>
                         <Input
-                            placeholder="Apenas números"
+                            placeholder="00.000.000/0000-00"
                             value={form.cnpj}
+                            className="h-11 border-primary/10 focus:border-primary transition-all font-mono"
                             onChange={e => setForm(f => ({ ...f, cnpj: e.target.value.replace(/\D/g, '').slice(0, 14) }))}
                         />
                     </div>
-                    <div className="col-span-full space-y-1.5">
-                        <Label>Endereço Completo</Label>
+                    <div className="lg:col-span-2 space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Endereço Profissional</Label>
                         <Input
-                            placeholder="Rua, número, etc"
+                            placeholder="Rua, número, sala..."
                             value={form.endereco}
+                            className="h-11 border-primary/10 focus:border-primary transition-all"
                             onChange={e => setForm(f => ({ ...f, endereco: e.target.value }))}
                         />
                     </div>
-                    <div className="space-y-1.5">
-                        <Label>Bairro</Label>
-                        <Input value={form.bairro} onChange={e => setForm(f => ({ ...f, bairro: e.target.value }))} />
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Bairro</Label>
+                        <Input 
+                            value={form.bairro}
+                            className="h-11 border-primary/10 focus:border-primary transition-all"
+                            onChange={e => setForm(f => ({ ...f, bairro: e.target.value }))} 
+                        />
                     </div>
-                    <div className="space-y-1.5">
-                        <Label>CEP</Label>
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">CEP</Label>
                         <Input
                             placeholder="Apenas números"
                             value={form.cep}
+                            className="h-11 border-primary/10 focus:border-primary transition-all font-mono"
                             onChange={e => setForm(f => ({ ...f, cep: e.target.value.replace(/\D/g, '').slice(0, 8) }))}
                         />
                     </div>
-                    <div className="space-y-1.5">
-                        <Label>Cidade</Label>
-                        <Input value={form.cidade} onChange={e => setForm(f => ({ ...f, cidade: e.target.value }))} />
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Cidade</Label>
+                        <Input 
+                            value={form.cidade}
+                            className="h-11 border-primary/10 focus:border-primary transition-all"
+                            onChange={e => setForm(f => ({ ...f, cidade: e.target.value }))} 
+                        />
                     </div>
-                    <div className="space-y-1.5">
-                        <Label>UF do Estabelecimento</Label>
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">UF</Label>
                         <select
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex h-11 w-full rounded-md border border-primary/10 bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
                             value={form.uf_estabelecimento}
                             onChange={e => setForm(f => ({ ...f, uf_estabelecimento: e.target.value }))}
                         >
@@ -326,11 +347,11 @@ export function PartnerForm({
 
             <FormSection
                 title="Preferências de Comunicação"
-                description="Como prefere ser contatado"
+                description="Selecione os canais para contato e notificações"
             >
                 <div className="flex flex-wrap gap-4">
                     {commTypes.map(ct => (
-                        <div key={ct.id} className="flex items-center space-x-2">
+                        <div key={ct.id} className="flex items-center space-x-3 bg-muted/10 px-5 py-3 rounded-full border border-border/40 hover:border-primary/50 transition-all cursor-pointer shadow-sm">
                             <Checkbox
                                 id={`comm-${ct.id}`}
                                 checked={form.comunicacoesIds.includes(ct.id)}
@@ -342,15 +363,15 @@ export function PartnerForm({
                                     }
                                 }}
                             />
-                            <Label htmlFor={`comm-${ct.id}`} className="cursor-pointer text-xs font-medium">{ct.descricao}</Label>
+                            <Label htmlFor={`comm-${ct.id}`} className="cursor-pointer text-xs font-bold uppercase tracking-tight select-none">{ct.descricao}</Label>
                         </div>
                     ))}
                 </div>
             </FormSection>
 
-            <div className="flex justify-end gap-3 pt-6">
-                <Button variant="ghost" onClick={onCancel} disabled={loading}>Cancelar</Button>
-                <Button onClick={handleSave} loading={loading} className="min-w-[150px]">
+            <div className="flex justify-end gap-3 pt-10 border-t border-border mt-8">
+                <Button variant="ghost" onClick={onCancel} disabled={loading} className="h-12 px-8 font-bold uppercase text-xs tracking-widest hover:bg-muted/30">Cancelar</Button>
+                <Button onClick={handleSave} loading={loading} className="h-12 px-10 font-bold uppercase text-xs tracking-widest min-w-[200px] shadow-lg shadow-primary/20">
                     {isEditing ? "Salvar Alterações" : "Cadastrar Parceiro"}
                 </Button>
             </div>

@@ -142,16 +142,12 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
         if (!selectedTreatmentId) return;
 
         setIsSubmitting(true);
-        let descricao = procedures.map(p => `${p.name}: R$ ${p.value}`).join('; ');
-        if (observations) {
-            descricao += `\nObs: ${observations}`;
-        }
 
         try {
             const newBudget = await budgetService.create({
                 tratamentoPublicId: selectedTreatmentId,
                 valor: totalValue,
-                descricao: descricao.substring(0, 400)
+                descricao: observations.substring(0, 400)
             }, token || undefined);
 
             // 1. Fechamos o modal primeiro e limpamos o formulário
@@ -351,46 +347,55 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
 
             {/* Budget View Modal */}
             <Dialog open={!!viewingBudget} onOpenChange={v => !v && setViewingBudget(null)}>
-                <DialogContent className="max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>Detalhes do Orçamento</DialogTitle>
+                <DialogContent className="max-w-[95vw] md:max-w-6xl h-auto border-none shadow-2xl p-0 overflow-hidden">
+                    <DialogHeader className="p-6 border-b border-border bg-muted/5 flex-shrink-0">
+                        <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+                            <FileText className="h-5 w-5 text-primary" />
+                            Detalhes do Orçamento do Tratamento
+                        </DialogTitle>
                     </DialogHeader>
                     {viewingBudget && (
-                        <div className="space-y-6 py-2">
-                            <div className="flex items-center justify-between border-b pb-4 border-border">
-                                <div>
-                                    <p className="text-xs font-semibold text-muted-foreground uppercase">Status</p>
-                                    <span className={`text-xs px-2.5 py-1 rounded-full font-semibold inline-block mt-1 ${statusClass[viewingBudget.status]}`}>
-                                        {statusLabel[viewingBudget.status]}
-                                    </span>
+                        <div className="p-8 space-y-8 bg-background/50">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                                <div className="bg-primary/5 rounded-2xl border border-primary/10 p-6 shadow-sm">
+                                    <div className="space-y-4">
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Status do Orçamento</p>
+                                            <span className={`text-[11px] px-3 py-1.5 rounded-full font-bold inline-block border ${statusClass[viewingBudget.status]}`}>
+                                                {statusLabel[viewingBudget.status]}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Valor do Tratamento</p>
+                                            <p className="text-3xl font-black text-foreground tabular-nums">
+                                                {Number(viewingBudget.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-xs font-semibold text-muted-foreground uppercase">Valor Total</p>
-                                    <p className="text-xl font-bold text-foreground mt-0.5">
-                                        {Number(viewingBudget.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                    </p>
-                                </div>
-                            </div>
 
-                            <div className="space-y-3">
-                                <p className="text-xs font-semibold text-muted-foreground uppercase">Descrição / Procedimentos</p>
-                                <div className="bg-muted/30 rounded-md p-3 border border-border">
-                                    <p className="text-sm text-foreground whitespace-pre-wrap">{viewingBudget.descricao}</p>
+                                <div className="space-y-4">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Descrição Técnica / Observações</p>
+                                    <div className="bg-muted/30 rounded-2xl p-6 border border-border/50 min-h-[160px]">
+                                        <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed italic">{viewingBudget.descricao}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     )}
-                    <DialogFooter>
-                        <Button variant="secondary" onClick={() => setViewingBudget(null)}>Fechar</Button>
+            <DialogFooter className="p-6 border-t border-border bg-muted/5">
+                        <Button variant="outline" onClick={() => setViewingBudget(null)} className="h-12 px-8 font-bold uppercase text-xs tracking-widest">Fechar Visualização</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
             {/* Budget Dialog */}
             <Dialog open={openBudget} onOpenChange={setOpenBudget}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Novo Orçamento</DialogTitle>
+                <DialogContent className="max-w-[95vw] md:max-w-6xl h-auto border-none shadow-2xl p-0 overflow-hidden">
+                    <DialogHeader className="p-6 border-b border-border bg-muted/5 flex-shrink-0">
+                        <DialogTitle className="text-xl font-bold font-black">
+                            Gerar Novo Orçamento
+                        </DialogTitle>
                     </DialogHeader>
 
                     {isSubmitting && (
@@ -399,28 +404,46 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-4">Processando...</p>
                         </div>
                     )}
-                    {/* Simplified procedure list omitted for Gerente if desired, or kept same */}
-                    <div className="space-y-4 py-4 pr-2">
-                        <Label>Descrição / Procedimentos</Label>
-                        <Textarea
-                            rows={10}
-                            placeholder="Descreva os itens do orçamento..."
-                            value={observations}
-                            onChange={e => setObservations(e.target.value)}
-                        />
-                        <div className="mt-2 text-right">
-                            <Label>Valor Total (BRL)</Label>
-                            <Input
-                                type="number"
-                                className="w-40 ml-auto mt-1"
-                                placeholder="0.00"
-                                onChange={e => setProcedures([{ id: 'val', name: 'Total', value: Number(e.target.value) }])}
-                            />
+                    <div className="p-8 space-y-6 bg-background/50">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch">
+                            <div className="md:col-span-8 flex flex-col space-y-3">
+                                <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground flex-shrink-0">Descrição do Plano de Tratamento</Label>
+                                <Textarea
+                                    rows={6}
+                                    placeholder="Descreva aqui o que está sendo orçado, tratamentos clínicos e observações financeiras..."
+                                    value={observations}
+                                    onChange={e => setObservations(e.target.value)}
+                                    className="flex-1 min-h-[160px] border-primary/10 focus:border-primary transition-all text-sm resize-none bg-background shadow-sm p-4 leading-relaxed"
+                                />
+                            </div>
+                            <div className="md:col-span-4 flex flex-col space-y-3">
+                                <span className="text-[11px] font-black uppercase tracking-widest text-transparent flex-shrink-0 select-none pointer-events-none">VALOR</span>
+                                <div className="flex-1 bg-primary/5 rounded-2xl border border-primary/10 p-6 shadow-sm flex flex-col justify-center min-h-[160px]">
+                                    <Label className="text-[11px] font-black uppercase tracking-widest text-primary mb-4 block">Valor Final do Tratamento</Label>
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-black text-xs uppercase">R$</span>
+                                        <Input
+                                            type="number"
+                                            className="pl-12 h-16 bg-background border-primary/10 focus:border-primary transition-all text-3xl font-black tabular-nums shadow-sm"
+                                            placeholder="0,00"
+                                            value={procedures[0]?.value || ''}
+                                            onChange={e => setProcedures([{ id: 'val', name: 'Total', value: Number(e.target.value) }])}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setOpenBudget(false)} disabled={isSubmitting}>Cancelar</Button>
-                        <Button onClick={handleSaveBudget} loading={isSubmitting} disabled={totalValue === 0}>Salvar Orçamento</Button>
+                    <DialogFooter className="p-6 border-t border-border bg-muted/5 gap-3">
+                        <Button variant="outline" onClick={() => setOpenBudget(false)} disabled={isSubmitting} className="h-12 px-8 font-bold uppercase text-xs tracking-widest">Descartar</Button>
+                        <Button 
+                            onClick={handleSaveBudget} 
+                            loading={isSubmitting} 
+                            disabled={totalValue === 0 || !observations}
+                            className="h-12 px-8 font-bold uppercase text-xs tracking-widest min-w-[240px] shadow-lg shadow-primary/20"
+                        >
+                            Gerar e Salvar Orçamento
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -438,7 +461,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
 
             {/* Edit Treatment Dialog */}
             <Dialog open={openEditTreatment} onOpenChange={setOpenEditTreatment}>
-                <DialogContent className="max-w-3xl h-[80vh] flex flex-col p-0 overflow-hidden gap-0">
+                <DialogContent className="max-w-[95vw] md:max-w-7xl h-[92vh] flex flex-col p-0 overflow-hidden gap-0 border-none shadow-2xl">
                     <DialogHeader className="p-6 border-b border-border flex-shrink-0">
                         <DialogTitle className="flex items-center gap-2">
                             <Pencil className="h-5 w-5 text-primary" />
@@ -464,7 +487,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
 
             {/* Edit Patient Dialog */}
             <Dialog open={openEditPatient} onOpenChange={setOpenEditPatient}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-w-[95vw] md:max-w-6xl h-auto flex flex-col p-0 overflow-hidden border-none shadow-2xl">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <User className="h-5 w-5 text-primary" />

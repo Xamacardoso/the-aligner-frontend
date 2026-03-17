@@ -180,31 +180,33 @@ export function TreatmentForm({
             )}
 
             <FormSection title="Informações Iniciais">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                        <Label>Data de Início Estimada</Label>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="md:col-span-1 space-y-1.5">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Data de Início</Label>
                         <Input
                             type="date"
                             value={form.dataInicio}
+                            className="h-11 border-primary/10 focus:border-primary transition-all font-medium"
                             onChange={e => setForm(f => ({ ...f, dataInicio: e.target.value }))}
                         />
                     </div>
-                    <div className="space-y-1.5">
-                        <Label>Queixa Principal</Label>
+                    <div className="md:col-span-3 space-y-1.5">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Queixa Principal</Label>
                         <Input
-                            placeholder="Ex: Dentes tortos, dor, estética..."
+                            placeholder="Descreva a queixa principal do paciente (ex: Diastemas, Apinhamento severo...)"
                             value={form.queixaPrincipal}
+                            className="h-11 border-primary/10 focus:border-primary transition-all font-medium"
                             onChange={e => setForm(f => ({ ...f, queixaPrincipal: e.target.value }))}
                         />
                     </div>
                     <div className="col-span-full space-y-1.5">
-                        <Label>Descrição do Caso / Diagnóstico</Label>
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Descrição do Caso / Diagnóstico</Label>
                         <Textarea
-                            placeholder="Descreva detalhes clínicos do caso..."
+                            placeholder="Forneça detalhes técnicos e diagnóstico clínico..."
                             value={form.descricaoCaso}
                             onChange={e => setForm(f => ({ ...f, descricaoCaso: e.target.value }))}
-                            rows={3}
-                            className="bg-background/50"
+                            rows={2}
+                            className="bg-background/50 border-primary/10 focus:border-primary transition-all resize-none"
                         />
                     </div>
                 </div>
@@ -212,27 +214,29 @@ export function TreatmentForm({
 
             <FormSection
                 title="Objetivos de Tratamento"
-                description="Obrigatório escolher Manter ou Corrigir em cada item"
+                description="Selecione as ações corretivas ou de manutenção para cada setor"
             >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
                     {Object.entries(groupedObjectives).map(([cat, opts]) => (
                         <div
                             key={cat}
                             id={`cat-${cat}`}
                             className={cn(
-                                "space-y-2 p-3 rounded-lg transition-colors border-2 border-transparent scroll-mt-20",
+                                "space-y-3 p-3.5 rounded-xl transition-all border border-border/40 bg-muted/10 hover:bg-muted/20 hover:border-primary/20",
                                 missingCategories.includes(cat) && "bg-red-50/50 border-red-200"
                             )}>
-                            <Label className={cn(
-                                "text-xs font-bold inline-flex items-center gap-1",
-                                missingCategories.includes(cat) ? "text-red-600" : "text-foreground"
-                            )}>
-                                {cat}
-                                {form.objetivos[cat] && <CheckCircle2 className="h-3 w-3 text-green-500" />}
-                                {missingCategories.includes(cat) && <span className="text-[10px] uppercase font-black ml-auto">* Obrigatório</span>}
-                            </Label>
+                            <div className="flex items-center justify-between border-b border-border/40 pb-2 mb-1">
+                                <Label className={cn(
+                                    "text-[10px] font-black uppercase tracking-tighter inline-flex items-center gap-1.5",
+                                    missingCategories.includes(cat) ? "text-red-600" : "text-primary"
+                                )}>
+                                    {cat}
+                                    {form.objetivos[cat] && <CheckCircle2 className="h-3 w-3 text-green-500" />}
+                                </Label>
+                                {missingCategories.includes(cat) && <span className="text-[8px] font-black text-red-600 bg-red-100 px-1.5 py-0.5 rounded uppercase">Pendente</span>}
+                            </div>
                             <RadioGroup
-                                className="flex items-center gap-4"
+                                className="grid grid-cols-2 gap-2"
                                 value={form.objetivos[cat]?.toString()}
                                 onValueChange={(val) => {
                                     setForm(f => ({
@@ -243,9 +247,9 @@ export function TreatmentForm({
                                 }}
                             >
                                 {opts.map(opt => (
-                                    <div key={opt.id} className="flex items-center gap-2">
-                                        <RadioGroupItem value={opt.id.toString()} id={`obj-${opt.id}`} />
-                                        <label htmlFor={`obj-${opt.id}`} className="text-xs cursor-pointer hover:text-primary transition-colors">{opt.option}</label>
+                                    <div key={opt.id} className="flex items-center space-x-2">
+                                        <RadioGroupItem value={opt.id.toString()} id={`obj-${opt.id}`} className="shrink-0" />
+                                        <Label htmlFor={`obj-${opt.id}`} className="text-[11px] font-semibold cursor-pointer truncate leading-none py-1">{opt.option}</Label>
                                     </div>
                                 ))}
                             </RadioGroup>
@@ -255,16 +259,16 @@ export function TreatmentForm({
             </FormSection>
 
             <FormSection
-                title="Apinhamento"
-                description="Selecione até 3 opções por categoria"
+                title="Apinhamento e Espaçamento"
+                description="Até 3 opções por arcada"
             >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {Object.entries(groupedCrowding).map(([cat, opts]) => (
-                        <div key={cat} className="space-y-3">
-                            <Label className="text-xs font-bold text-foreground border-l-2 border-primary pl-2">{cat}</Label>
-                            <div className="space-y-2 pl-2">
+                        <div key={cat} className="space-y-4 p-5 rounded-2xl border border-border/50 bg-muted/5 shadow-sm">
+                            <Label className="text-[11px] font-black uppercase tracking-widest text-primary border-l-4 border-primary pl-3">{cat}</Label>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                                 {opts.map(opt => (
-                                    <div key={opt.id} className="flex items-center gap-2">
+                                    <div key={opt.id} className="flex items-center gap-3 p-1 rounded-lg hover:bg-background/80 transition-all border border-transparent hover:border-border/40">
                                         <Checkbox
                                             id={`crowd-${opt.id}`}
                                             checked={form.apinhamentos.includes(opt.id)}
@@ -272,7 +276,7 @@ export function TreatmentForm({
                                                 if (checked) {
                                                     const countInCategory = opts.filter(o => form.apinhamentos.includes(o.id)).length;
                                                     if (countInCategory >= 3) {
-                                                        toast({ title: "Limite atingido", description: "Limite de 3 seleções por categoria.", variant: "destructive" });
+                                                        toast({ title: "Limite atingido", description: "Máximo de 3 seleções nesta seção.", variant: "destructive" });
                                                         return;
                                                     }
                                                     setForm(f => ({ ...f, apinhamentos: [...f.apinhamentos, opt.id] }));
@@ -281,7 +285,7 @@ export function TreatmentForm({
                                                 }
                                             }}
                                         />
-                                        <label htmlFor={`crowd-${opt.id}`} className="text-xs leading-none cursor-pointer">{opt.option}</label>
+                                        <Label htmlFor={`crowd-${opt.id}`} className="text-xs font-semibold cursor-pointer truncate leading-none">{opt.option}</Label>
                                     </div>
                                 ))}
                             </div>

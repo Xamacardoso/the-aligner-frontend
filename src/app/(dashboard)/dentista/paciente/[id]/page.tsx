@@ -217,16 +217,12 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
         if (!selectedTreatmentId) return;
 
         setIsSubmitting(true);
-        let descricao = procedures.map(p => `${p.name}: R$ ${p.value}`).join('; ');
-        if (observations) {
-            descricao += `\nObs: ${observations}`;
-        }
 
         try {
             const newBudget = await budgetService.create({
                 tratamentoPublicId: selectedTreatmentId,
                 valor: totalValue,
-                descricao: descricao.substring(0, 400)
+                descricao: observations.substring(0, 400)
             }, token || undefined);
 
             // 1. Fechamos o modal primeiro para garantir a UI fluida e limpar estado
@@ -441,9 +437,11 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
 
             {/* Budget Dialog */}
             <Dialog open={openBudget} onOpenChange={setOpenBudget}>
-                <DialogContent className="max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>Novo Orçamento</DialogTitle>
+                <DialogContent className="max-w-[95vw] md:max-w-6xl h-auto border-none shadow-2xl p-0 overflow-hidden">
+                    <DialogHeader className="p-6 border-b border-border bg-muted/5 flex-shrink-0">
+                        <DialogTitle className="text-xl font-bold">
+                            Gerar Novo Orçamento
+                        </DialogTitle>
                     </DialogHeader>
 
                     {isSubmitting && (
@@ -452,53 +450,46 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-4">Processando...</p>
                         </div>
                     )}
-                    <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto pr-2">
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <Label>Procedimentos</Label>
-                                <Button variant="ghost" size="sm" onClick={addProcedure} className="h-7 gap-1 text-xs">
-                                    <Plus className="h-3 w-3" /> Adicionar
-                                </Button>
+                    <div className="p-8 space-y-6 bg-background/50">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch">
+                            <div className="md:col-span-8 flex flex-col space-y-3">
+                                <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground flex-shrink-0">Descrição do Tratamento e Procedimentos</Label>
+                                <Textarea
+                                    rows={6}
+                                    placeholder="Descreva aqui o plano de tratamento, materiais inclusos e observações gerais..."
+                                    value={observations}
+                                    onChange={e => setObservations(e.target.value)}
+                                    className="flex-1 min-h-[160px] border-primary/10 focus:border-primary transition-all text-sm resize-none bg-background shadow-sm p-4 leading-relaxed"
+                                />
                             </div>
-                            <div className="space-y-2">
-                                {procedures.map(proc => (
-                                    <div key={proc.id} className="flex gap-2 items-center">
-                                        <Input
-                                            placeholder="Nome do procedimento"
-                                            value={proc.name}
-                                            className="flex-1"
-                                            onChange={e => updateProcedure(proc.id, 'name', e.target.value)}
-                                        />
+                            <div className="md:col-span-4 flex flex-col space-y-3">
+                                <span className="text-[11px] font-black uppercase tracking-widest text-transparent flex-shrink-0 select-none pointer-events-none">VALOR</span>
+                                <div className="flex-1 bg-primary/5 rounded-2xl border border-primary/10 p-6 shadow-sm flex flex-col justify-center min-h-[160px]">
+                                    <Label className="text-[11px] font-black uppercase tracking-widest text-primary mb-4 block">Valor Final do Tratamento</Label>
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-black text-xs uppercase">R$</span>
                                         <Input
                                             type="number"
-                                            placeholder="Valor"
-                                            value={proc.value || ''}
-                                            className="w-28"
-                                            onChange={e => updateProcedure(proc.id, 'value', e.target.value)}
+                                            className="pl-12 h-16 bg-background border-primary/10 focus:border-primary transition-all text-3xl font-black tabular-nums shadow-sm"
+                                            placeholder="0,00"
+                                            value={procedures[0]?.value || ''}
+                                            onChange={e => setProcedures([{ id: 'total', name: 'Total', value: Number(e.target.value) }])}
                                         />
-                                        <Button variant="ghost" size="icon" onClick={() => removeProcedure(proc.id)} title="Remover procedimento">
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
                                     </div>
-                                ))}
+                                </div>
                             </div>
-                            <p className="text-sm font-medium text-foreground mt-2 text-right">
-                                Total: {totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                            </p>
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label>Observações</Label>
-                            <Textarea
-                                value={observations}
-                                onChange={e => setObservations(e.target.value)}
-                                placeholder="Observações sobre o orçamento..."
-                                rows={3}
-                            />
                         </div>
                     </div>
-                    <DialogFooter className="gap-2 sm:gap-0">
-                        <Button variant="outline" onClick={() => setOpenBudget(false)} disabled={isSubmitting} className="h-11 px-8">Cancelar</Button>
-                        <Button onClick={handleSaveBudget} loading={isSubmitting} disabled={procedures.length === 0 || procedures.some(p => !p.name || !p.value)} className="h-11 px-8">Salvar Orçamento</Button>
+                    <DialogFooter className="p-6 border-t border-border bg-muted/5 gap-3">
+                        <Button variant="outline" onClick={() => setOpenBudget(false)} disabled={isSubmitting} className="h-12 px-8 font-bold uppercase text-xs tracking-widest">Descartar</Button>
+                        <Button 
+                            onClick={handleSaveBudget} 
+                            loading={isSubmitting} 
+                            disabled={totalValue === 0 || !observations} 
+                            className="h-12 px-8 font-bold uppercase text-xs tracking-widest min-w-[240px] shadow-lg shadow-primary/20"
+                        >
+                            Gerar e Salvar Orçamento
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -561,7 +552,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
             </Dialog>
             {/* New Treatment Dialog */}
             <Dialog open={openCreateTreatment} onOpenChange={setOpenCreateTreatment}>
-                <DialogContent className="max-w-3xl h-[80vh] flex flex-col p-0 overflow-hidden gap-0">
+                <DialogContent className="max-w-[95vw] md:max-w-7xl h-[92vh] flex flex-col p-0 overflow-hidden gap-0">
                     <DialogHeader className="p-6 border-b border-border flex-shrink-0">
                         <DialogTitle className="flex items-center gap-2">
                             <Stethoscope className="h-5 w-5 text-primary" />
@@ -586,7 +577,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
 
             {/* Edit Treatment Dialog */}
             <Dialog open={openEditTreatment} onOpenChange={setOpenEditTreatment}>
-                <DialogContent className="max-w-3xl h-[80vh] flex flex-col p-0 overflow-hidden gap-0">
+                <DialogContent className="max-w-[95vw] md:max-w-7xl h-[92vh] flex flex-col p-0 overflow-hidden gap-0">
                     <DialogHeader className="p-6 border-b border-border flex-shrink-0">
                         <DialogTitle className="flex items-center gap-2">
                             <Pencil className="h-5 w-5 text-primary" />

@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Eye, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, Search, User } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
@@ -299,36 +300,79 @@ export default function DentistaPatientsPage() {
 
             {/* Patient Form Dialog */}
             <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent className="max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>{isEditing ? 'Editar Identificação' : 'Novo Paciente'}</DialogTitle>
+                <DialogContent className="max-w-[95vw] md:max-w-6xl h-auto flex flex-col p-0 overflow-hidden border-none shadow-2xl">
+                    <DialogHeader className="p-6 border-b border-border bg-muted/5 flex-shrink-0">
+                        <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+                            {isEditing ? (
+                                <>
+                                    <Pencil className="h-5 w-5 text-primary" />
+                                    Editar Identificação do Paciente
+                                </>
+                            ) : (
+                                <>
+                                    <Plus className="h-5 w-5 text-primary" />
+                                    Novo Cadastro de Paciente
+                                </>
+                            )}
+                        </DialogTitle>
                     </DialogHeader>
 
-                    <div className="py-4 space-y-4">
-                        <div className="space-y-1.5">
-                            <Label>CPF *</Label>
-                            <Input
-                                value={form.cpf}
-                                onChange={e => setForm(f => ({ ...f, cpf: e.target.value.replace(/\D/g, '').slice(0, 11) }))}
-                                placeholder="Apenas números"
-                                disabled={isEditing}
-                                className={isEditing ? "bg-muted cursor-not-allowed" : ""}
-                            />
+                    <div className="p-8 space-y-8 bg-background/50">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div className="space-y-2">
+                                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                    <User className="h-3.5 w-3.5 text-primary" />
+                                    Nome Completo *
+                                </Label>
+                                <Input 
+                                    value={form.nome} 
+                                    onChange={e => setForm(f => ({ ...f, nome: e.target.value }))}
+                                    placeholder="Nome civil completo"
+                                    className="h-12 border-primary/10 focus:border-primary transition-all font-semibold shadow-sm"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                    <Plus className="h-3.5 w-3.5 text-primary" />
+                                    CPF *
+                                </Label>
+                                <Input
+                                    value={form.cpf}
+                                    onChange={e => setForm(f => ({ ...f, cpf: e.target.value.replace(/\D/g, '').slice(0, 11) }))}
+                                    placeholder="Apenas números (11 dígitos)"
+                                    disabled={isEditing}
+                                    className={cn(
+                                        "h-12 border-primary/10 focus:border-primary transition-all font-mono font-bold shadow-sm",
+                                        isEditing && "bg-muted/50 cursor-not-allowed grayscale"
+                                    )}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                    <Search className="h-3.5 w-3.5 text-primary" />
+                                    Data de Nascimento
+                                </Label>
+                                <Input 
+                                    type="date" 
+                                    value={form.nascimento} 
+                                    onChange={e => setForm(f => ({ ...f, nascimento: e.target.value }))}
+                                    className="h-12 border-primary/10 focus:border-primary transition-all shadow-sm"
+                                />
+                            </div>
                         </div>
-                        <div className="space-y-1.5">
-                            <Label>Nome Completo *</Label>
-                            <Input value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label>Data de Nascimento</Label>
-                            <Input type="date" value={form.nascimento} onChange={e => setForm(f => ({ ...f, nascimento: e.target.value }))} />
-                        </div>
+
+
                     </div>
 
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-                        <Button onClick={handleSave} disabled={!form.cpf || !form.nome} loading={isSubmitting}>
-                            Salvar Paciente
+                    <DialogFooter className="p-6 border-t border-border bg-muted/5 gap-3">
+                        <Button variant="outline" onClick={() => setOpen(false)} className="h-12 px-8 font-bold uppercase text-xs tracking-widest">Cancelar</Button>
+                        <Button 
+                            onClick={handleSave} 
+                            disabled={!form.cpf || !form.nome} 
+                            loading={isSubmitting}
+                            className="h-12 px-8 font-bold uppercase text-xs tracking-widest min-w-[200px] shadow-lg shadow-primary/10"
+                        >
+                            {isEditing ? "Salvar Alterações" : "Cadastrar Paciente"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
