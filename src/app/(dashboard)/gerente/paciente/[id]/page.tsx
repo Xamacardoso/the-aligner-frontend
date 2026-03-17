@@ -307,14 +307,8 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
             <div className="bg-card rounded-lg border border-border p-5 mb-6 relative group">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-sm font-semibold text-foreground">Identificação do Paciente</h2>
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={openEditPatientModal}
-                        className="h-8 gap-2 text-[10px] font-bold uppercase"
-                    >
-                        <Pencil className="h-3.5 w-3.5" /> Editar Dados
-                    </Button>
+                    <h2 className="text-sm font-semibold text-foreground">Identificação do Paciente</h2>
+                    {/* Botão de editar removido conforme novo requisito: Gerente apenas visualiza */}
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                     {[
@@ -344,12 +338,14 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                     onSelect={setSelectedTreatmentId}
                     treatmentDetails={treatmentDetails}
                     budgets={budgets}
-                    onEditTreatment={() => setOpenEditTreatment(true)}
-                    onDeleteTreatment={handleDeleteTreatment}
+                    // Edit/Delete desativados para Gerente conforme novo requisito
+                    onEditTreatment={undefined}
+                    onDeleteTreatment={undefined}
                     onAddBudget={() => setOpenBudget(true)}
                     onViewBudget={setViewingBudget}
                     onDeleteBudget={setBudgetToDelete}
                     isLoadingDetails={isLoadingDetails}
+                    canUpload={true}
                 />
             </div>
 

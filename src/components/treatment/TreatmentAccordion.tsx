@@ -57,11 +57,12 @@ interface TreatmentItemContentProps {
     treatment: TreatmentListItem;
     details: TreatmentDetails;
     budgets: Budget[];
-    onEdit: () => void;
-    onDeleteTreatment: (id: string) => void;
+    onEdit?: () => void;
+    onDeleteTreatment?: (id: string) => void;
     onAddBudget: () => void;
     onViewBudget: (b: Budget) => void;
     onDeleteBudget: (id: string) => void;
+    canUpload?: boolean;
 }
 
 /**
@@ -75,7 +76,8 @@ function TreatmentItemContent({
     onDeleteTreatment,
     onAddBudget,
     onViewBudget,
-    onDeleteBudget
+    onDeleteBudget,
+    canUpload = false
 }: TreatmentItemContentProps) {
     const [labFilesOpen, setLabFilesOpen] = React.useState(false);
     const [dentistFilesOpen, setDentistFilesOpen] = React.useState(false);
@@ -93,7 +95,7 @@ function TreatmentItemContent({
                 open={isDeleteDialogOpen}
                 onOpenChange={setIsDeleteDialogOpen}
                 onConfirm={() => {
-                    onDeleteTreatment(treatment.publicId);
+                    onDeleteTreatment?.(treatment.publicId);
                     setIsDeleteDialogOpen(false);
                 }}
                 title="Excluir Tratamento"
@@ -111,30 +113,36 @@ function TreatmentItemContent({
                     </div>
                 )}
 
-                <div className="flex justify-end items-start gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onEdit();
-                        }}
-                        className="h-8 gap-1.5 font-bold uppercase text-[10px]"
-                    >
-                        <Pencil className="h-3.5 w-3.5" /> Editar
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setIsDeleteDialogOpen(true);
-                        }}
-                        className="h-8 gap-1.5 font-bold uppercase text-[10px] text-destructive hover:bg-destructive/10 border-destructive/20"
-                    >
-                        <Trash2 className="h-3.5 w-3.5" /> Excluir
-                    </Button>
-                </div>
+                {(onEdit || onDeleteTreatment) && (
+                    <div className="flex justify-end items-start gap-2">
+                        {onEdit && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onEdit();
+                                }}
+                                className="h-8 gap-1.5 font-bold uppercase text-[10px]"
+                            >
+                                <Pencil className="h-3.5 w-3.5" /> Editar
+                            </Button>
+                        )}
+                        {onDeleteTreatment && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsDeleteDialogOpen(true);
+                                }}
+                                className="h-8 gap-1.5 font-bold uppercase text-[10px] text-destructive hover:bg-destructive/10 border-destructive/20"
+                            >
+                                <Trash2 className="h-3.5 w-3.5" /> Excluir
+                            </Button>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Seção visual melhorada de Objetivos e Apinhamentos */}
@@ -157,23 +165,25 @@ function TreatmentItemContent({
                 open={labFilesOpen}
                 onOpenChange={setLabFilesOpen}
                 headerRight={
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 gap-1.5 text-[10px] font-bold uppercase transition-all"
-                        disabled={isUploadingLab}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            document.getElementById(`file-upload-${treatment.publicId}-laboratorio`)?.click();
-                        }}
-                    >
-                        {isUploadingLab ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                            <Plus className="h-3.5 w-3.5" />
-                        )}
-                        {isUploadingLab ? "Enviando..." : "Upload"}
-                    </Button>
+                    (onEdit || canUpload) && (
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 gap-1.5 text-[10px] font-bold uppercase transition-all"
+                            disabled={isUploadingLab}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                document.getElementById(`file-upload-${treatment.publicId}-laboratorio`)?.click();
+                            }}
+                        >
+                            {isUploadingLab ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                                <Plus className="h-3.5 w-3.5" />
+                            )}
+                            {isUploadingLab ? "Enviando..." : "Upload"}
+                        </Button>
+                    )
                 }
             >
                 <FileManagement
@@ -192,23 +202,25 @@ function TreatmentItemContent({
                 open={dentistFilesOpen}
                 onOpenChange={setDentistFilesOpen}
                 headerRight={
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 gap-1.5 text-[10px] font-bold uppercase transition-all"
-                        disabled={isUploadingDentist}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            document.getElementById(`file-upload-${treatment.publicId}-dentista`)?.click();
-                        }}
-                    >
-                        {isUploadingDentist ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                            <Plus className="h-3.5 w-3.5" />
-                        )}
-                        {isUploadingDentist ? "Enviando..." : "Upload"}
-                    </Button>
+                    (onEdit || canUpload) && (
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 gap-1.5 text-[10px] font-bold uppercase transition-all"
+                            disabled={isUploadingDentist}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                document.getElementById(`file-upload-${treatment.publicId}-dentista`)?.click();
+                            }}
+                        >
+                            {isUploadingDentist ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                                <Plus className="h-3.5 w-3.5" />
+                            )}
+                            {isUploadingDentist ? "Enviando..." : "Upload"}
+                        </Button>
+                    )
                 }
             >
                 <FileManagement
@@ -323,12 +335,13 @@ interface TreatmentAccordionProps {
     onSelect: (id: string) => void;
     treatmentDetails: TreatmentDetails | null;
     budgets: Budget[];
-    onEditTreatment: () => void;
-    onDeleteTreatment: (id: string) => void;
+    onEditTreatment?: () => void;
+    onDeleteTreatment?: (id: string) => void;
     onAddBudget: () => void;
     onViewBudget: (budget: Budget) => void;
     onDeleteBudget: (id: string) => void;
     isLoadingDetails?: boolean;
+    canUpload?: boolean;
 }
 
 export function TreatmentAccordion({
@@ -342,7 +355,8 @@ export function TreatmentAccordion({
     onAddBudget,
     onViewBudget,
     onDeleteBudget,
-    isLoadingDetails = false
+    isLoadingDetails = false,
+    canUpload = false
 }: TreatmentAccordionProps) {
     if (treatments.length === 0) {
         return (
@@ -403,6 +417,7 @@ export function TreatmentAccordion({
                                 onAddBudget={onAddBudget}
                                 onViewBudget={onViewBudget}
                                 onDeleteBudget={onDeleteBudget}
+                                canUpload={canUpload}
                             />
                         ) : (
                             <div className="py-8 text-center text-muted-foreground text-sm">
