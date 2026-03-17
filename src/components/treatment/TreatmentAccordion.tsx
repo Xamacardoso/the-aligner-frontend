@@ -17,7 +17,9 @@ import {
     Stethoscope,
     AlertCircle,
     Files,
-    Loader2
+    Loader2,
+    FlaskConical,
+    FileSearch
 } from "lucide-react";
 import { TreatmentListItem, TreatmentDetails, Budget } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
@@ -75,9 +77,11 @@ function TreatmentItemContent({
     onViewBudget,
     onDeleteBudget
 }: TreatmentItemContentProps) {
-    const [filesOpen, setFilesOpen] = React.useState(false);
+    const [labFilesOpen, setLabFilesOpen] = React.useState(false);
+    const [dentistFilesOpen, setDentistFilesOpen] = React.useState(false);
     const [budgetsOpen, setBudgetsOpen] = React.useState(false);
-    const [isUploading, setIsUploading] = React.useState(false);
+    const [isUploadingLab, setIsUploadingLab] = React.useState(false);
+    const [isUploadingDentist, setIsUploadingDentist] = React.useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
     const [statusFilter, setStatusFilter] = React.useState<'todos' | 'pendente' | 'aprovado' | 'declinado' | 'cancelado'>('todos');
 
@@ -146,38 +150,73 @@ function TreatmentItemContent({
                 </div>
             )}
 
-            {/* Seção de Arquivos e Exames */}
+            {/* Seção de Arquivos do Laboratório */}
             <CollapsibleSection
-                title="Arquivos e Exames"
-                icon={<Files className="h-4 w-4" />}
-                open={filesOpen}
-                onOpenChange={setFilesOpen}
+                title="Arquivos de Exames/Laboratório"
+                icon={<FlaskConical className="h-4 w-4" />}
+                open={labFilesOpen}
+                onOpenChange={setLabFilesOpen}
                 headerRight={
                     <Button
                         size="sm"
                         variant="outline"
                         className="h-7 gap-1.5 text-[10px] font-bold uppercase transition-all"
-                        disabled={isUploading}
+                        disabled={isUploadingLab}
                         onClick={(e) => {
                             e.stopPropagation();
-                            // Aciona o input oculto dentro do FileManagement
-                            document.getElementById(`file-upload-${treatment.publicId}`)?.click();
+                            document.getElementById(`file-upload-${treatment.publicId}-laboratorio`)?.click();
                         }}
                     >
-                        {isUploading ? (
+                        {isUploadingLab ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         ) : (
                             <Plus className="h-3.5 w-3.5" />
                         )}
-                        {isUploading ? "Enviando..." : "Upload"}
+                        {isUploadingLab ? "Enviando..." : "Upload"}
                     </Button>
                 }
             >
                 <FileManagement
-                    patientCpf={treatment.publicId}
+                    treatmentPublicId={treatment.publicId}
+                    tipo="laboratorio"
                     noCard
-                    onUploadSuccess={() => setFilesOpen(true)}
-                    onUploadingChange={setIsUploading}
+                    onUploadSuccess={() => setLabFilesOpen(true)}
+                    onUploadingChange={setIsUploadingLab}
+                />
+            </CollapsibleSection>
+
+            {/* Seção de Documentos do Dentista / Planejamento */}
+            <CollapsibleSection
+                title="Documentos do Planejamento de Tratamento (Dentista)"
+                icon={<FileSearch className="h-4 w-4" />}
+                open={dentistFilesOpen}
+                onOpenChange={setDentistFilesOpen}
+                headerRight={
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 gap-1.5 text-[10px] font-bold uppercase transition-all"
+                        disabled={isUploadingDentist}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            document.getElementById(`file-upload-${treatment.publicId}-dentista`)?.click();
+                        }}
+                    >
+                        {isUploadingDentist ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                            <Plus className="h-3.5 w-3.5" />
+                        )}
+                        {isUploadingDentist ? "Enviando..." : "Upload"}
+                    </Button>
+                }
+            >
+                <FileManagement
+                    treatmentPublicId={treatment.publicId}
+                    tipo="dentista"
+                    noCard
+                    onUploadSuccess={() => setDentistFilesOpen(true)}
+                    onUploadingChange={setIsUploadingDentist}
                 />
             </CollapsibleSection>
 

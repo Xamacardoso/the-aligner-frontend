@@ -26,16 +26,18 @@ export const treatmentService = {
             method: 'DELETE',
         }, token),
 
-    getFiles: (publicId: string, token?: string) =>
-        apiClient<any[]>(`/treatments/${publicId}/files`, {}, token),
+    getFiles: (publicId: string, tipo?: string, token?: string) => {
+        const url = tipo ? `/treatments/${publicId}/files?tipo=${tipo}` : `/treatments/${publicId}/files`;
+        return apiClient<any[]>(url, {}, token);
+    },
 
-    requestUpload: (publicId: string, data: { fileName: string, contentType: string }, token?: string) =>
+    requestUpload: (publicId: string, data: { fileName: string, contentType: string, tipo: string }, token?: string) =>
         apiClient<{ uploadUrl: string, r2key: string }>(`/treatments/${publicId}/files/request-upload`, {
             method: 'POST',
             body: JSON.stringify(data),
         }, token),
 
-    confirmUpload: (publicId: string, data: { r2key: string, nomeOriginal: string, formato: string }, token?: string) =>
+    confirmUpload: (publicId: string, data: { r2key: string, nomeOriginal: string, formato: string, tipo: string }, token?: string) =>
         apiClient<void>(`/treatments/${publicId}/files/confirm-upload`, {
             method: 'POST',
             body: JSON.stringify(data),

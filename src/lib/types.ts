@@ -91,6 +91,7 @@ export interface TreatmentFile {
   formato: string;
   r2key: string;
   nomeOriginal: string;
+  tipo: 'laboratorio' | 'dentista';
   dataCriacao: string | Date;
   downloadUrl?: string;
 }

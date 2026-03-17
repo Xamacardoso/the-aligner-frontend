@@ -6,24 +6,27 @@ import { treatmentService } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { File, Download, UploadCloud, Loader2, Eye, Box, Trash2 } from 'lucide-react';
-import { useId } from 'react';
 import { cn } from "@/lib/utils";
 import { useAppAuth } from '@/hooks/use-app-auth';
 
 interface FileManagementProps {
-    patientCpf: string; // Keeping name for compatibility but it should be treatmentPublicId now
+    treatmentPublicId: string;
+    tipo?: 'laboratorio' | 'dentista';
+    title?: string;
     noCard?: boolean;
     onUploadSuccess?: () => void;
     onUploadingChange?: (isUploading: boolean) => void;
 }
 
 export function FileManagement({
-    patientCpf: treatmentPublicId,
+    treatmentPublicId,
+    tipo,
+    title = "Arquivos e Exames",
     noCard = false,
     onUploadSuccess,
     onUploadingChange
 }: FileManagementProps) {
-    const inputId = `file-upload-${treatmentPublicId}`;
+    const inputId = `file-upload-${treatmentPublicId}-${tipo || 'all'}`;
     const [documents, setDocuments] = useState<TreatmentFile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
@@ -41,7 +44,7 @@ export function FileManagement({
         if (!treatmentPublicId) return;
         setIsLoading(true);
         try {
-            const docs = await treatmentService.getFiles(treatmentPublicId, token || undefined);
+            const docs = await treatmentService.getFiles(treatmentPublicId, tipo, token || undefined);
             setDocuments(docs);
         } catch (err) {
             console.error(err);
@@ -52,11 +55,14 @@ export function FileManagement({
 
     useEffect(() => {
         loadDocuments();
-    }, [treatmentPublicId]);
+    }, [treatmentPublicId, tipo]);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !treatmentPublicId) return;
+
+        // Se não houver tipo definido, padrão para laboratorio
+        const uploadTipo = tipo || 'laboratorio';
 
         setIsUploading(true);
         try {
@@ -65,7 +71,8 @@ export function FileManagement({
             // 1. Request presigned URL
             const data = await treatmentService.requestUpload(treatmentPublicId, {
                 fileName: file.name,
-                contentType: fileType
+                contentType: fileType,
+                tipo: uploadTipo
             }, token || undefined);
 
             if (!data) throw new Error("Falha ao obter URL de upload");
@@ -88,7 +95,8 @@ export function FileManagement({
             await treatmentService.confirmUpload(treatmentPublicId, {
                 nomeOriginal: file.name,
                 r2key,
-                formato: format
+                formato: format,
+                tipo: uploadTipo
             }, token || undefined);
 
             toast({ title: "Arquivo enviado com sucesso!", description: file.name });
@@ -161,7 +169,7 @@ export function FileManagement({
                 <div className="border-b border-border px-5 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <File className="h-4 w-4 text-primary" />
-                        <h2 className="text-sm font-bold text-foreground">Arquivos e Exames</h2>
+                        <h2 className="text-sm font-bold text-foreground">{title}</h2>
                     </div>
                     <div className="relative">
                         <Button
@@ -185,7 +193,7 @@ export function FileManagement({
                         Carregando documentos...
                     </div>
                 ) : documents.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Nenhum documento anexado.</p>
+                    <p className="text-sm text-muted-foreground italic">Nenhum documento anexado.</p>
                 ) : (
                     <div className="flex flex-col gap-3">
                         {documents.map((doc) => (
