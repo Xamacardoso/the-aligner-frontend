@@ -16,7 +16,12 @@ export async function apiClient<T>(
         headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(url, { ...options, headers });
+    const fetchOptions: RequestInit = { ...options, headers };
+    if (fetchOptions.cache === undefined) {
+        fetchOptions.cache = 'no-store';
+    }
+
+    const response = await fetch(url, fetchOptions);
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

@@ -7,6 +7,7 @@ import {
     Pencil, 
     Trash2, 
     Archive,
+    RotateCcw,
     Loader2, 
     Search,
     Target,
@@ -50,6 +51,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { useAppAuth } from '@/hooks/use-app-auth';
 import { maintenanceService, AuxiliaryItem } from '@/lib/api';
+import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
 
 type CategoryType = 'specialties' | 'objectives' | 'crowding' | 'degrees' | 'communication' | 'ufs';
 
@@ -74,6 +76,7 @@ export default function MaintenancePage() {
     const [currentItem, setCurrentItem] = useState<AuxiliaryItem | null>(null);
     const [formData, setFormData] = useState({ nome: '', descricao: '', sigla: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [actionItem, setActionItem] = useState<{ id: number; action: 'delete' | 'restore' } | null>(null);
 
     const categories = [
         { id: 'specialties', label: 'Especialidades', icon: <GraduationCap className="h-4 w-4" /> },
@@ -161,25 +164,39 @@ export default function MaintenancePage() {
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!confirm('Tem certeza que deseja arquivar este item? Ele deixará de aparecer em novos formulários, mas permanecerá nos registros existentes.')) return;
+    const executeAction = async () => {
+        if (!actionItem) return;
+        setIsSubmitting(true);
+        const { id, action } = actionItem;
         
         try {
-            if (currentCategory === 'specialties') await maintenanceService.deleteSpecialty(id, token!);
-            else if (currentCategory === 'objectives') await maintenanceService.deleteObjective(id, token!);
-            else if (currentCategory === 'crowding') await maintenanceService.deleteCrowding(id, token!);
-            else if (currentCategory === 'degrees') await maintenanceService.deleteDegree(id, token!);
-            else if (currentCategory === 'communication') await maintenanceService.deleteCommunication(id, token!);
-            else if (currentCategory === 'ufs') await maintenanceService.deleteUf(id, token!);
-            
-            toast({ title: "Item excluído com sucesso!" });
+            if (action === 'delete') {
+                if (currentCategory === 'specialties') await maintenanceService.deleteSpecialty(id, token!);
+                else if (currentCategory === 'objectives') await maintenanceService.deleteObjective(id, token!);
+                else if (currentCategory === 'crowding') await maintenanceService.deleteCrowding(id, token!);
+                else if (currentCategory === 'degrees') await maintenanceService.deleteDegree(id, token!);
+                else if (currentCategory === 'communication') await maintenanceService.deleteCommunication(id, token!);
+                else if (currentCategory === 'ufs') await maintenanceService.deleteUf(id, token!);
+                toast({ title: "Item arquivado com sucesso!" });
+            } else {
+                if (currentCategory === 'specialties') await maintenanceService.restoreSpecialty(id, token!);
+                else if (currentCategory === 'objectives') await maintenanceService.restoreObjective(id, token!);
+                else if (currentCategory === 'crowding') await maintenanceService.restoreCrowding(id, token!);
+                else if (currentCategory === 'degrees') await maintenanceService.restoreDegree(id, token!);
+                else if (currentCategory === 'communication') await maintenanceService.restoreCommunication(id, token!);
+                else if (currentCategory === 'ufs') await maintenanceService.restoreUf(id, token!);
+                toast({ title: "Item reativado com sucesso!" });
+            }
             loadData(currentCategory);
+            setActionItem(null);
         } catch (err: any) {
             toast({ 
-                title: "Erro ao excluir", 
-                description: "Este item não pode ser excluído pois está sendo utilizado.",
+                title: `Erro ao ${action === 'delete' ? 'arquivar' : 'reativar'}`, 
+                description: err.message || "Ocorreu um erro inesperado.",
                 variant: "destructive" 
             });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -287,16 +304,27 @@ export default function MaintenancePage() {
                                                             >
                                                                 <Pencil className="h-4 w-4" />
                                                             </Button>
+                                                            {(item as any).deletedAt ? (
                                                                 <Button 
-                                                                variant="ghost" 
-                                                                size="icon" 
-                                                                onClick={() => handleDelete(item.id)}
-                                                                disabled={!!(item as any).deletedAt}
-                                                                className="h-9 w-9 text-destructive/60 hover:bg-destructive/10 hover:text-destructive transition-all"
-                                                                title="Arquivar"
-                                                            >
-                                                                <Archive className="h-4 w-4" />
-                                                            </Button>
+                                                                    variant="ghost" 
+                                                                    size="icon" 
+                                                                    onClick={() => setActionItem({ id: item.id, action: 'restore' })}
+                                                                    className="h-9 w-9 text-green-600 hover:bg-green-600/10 hover:text-green-700 transition-all"
+                                                                    title="Reativar"
+                                                                >
+                                                                    <RotateCcw className="h-4 w-4" />
+                                                                </Button>
+                                                            ) : (
+                                                                <Button 
+                                                                    variant="ghost" 
+                                                                    size="icon" 
+                                                                    onClick={() => setActionItem({ id: item.id, action: 'delete' })}
+                                                                    className="h-9 w-9 text-destructive/60 hover:bg-destructive/10 hover:text-destructive transition-all"
+                                                                    title="Arquivar"
+                                                                >
+                                                                    <Archive className="h-4 w-4" />
+                                                                </Button>
+                                                            )}
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>
@@ -386,6 +414,21 @@ export default function MaintenancePage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Confirm Action Dialog */}
+            <ConfirmActionDialog
+                open={!!actionItem}
+                onOpenChange={val => !val && setActionItem(null)}
+                onConfirm={executeAction}
+                isLoading={isSubmitting}
+                title={actionItem?.action === 'delete' ? "Arquivar Item" : "Reativar Item"}
+                description={
+                    actionItem?.action === 'delete' 
+                        ? "Tem certeza que deseja arquivar este item? Ele deixará de aparecer em novos formulários, mas permanecerá nos registros existentes."
+                        : "Tem certeza que deseja reativar este item? Ele voltará a aparecer nos formulários e listagens ativas."
+                }
+                confirmText={actionItem?.action === 'delete' ? "Sim, arquivar" : "Sim, reativar"}
+            />
         </div>
     );
 }

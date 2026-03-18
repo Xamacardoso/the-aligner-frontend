@@ -138,6 +138,16 @@ export function PartnerForm({
             return;
         }
 
+        if (form.cpf.length !== 11) {
+            toast({ title: "CPF inválido", description: "O CPF deve conter exatamente 11 números.", variant: "destructive" });
+            return;
+        }
+
+        if (form.cnpj && form.cnpj.length !== 14) {
+            toast({ title: "CNPJ inválido", description: "O CNPJ deve conter exatamente 14 números.", variant: "destructive" });
+            return;
+        }
+
         setLoading(true);
         try {
             const payload = {
@@ -146,11 +156,11 @@ export function PartnerForm({
                 comunicacoesIds: form.comunicacoesIds
             };
 
-            // Remove empty fields for establishment if they are not provided
-            if (!payload.cnpj) delete (payload as any).cnpj;
-            if (!payload.razaoSocial) delete (payload as any).razaoSocial;
-            if (!payload.endereco) delete (payload as any).endereco;
-            if (!payload.telefone_estabelecimento) delete (payload as any).telefone_estabelecimento;
+            // Tratar campos vazios do estabelecimento (apagar no backend em caso de edição)
+            if (!payload.cnpj) (payload as any).cnpj = isEditing ? null : undefined;
+            if (!payload.razaoSocial) (payload as any).razaoSocial = isEditing ? null : undefined;
+            if (!payload.endereco) (payload as any).endereco = isEditing ? null : undefined;
+            if (!payload.telefone_estabelecimento) (payload as any).telefone_estabelecimento = isEditing ? null : undefined;
 
             if (isEditing) {
                 // Remove password if not changing

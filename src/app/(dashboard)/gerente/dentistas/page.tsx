@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { PartnerListItem, PartnerDetails } from '@/lib/types';
 import { PartnerForm } from '@/components/partner/PartnerForm';
+import { formatPhone } from '@/lib/utils';
 import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
 import { useAppAuth } from '@/hooks/use-app-auth';
 import {
@@ -192,7 +193,7 @@ export default function GerenteDentistasPage() {
                                     <TableCell className="font-medium">{d.nome}</TableCell>
                                     <TableCell>{d.cro}-{d.croUf}</TableCell>
                                     <TableCell>{d.email}</TableCell>
-                                    <TableCell>{d.telefone}</TableCell>
+                                    <TableCell>{d.telefone ? formatPhone(d.telefone) : '-'}</TableCell>
                                     <TableCell>
                                         <div className="flex gap-1 justify-end">
                                             <Button
@@ -365,7 +366,7 @@ export default function GerenteDentistasPage() {
                                             </div>
                                             <div className="space-y-0.5">
                                                 <p className="text-[10px] text-foreground uppercase font-bold tracking-wider">Telefone</p>
-                                                <p className="text-sm text-muted-foreground">{viewDetails.telefone || 'Não informado'}</p>
+                                                <p className="text-sm text-muted-foreground">{viewDetails.telefone ? formatPhone(viewDetails.telefone) : 'Não informado'}</p>
                                             </div>
                                         </div>
                                         {viewDetails.comunicacoes && viewDetails.comunicacoes.length > 0 && (

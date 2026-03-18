@@ -16,6 +16,8 @@ export const maintenanceService = {
         apiClient(`/maintenance/specialties/${id}`, { method: 'PATCH', body: JSON.stringify(data) }, token),
     deleteSpecialty: (id: number, token?: string) => 
         apiClient(`/maintenance/specialties/${id}`, { method: 'DELETE' }, token),
+    restoreSpecialty: (id: number, token?: string) => 
+        apiClient(`/maintenance/specialties/${id}/restore`, { method: 'PATCH' }, token),
 
     // Objetivos
     getObjectives: (token?: string) => apiClient<AuxiliaryItem[]>('/maintenance/objectives', {}, token),
@@ -25,6 +27,8 @@ export const maintenanceService = {
         apiClient(`/maintenance/objectives/${id}`, { method: 'PATCH', body: JSON.stringify(data) }, token),
     deleteObjective: (id: number, token?: string) => 
         apiClient(`/maintenance/objectives/${id}`, { method: 'DELETE' }, token),
+    restoreObjective: (id: number, token?: string) => 
+        apiClient(`/maintenance/objectives/${id}/restore`, { method: 'PATCH' }, token),
 
     // Apinhamentos
     getCrowding: (token?: string) => apiClient<AuxiliaryItem[]>('/maintenance/crowding', {}, token),
@@ -34,6 +38,8 @@ export const maintenanceService = {
         apiClient(`/maintenance/crowding/${id}`, { method: 'PATCH', body: JSON.stringify(data) }, token),
     deleteCrowding: (id: number, token?: string) => 
         apiClient(`/maintenance/crowding/${id}`, { method: 'DELETE' }, token),
+    restoreCrowding: (id: number, token?: string) => 
+        apiClient(`/maintenance/crowding/${id}/restore`, { method: 'PATCH' }, token),
 
     // Graus/Titulações
     getDegrees: (token?: string) => apiClient<AuxiliaryItem[]>('/maintenance/degrees', {}, token),
@@ -43,6 +49,8 @@ export const maintenanceService = {
         apiClient(`/maintenance/degrees/${id}`, { method: 'PATCH', body: JSON.stringify(data) }, token),
     deleteDegree: (id: number, token?: string) => 
         apiClient(`/maintenance/degrees/${id}`, { method: 'DELETE' }, token),
+    restoreDegree: (id: number, token?: string) => 
+        apiClient(`/maintenance/degrees/${id}/restore`, { method: 'PATCH' }, token),
 
     // Comunicação
     getCommunication: (token?: string) => apiClient<AuxiliaryItem[]>('/maintenance/communication', {}, token),
@@ -52,6 +60,8 @@ export const maintenanceService = {
         apiClient(`/maintenance/communication/${id}`, { method: 'PATCH', body: JSON.stringify(data) }, token),
     deleteCommunication: (id: number, token?: string) => 
         apiClient(`/maintenance/communication/${id}`, { method: 'DELETE' }, token),
+    restoreCommunication: (id: number, token?: string) => 
+        apiClient(`/maintenance/communication/${id}/restore`, { method: 'PATCH' }, token),
 
     // UFs
     getUfs: (token?: string) => apiClient<AuxiliaryItem[]>('/maintenance/ufs', {}, token),
@@ -61,4 +71,6 @@ export const maintenanceService = {
         apiClient(`/maintenance/ufs/${id}`, { method: 'PATCH', body: JSON.stringify(data) }, token),
     deleteUf: (id: number, token?: string) => 
         apiClient(`/maintenance/ufs/${id}`, { method: 'DELETE' }, token),
+    restoreUf: (id: number, token?: string) => 
+        apiClient(`/maintenance/ufs/${id}/restore`, { method: 'PATCH' }, token),
 };
