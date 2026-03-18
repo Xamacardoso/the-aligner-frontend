@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { LogOut, Users, UserCheck } from 'lucide-react';
+import { LogOut, Users, UserCheck, Settings } from 'lucide-react';
 import { UserRole } from '@/lib/types';
 import { useAppAuth } from '@/hooks/use-app-auth';
 
@@ -18,6 +18,7 @@ interface NavItem {
 const gerenteNav: NavItem[] = [
     { label: 'Dentistas', path: '/gerente/dentistas', icon: <UserCheck className="h-4 w-4" /> },
     { label: 'Pacientes', path: '/gerente/pacientes', icon: <Users className="h-4 w-4" /> },
+    { label: 'Manutenção', path: '/gerente/manutencao', icon: <Settings className="h-4 w-4" /> },
 ];
 
 const dentistaNav: NavItem[] = [

@@ -3,6 +3,7 @@ import { patientService } from './api/patient.service';
 import { treatmentService } from './api/treatment.service';
 import { budgetService } from './api/budget.service';
 import { clinicalService } from './api/clinical.service';
+import { maintenanceService, AuxiliaryItem } from './api/maintenance.service';
 import { PartnerListItem, PartnerDetails, PatientListItem, PatientDetails, Budget, TreatmentListItem, TreatmentDetails } from './types';
 
 export * from './api/partner.service';
@@ -10,6 +11,9 @@ export * from './api/patient.service';
 export * from './api/treatment.service';
 export * from './api/budget.service';
 export * from './api/clinical.service';
+export * from './api/maintenance.service';
+
+export type { AuxiliaryItem };
 
 // Legacy Mappings for backward compatibility
 // These will help the app continue working while we update the components one by one
@@ -68,10 +72,10 @@ export async function fetchPatientDocuments(treatmentPublicId: string) {
 }
 
 export async function requestFileUpload(treatmentPublicId: string, fileName: string, contentType: string) {
-    return treatmentService.requestUpload(treatmentPublicId, { fileName, contentType });
+    return treatmentService.requestUpload(treatmentPublicId, { fileName, contentType, tipo: 'laboratorio' });
 }
 
 export async function confirmFileUpload(treatmentPublicId: string, fileName: string, r2key: string) {
     const format = fileName.split('.').pop() || '';
-    return treatmentService.confirmUpload(treatmentPublicId, { r2key, nomeOriginal: fileName, formato: format });
+    return treatmentService.confirmUpload(treatmentPublicId, { r2key, nomeOriginal: fileName, formato: format, tipo: 'laboratorio' });
 }
