@@ -13,8 +13,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FormSection } from "@/components/forms/FormSection";
 import { PartnerDetails } from "@/lib/types";
-import { Loader2, User, Building, Award, Phone } from "lucide-react";
+import { Loader2, User, Building, Award, Phone, Eye, EyeOff } from "lucide-react";
 import { useAppAuth } from "@/hooks/use-app-auth";
+import { formatCpf, formatPhone, formatCnpj, formatCep } from "@/lib/utils";
 
 interface PartnerFormProps {
     initialData?: PartnerDetails;
@@ -30,6 +31,7 @@ export function PartnerForm({
     const { toast } = useToast();
     const { token, isLoaded } = useAppAuth();
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [ufs, setUfs] = useState<{ id: number, nome: string, sigla: string }[]>([]);
     const [specialties, setSpecialties] = useState<{ id: number, nome: string }[]>([]);
     const [degrees, setDegrees] = useState<{ id: number, nome: string }[]>([]);
@@ -101,6 +103,30 @@ export function PartnerForm({
         loadAuxData();
     }, [isLoaded, token, initialData]);
 
+    useEffect(() => {
+        async function fetchAddress() {
+            const cepDigit = form.cep.replace(/\D/g, '');
+            if (cepDigit.length === 8) {
+                try {
+                    const res = await fetch(`https://viacep.com.br/ws/${cepDigit}/json/`);
+                    const data = await res.json();
+                    if (!data.erro) {
+                        setForm(f => ({
+                            ...f,
+                            endereco: data.logradouro || f.endereco,
+                            bairro: data.bairro || f.bairro,
+                            cidade: data.localidade || f.cidade,
+                            uf_estabelecimento: data.uf || f.uf_estabelecimento,
+                        }));
+                    }
+                } catch (err) {
+                    console.error("Erro ao buscar CEP", err);
+                }
+            }
+        }
+        fetchAddress();
+    }, [form.cep]);
+
     const handleSave = async () => {
         // Basic validation
         if (!form.cpf || !form.nome || !form.email || (!isEditing && !form.senha) || !form.cro || !form.croUf || !form.titulacaoId) {
@@ -156,7 +182,7 @@ export function PartnerForm({
                         <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">CPF *</Label>
                         <Input
                             placeholder="000.000.000-00"
-                            value={form.cpf}
+                            value={formatCpf(form.cpf)}
                             className="h-11 border-primary/10 focus:border-primary transition-all font-mono font-bold"
                             onChange={e => setForm(f => ({ ...f, cpf: e.target.value.replace(/\D/g, '').slice(0, 11) }))}
                             disabled={isEditing}
@@ -183,19 +209,28 @@ export function PartnerForm({
                     </div>
                     <div className="space-y-2">
                         <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{isEditing ? 'Nova Senha' : 'Senha Provisória *'}</Label>
-                        <Input
-                            type="password"
-                            placeholder={isEditing ? "(Opcional)" : "Mínimo 6 caracteres"}
-                            value={form.senha}
-                            className="h-11 border-primary/10 focus:border-primary transition-all"
-                            onChange={e => setForm(f => ({ ...f, senha: e.target.value }))}
-                        />
+                        <div className="relative">
+                            <Input
+                                type={showPassword ? "text" : "password"}
+                                placeholder={isEditing ? "(Opcional)" : "Mínimo 6 caracteres"}
+                                value={form.senha}
+                                className="h-11 border-primary/10 focus:border-primary transition-all pr-10"
+                                onChange={e => setForm(f => ({ ...f, senha: e.target.value }))}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            >
+                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                        </div>
                     </div>
                     <div className="space-y-2">
                         <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Telefone de Contato</Label>
                         <Input
                             placeholder="(00) 00000-0000"
-                            value={form.telefone}
+                            value={formatPhone(form.telefone)}
                             className="h-11 border-primary/10 focus:border-primary transition-all font-medium"
                             onChange={e => setForm(f => ({ ...f, telefone: e.target.value.replace(/\D/g, '').slice(0, 11) }))}
                         />
@@ -290,7 +325,7 @@ export function PartnerForm({
                         <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">CNPJ</Label>
                         <Input
                             placeholder="00.000.000/0000-00"
-                            value={form.cnpj}
+                            value={formatCnpj(form.cnpj)}
                             className="h-11 border-primary/10 focus:border-primary transition-all font-mono"
                             onChange={e => setForm(f => ({ ...f, cnpj: e.target.value.replace(/\D/g, '').slice(0, 14) }))}
                         />
@@ -315,8 +350,8 @@ export function PartnerForm({
                     <div className="space-y-2">
                         <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">CEP</Label>
                         <Input
-                            placeholder="Apenas números"
-                            value={form.cep}
+                            placeholder="00000-000"
+                            value={formatCep(form.cep)}
                             className="h-11 border-primary/10 focus:border-primary transition-all font-mono"
                             onChange={e => setForm(f => ({ ...f, cep: e.target.value.replace(/\D/g, '').slice(0, 8) }))}
                         />

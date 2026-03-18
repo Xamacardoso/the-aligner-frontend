@@ -9,9 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Eye, Search, User } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Plus, Pencil, Trash2, Eye, Search, User, Users } from 'lucide-react';
+import { cn, formatCpf } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
 import {
@@ -55,6 +56,7 @@ export default function DentistaPatientsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const itemsPerPage = 10;
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isFetching, setIsFetching] = useState(true);
 
     useEffect(() => {
         if (isLoaded && token && user?.publicId) {
@@ -72,6 +74,7 @@ export default function DentistaPatientsPage() {
     };
 
     const loadData = async (page: number = currentPage, search: string = searchTerm) => {
+        setIsFetching(true);
         try {
             if (!user?.publicId || !token) return;
             const data = await patientService.findMyPatients(page, itemsPerPage, search, token);
@@ -79,6 +82,8 @@ export default function DentistaPatientsPage() {
             setTotalItems(data.total);
         } catch (err) {
             console.error(err);
+        } finally {
+            setIsFetching(false);
         }
     };
 
@@ -196,14 +201,40 @@ export default function DentistaPatientsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {patients.length === 0 && (
+                            {isFetching ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <TableRow key={`sk-${i}`}>
+                                        <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                        <TableCell>
+                                            <div className="flex gap-1 justify-end">
+                                                <Skeleton className="h-8 w-8 rounded-md" />
+                                                <Skeleton className="h-8 w-8 rounded-md" />
+                                                <Skeleton className="h-8 w-8 rounded-md" />
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : patients.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                                        Nenhum paciente cadastrado.
+                                    <TableCell colSpan={4} className="h-[400px] text-center">
+                                        <div className="flex flex-col items-center justify-center space-y-4 text-muted-foreground">
+                                            <div className="h-24 w-24 rounded-full bg-muted/10 flex items-center justify-center">
+                                                <Users className="h-10 w-10 opacity-40" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <h3 className="text-lg font-semibold text-foreground">Nenhum paciente encontrado</h3>
+                                                <p className="text-sm pb-4">Você ainda não tem pacientes listados aqui.</p>
+                                            </div>
+                                            <Button onClick={openCreate} className="gap-2 shadow-lg shadow-primary/20 transition-all hover:scale-105 px-8">
+                                                <Plus className="h-4 w-4" /> Cadastrar Paciente
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
-                            )}
-                            {patients.map(p => (
+                            ) : (
+                                patients.map(p => (
                                 <TableRow
                                     key={p.publicId}
                                     className="cursor-pointer hover:bg-muted/50 transition-colors"
@@ -250,7 +281,8 @@ export default function DentistaPatientsPage() {
                                         </div>
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                                ))
+                            )}
                         </TableBody>
                     </Table>
                 </ScrollArea>
@@ -337,9 +369,9 @@ export default function DentistaPatientsPage() {
                                     CPF *
                                 </Label>
                                 <Input
-                                    value={form.cpf}
+                                    value={formatCpf(form.cpf)}
                                     onChange={e => setForm(f => ({ ...f, cpf: e.target.value.replace(/\D/g, '').slice(0, 11) }))}
-                                    placeholder="Apenas números (11 dígitos)"
+                                    placeholder="000.000.000-00"
                                     disabled={isEditing}
                                     className={cn(
                                         "h-12 border-primary/10 focus:border-primary transition-all font-mono font-bold shadow-sm",

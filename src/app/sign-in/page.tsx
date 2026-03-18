@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useAppAuth } from "@/hooks/use-app-auth";
+import { formatCpf } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -13,6 +15,7 @@ import Image from "next/image";
 export default function SignInPage() {
     const [cpf, setCpf] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const { login } = useAppAuth();
     const router = useRouter();
@@ -85,22 +88,31 @@ export default function SignInPage() {
                                 <Input 
                                     id="cpf" 
                                     placeholder="000.000.000-00" 
-                                    value={cpf}
-                                    onChange={(e) => setCpf(e.target.value)}
+                                    value={formatCpf(cpf)}
+                                    onChange={(e) => setCpf(e.target.value.replace(/\D/g, '').slice(0, 11))}
                                     required 
                                     className="h-11"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="password">Senha</Label>
-                                <Input 
-                                    id="password" 
-                                    type="password" 
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required 
-                                    className="h-11"
-                                />
+                                <div className="relative">
+                                    <Input 
+                                        id="password" 
+                                        type={showPassword ? "text" : "password"} 
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required 
+                                        className="h-11 pr-10"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                    >
+                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </div>
                             </div>
                         </CardContent>
                         <CardFooter className="flex flex-col">
