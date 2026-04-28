@@ -359,21 +359,30 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                                 </div>
                             </div>
 
-                            {/* PDF Anexado — Dentista pode visualizar/baixar */}
-                            {viewingBudget.arquivoDownloadUrl && (
-                                <div className="space-y-2">
-                                    <p className="text-xs font-semibold text-muted-foreground uppercase">Documento Anexado</p>
-                                    <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-md border border-border">
-                                        <FileText className="h-5 w-5 text-primary flex-shrink-0" />
-                                        <span className="text-sm text-foreground truncate flex-1">{viewingBudget.arquivoNomeOriginal || 'Documento.pdf'}</span>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="gap-1.5 text-xs"
-                                            onClick={() => window.open(viewingBudget.arquivoDownloadUrl!, '_blank')}
-                                        >
-                                            <Download className="h-3.5 w-3.5" /> Baixar
-                                        </Button>
+                            {/* Arquivos Anexados — Dentista pode visualizar/baixar */}
+                            {viewingBudget.arquivos && viewingBudget.arquivos.length > 0 && (
+                                <div className="space-y-3">
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase">Documentos Anexados ({viewingBudget.arquivos.length})</p>
+                                    <div className="flex flex-col gap-2 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+                                        {viewingBudget.arquivos.map((file) => (
+                                            <div key={file.r2key} className="flex items-center gap-3 p-3 bg-muted/30 rounded-md border border-border">
+                                                <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                                                <div className="flex-1 overflow-hidden">
+                                                    <p className="text-sm text-foreground truncate" title={file.nomeOriginal}>
+                                                        {file.nomeOriginal}
+                                                    </p>
+                                                    <p className="text-[10px] text-muted-foreground uppercase">{file.formato}</p>
+                                                </div>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="gap-1.5 text-xs h-8"
+                                                    onClick={() => window.open(file.downloadUrl, '_blank')}
+                                                >
+                                                    <Download className="h-3.5 w-3.5" /> Baixar
+                                                </Button>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             )}

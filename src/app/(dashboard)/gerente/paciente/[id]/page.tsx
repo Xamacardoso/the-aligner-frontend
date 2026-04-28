@@ -39,6 +39,7 @@ import { FileManagement } from '@/components/FileManagement';
 import { useToast } from '@/hooks/use-toast';
 import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
 import { useAppAuth } from '@/hooks/use-app-auth';
+import { BudgetFileUpload } from '@/components/budget/BudgetFileUpload';
 
 const statusLabel: Record<string, string> = {
     pendente: 'Pendente',
@@ -84,8 +85,8 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
 
     const [openEditTreatment, setOpenEditTreatment] = useState(false);
 
-    // Estado para upload de PDF do orçamento
-    const [budgetFile, setBudgetFile] = useState<File | null>(null);
+    // Estado para upload de múltiplos arquivos do orçamento
+    const [budgetFiles, setBudgetFiles] = useState<File[]>([]);
     const [isUploadingBudgetFile, setIsUploadingBudgetFile] = useState(false);
 
     const loadData = async () => {
@@ -156,45 +157,46 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                 descricao: observations.substring(0, 400)
             }, token || undefined);
 
-            // Se o gerente selecionou um PDF, faz upload
-            if (budgetFile && newBudget?.publicId) {
+            // Se o gerente selecionou arquivos, faz upload de todos
+            if (budgetFiles.length > 0 && newBudget?.publicId) {
                 setIsUploadingBudgetFile(true);
-                try {
-                    const fileType = budgetFile.type || 'application/pdf';
-                    const { uploadUrl, r2key } = await budgetService.requestFileUpload(newBudget.publicId, {
-                        fileName: budgetFile.name,
-                        contentType: fileType,
-                    }, token || undefined);
+                for (const file of budgetFiles) {
+                    try {
+                        const fileType = file.type || 'application/pdf';
+                        const { uploadUrl, r2key } = await budgetService.requestFileUpload(newBudget.publicId, {
+                            fileName: file.name,
+                            contentType: fileType,
+                        }, token || undefined);
 
-                    const res = await fetch(uploadUrl, {
-                        method: 'PUT',
-                        body: budgetFile,
-                        headers: { 'Content-Type': fileType },
-                    });
+                        const res = await fetch(uploadUrl, {
+                            method: 'PUT',
+                            body: file,
+                            headers: { 'Content-Type': fileType },
+                        });
 
-                    if (!res.ok) throw new Error("Upload do PDF falhou");
+                        if (!res.ok) throw new Error(`Upload de ${file.name} falhou`);
 
-                    await budgetService.confirmFileUpload(newBudget.publicId, {
-                        r2key,
-                        nomeOriginal: budgetFile.name,
-                    }, token || undefined);
-                } catch (fileErr) {
-                    console.error('Erro no upload do PDF:', fileErr);
-                    toast({
-                        title: "Orçamento criado, mas erro no upload do PDF",
-                        description: "O orçamento foi salvo, mas o anexo não pôde ser enviado.",
-                        variant: "destructive"
-                    });
-                } finally {
-                    setIsUploadingBudgetFile(false);
+                        await budgetService.confirmFileUpload(newBudget.publicId, {
+                            r2key,
+                            nomeOriginal: file.name,
+                        }, token || undefined);
+                    } catch (fileErr) {
+                        console.error('Erro no upload do arquivo:', fileErr);
+                        toast({
+                            title: `Erro no upload: ${file.name}`,
+                            description: "O orçamento foi salvo, mas este anexo não pôde ser enviado.",
+                            variant: "destructive"
+                        });
+                    }
                 }
+                setIsUploadingBudgetFile(false);
             }
 
             // Limpar formulário
             setOpenBudget(false);
             setProcedures([{ id: generateId(), name: '', value: 0 }]);
             setObservations('');
-            setBudgetFile(null);
+            setBudgetFiles([]);
 
             if (newBudget && typeof newBudget === 'object' && newBudget.publicId) {
                 setBudgets(prev => [newBudget, ...prev]);
@@ -324,6 +326,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                     onAddBudget={() => setOpenBudget(true)}
                     onViewBudget={setViewingBudget}
                     onDeleteBudget={setBudgetToDelete}
+                    onBudgetUpdated={() => selectedTreatmentId && loadTreatmentData(selectedTreatmentId, true)}
                     isLoadingDetails={isLoadingDetails}
                     canUpload={true}
                     userRole="gerente"
@@ -340,18 +343,19 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                         </DialogTitle>
                     </DialogHeader>
                     {viewingBudget && (
-                        <div className="p-8 space-y-8 bg-background/50">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                                <div className="bg-primary/5 rounded-2xl border border-primary/10 p-6 shadow-sm">
-                                    <div className="space-y-4">
+                        <div className="p-8 space-y-8 bg-background/50 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+                                <div className="space-y-4 flex flex-col">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Informações Financeiras</p>
+                                    <div className="bg-primary/5 rounded-2xl border border-primary/10 p-6 shadow-sm flex-1 flex flex-col justify-center gap-6">
                                         <div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Status do Orçamento</p>
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-primary/60 mb-2">Status Atual</p>
                                             <span className={`text-[11px] px-3 py-1.5 rounded-full font-bold inline-block border ${statusClass[viewingBudget.status]}`}>
                                                 {statusLabel[viewingBudget.status]}
                                             </span>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Valor do Tratamento</p>
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-primary/60 mb-1">Valor do Tratamento</p>
                                             <p className="text-3xl font-black text-foreground tabular-nums">
                                                 {Number(viewingBudget.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                                             </p>
@@ -359,29 +363,80 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                                     </div>
                                 </div>
 
-                                <div className="space-y-4">
+                                <div className="space-y-4 flex flex-col">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Descrição Técnica / Observações</p>
-                                    <div className="bg-muted/30 rounded-2xl p-6 border border-border/50 min-h-[160px]">
+                                    <div className="bg-muted/30 rounded-2xl p-6 border border-border/50 flex-1 min-h-[160px]">
                                         <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed italic">{viewingBudget.descricao}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* PDF Anexado — Gerente pode visualizar/baixar */}
-                            {viewingBudget.arquivoDownloadUrl && (
-                                <div className="space-y-2">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Documento Anexado</p>
-                                    <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-xl border border-border/50">
-                                        <FileText className="h-5 w-5 text-primary flex-shrink-0" />
-                                        <span className="text-sm text-foreground truncate flex-1">{viewingBudget.arquivoNomeOriginal || 'Documento.pdf'}</span>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="gap-1.5 text-xs font-bold"
-                                            onClick={() => window.open(viewingBudget.arquivoDownloadUrl!, '_blank')}
-                                        >
-                                            <Download className="h-3.5 w-3.5" /> Baixar PDF
-                                        </Button>
+                            {/* Arquivos Anexados — Gerente pode visualizar/baixar/excluir */}
+                            {viewingBudget.arquivos && viewingBudget.arquivos.length > 0 && (
+                                <div className="space-y-4">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Documentos Anexados ({viewingBudget.arquivos.length})</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                        {viewingBudget.arquivos.map((file) => (
+                                            <div key={file.r2key} className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border/50 group/file transition-colors hover:bg-muted/50">
+                                                <div className="flex items-center gap-3 overflow-hidden">
+                                                    <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                                                    <div className="overflow-hidden">
+                                                        <p className="text-xs font-bold text-foreground truncate" title={file.nomeOriginal}>
+                                                            {file.nomeOriginal}
+                                                        </p>
+                                                        <p className="text-[9px] text-muted-foreground uppercase">{file.formato}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-1 ml-2">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-primary hover:bg-primary/10"
+                                                        onClick={() => window.open(file.downloadUrl, '_blank')}
+                                                        title="Baixar"
+                                                    >
+                                                        <Download className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                                        onClick={async () => {
+                                                            try {
+                                                                await budgetService.deleteFile(file.r2key, token || undefined);
+                                                                toast({ title: "Arquivo removido" });
+                                                                if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId, true);
+                                                                setViewingBudget(prev => prev ? {
+                                                                    ...prev,
+                                                                    arquivos: prev.arquivos?.filter(f => f.r2key !== file.r2key)
+                                                                } : null);
+                                                            } catch (err) {
+                                                                toast({ title: "Erro ao excluir arquivo", variant: "destructive" });
+                                                            }
+                                                        }}
+                                                        title="Excluir"
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        {/* Dropzone para adicionar novos arquivos diretamente no modal */}
+                                        <div className="col-span-1">
+                                            <BudgetFileUpload
+                                                budgetPublicId={viewingBudget.publicId}
+                                                variant="card"
+                                                onSuccess={async () => {
+                                                    if (selectedTreatmentId) {
+                                                        const updatedBudgets = await budgetService.findByTreatment(selectedTreatmentId, token || undefined);
+                                                        const current = updatedBudgets.find(b => b.publicId === viewingBudget.publicId);
+                                                        if (current) setViewingBudget(current);
+                                                        loadTreatmentData(selectedTreatmentId, true);
+                                                    }
+                                                }}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -440,47 +495,62 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                             </div>
                         </div>
 
-                        {/* Upload de PDF do orçamento */}
+                        {/* Upload de arquivos do orçamento */}
                         <div className="space-y-3">
                             <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
-                                Anexar Documento PDF (opcional)
+                                Anexar Documentos (opcional)
                             </Label>
-                            <div className="flex items-center gap-3">
-                                <Input
-                                    type="file"
-                                    accept=".pdf,application/pdf"
-                                    id="budget-file-input"
-                                    className="hidden"
-                                    onChange={e => setBudgetFile(e.target.files?.[0] || null)}
-                                />
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="gap-2 text-xs font-bold uppercase h-10"
-                                    onClick={() => document.getElementById('budget-file-input')?.click()}
-                                >
-                                    <UploadCloud className="h-4 w-4" />
-                                    {budgetFile ? 'Trocar arquivo' : 'Selecionar PDF'}
-                                </Button>
-                                {budgetFile && (
-                                    <div className="flex items-center gap-2 bg-muted/40 px-3 py-2 rounded-lg border border-border/50">
-                                        <FileText className="h-4 w-4 text-primary flex-shrink-0" />
-                                        <span className="text-xs text-foreground font-medium truncate max-w-[200px]">{budgetFile.name}</span>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-6 w-6 text-destructive"
-                                            onClick={() => setBudgetFile(null)}
-                                        >
-                                            <Trash2 className="h-3 w-3" />
-                                        </Button>
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-3">
+                                    <Input
+                                        type="file"
+                                        multiple
+                                        id="budget-file-input"
+                                        className="hidden"
+                                        onChange={e => {
+                                            const files = Array.from(e.target.files || []);
+                                            setBudgetFiles(prev => [...prev, ...files]);
+                                        }}
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-2 text-xs font-bold uppercase h-10"
+                                        onClick={() => document.getElementById('budget-file-input')?.click()}
+                                    >
+                                        <UploadCloud className="h-4 w-4" />
+                                        Selecionar Arquivos
+                                    </Button>
+                                    {budgetFiles.length > 0 && (
+                                        <span className="text-xs text-muted-foreground font-medium">
+                                            {budgetFiles.length} {budgetFiles.length === 1 ? 'arquivo selecionado' : 'arquivos selecionados'}
+                                        </span>
+                                    )}
+                                </div>
+                                
+                                {budgetFiles.length > 0 && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                                        {budgetFiles.map((file, idx) => (
+                                            <div key={`${file.name}-${idx}`} className="flex items-center gap-2 bg-muted/40 px-3 py-2 rounded-lg border border-border/50 group">
+                                                <FileText className="h-4 w-4 text-primary flex-shrink-0" />
+                                                <span className="text-xs text-foreground font-medium truncate flex-1">{file.name}</span>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-6 w-6 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    onClick={() => setBudgetFiles(prev => prev.filter((_, i) => i !== idx))}
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
                             </div>
                         </div>
                     </div>
                     <DialogFooter className="p-6 border-t border-border bg-muted/5 gap-3">
-                        <Button variant="outline" onClick={() => { setOpenBudget(false); setBudgetFile(null); }} disabled={isSubmitting} className="h-12 px-8 font-bold uppercase text-xs tracking-widest">Descartar</Button>
+                        <Button variant="outline" onClick={() => { setOpenBudget(false); setBudgetFiles([]); }} disabled={isSubmitting} className="h-12 px-8 font-bold uppercase text-xs tracking-widest">Descartar</Button>
                         <Button 
                             onClick={handleSaveBudget} 
                             loading={isSubmitting} 

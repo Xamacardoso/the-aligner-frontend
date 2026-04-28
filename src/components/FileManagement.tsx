@@ -12,7 +12,7 @@
  * Categorias de arquivo suportadas: 'exames', 'setup', 'final'
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { TreatmentFile } from '@/lib/types';
 import { treatmentService } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -57,6 +57,7 @@ export function FileManagement({
     const [deletingKey, setDeletingKey] = useState<string | null>(null);
     const { toast } = useToast();
     const { token } = useAppAuth();
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Resolve canDelete: se não especificado, é !readOnly
     const showDelete = canDelete !== undefined ? canDelete : !readOnly;
@@ -85,54 +86,64 @@ export function FileManagement({
     }, [treatmentPublicId, tipo]);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file || !treatmentPublicId || readOnly) return;
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0 || !treatmentPublicId || readOnly) return;
 
         const uploadTipo = tipo || 'exames';
 
         setIsUploading(true);
+        let successCount = 0;
+
         try {
-            const fileType = file.type || 'application/octet-stream';
+            for (const file of files) {
+                const fileType = file.type || 'application/octet-stream';
 
-            // 1. Request presigned URL
-            const data = await treatmentService.requestUpload(treatmentPublicId, {
-                fileName: file.name,
-                contentType: fileType,
-                tipo: uploadTipo
-            }, token || undefined);
+                // 1. Request presigned URL
+                const data = await treatmentService.requestUpload(treatmentPublicId, {
+                    fileName: file.name,
+                    contentType: fileType,
+                    tipo: uploadTipo
+                }, token || undefined);
 
-            if (!data) throw new Error("Falha ao obter URL de upload");
+                if (!data) throw new Error(`Falha ao obter URL para ${file.name}`);
 
-            const { uploadUrl, r2key } = data;
+                const { uploadUrl, r2key } = data;
 
-            // 2. Upload diretamente para o Cloudflare R2
-            const res = await fetch(uploadUrl, {
-                method: 'PUT',
-                body: file,
-                headers: {
-                    'Content-Type': fileType,
-                },
+                // 2. Upload diretamente para o Cloudflare R2
+                const res = await fetch(uploadUrl, {
+                    method: 'PUT',
+                    body: file,
+                    headers: {
+                        'Content-Type': fileType,
+                    },
+                });
+
+                if (!res.ok) throw new Error(`Upload de ${file.name} falhou`);
+
+                // 3. Confirm metadata to backend
+                const format = file.name.split('.').pop() || '';
+                await treatmentService.confirmUpload(treatmentPublicId, {
+                    nomeOriginal: file.name,
+                    r2key,
+                    formato: format,
+                    tipo: uploadTipo
+                }, token || undefined);
+                
+                successCount++;
+            }
+
+            toast({ 
+                title: successCount > 1 ? "Arquivos enviados!" : "Arquivo enviado!", 
+                description: successCount > 1 ? `${successCount} itens foram adicionados.` : "Documento adicionado com sucesso."
             });
-
-            if (!res.ok) throw new Error("Upload para nuvem falhou");
-
-            // 3. Confirm metadata to backend
-            const format = file.name.split('.').pop() || '';
-            await treatmentService.confirmUpload(treatmentPublicId, {
-                nomeOriginal: file.name,
-                r2key,
-                formato: format,
-                tipo: uploadTipo
-            }, token || undefined);
-
-            toast({ title: "Arquivo enviado com sucesso!", description: file.name });
+            
             loadDocuments();
             if (onUploadSuccess) onUploadSuccess();
         } catch (err: any) {
             console.error(err);
             toast({
-                title: "Erro no upload",
-                description: err.message || "Não foi possível enviar o arquivo.",
+                title: "Erro no upload parcial",
+                description: err.message || "Alguns arquivos podem não ter sido enviados.",
                 variant: "destructive"
             });
         } finally {
@@ -186,7 +197,9 @@ export function FileManagement({
             {!readOnly && (
                 <input
                     type="file"
+                    multiple
                     id={inputId}
+                    ref={fileInputRef}
                     className="hidden"
                     onChange={handleFileChange}
                     disabled={isUploading}
@@ -206,7 +219,7 @@ export function FileManagement({
                                 variant="outline"
                                 className="h-8 gap-1.5 text-[10px] font-bold uppercase transition-all"
                                 loading={isUploading}
-                                onClick={() => document.getElementById(inputId)?.click()}
+                                onClick={() => fileInputRef.current?.click()}
                                 title="Fazer upload de novo arquivo"
                             >
                                 <UploadCloud className="h-3 w-3" />
@@ -225,7 +238,7 @@ export function FileManagement({
                 ) : documents.length === 0 ? (
                     <p className="text-sm text-muted-foreground italic">Nenhum documento anexado.</p>
                 ) : (
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                         {documents.map((doc) => (
                             <div
                                 key={doc.publicId}

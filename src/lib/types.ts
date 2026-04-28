@@ -134,12 +134,17 @@ export interface Budget {
   descricao: string;
   status: BudgetStatus;
   dataCriacao: string | Date;
-  /** Chave R2 do PDF anexado (se houver) */
-  arquivoR2key?: string | null;
-  /** Nome original do PDF anexado */
-  arquivoNomeOriginal?: string | null;
-  /** URL temporária de download do PDF (gerada pelo backend) */
-  arquivoDownloadUrl?: string | null;
+  /** Lista de arquivos anexados ao orçamento */
+  arquivos?: BudgetFile[];
+}
+
+export interface BudgetFile {
+  publicId: string;
+  r2key: string;
+  nomeOriginal: string;
+  formato: string;
+  dataCriacao: string | Date;
+  downloadUrl?: string;
 }
 
 // Legacy support

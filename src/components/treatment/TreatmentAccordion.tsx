@@ -42,6 +42,7 @@ import { FileManagement } from "@/components/FileManagement";
 import { ClinicalVisualizer } from "./ClinicalVisualizer";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { ConfirmActionDialog } from "@/components/ConfirmActionDialog";
+import { BudgetFileUpload } from "@/components/budget/BudgetFileUpload";
 
 /**
  * Cores e rótulos para os status de orçamento
@@ -76,6 +77,7 @@ interface TreatmentItemContentProps {
     onAddBudget?: () => void;
     onViewBudget: (b: Budget) => void;
     onDeleteBudget: (id: string) => void;
+    onBudgetUpdated?: () => void;
     canUpload?: boolean;
     /** Role do usuário logado */
     userRole: UserRole;
@@ -93,6 +95,7 @@ function TreatmentItemContent({
     onAddBudget,
     onViewBudget,
     onDeleteBudget,
+    onBudgetUpdated,
     canUpload = false,
     userRole,
 }: TreatmentItemContentProps) {
@@ -371,10 +374,11 @@ function TreatmentItemContent({
                                             {b.dataCriacao ? new Date(b.dataCriacao).toLocaleDateString('pt-BR') : ''}
                                         </span>
                                     </div>
-                                    {/* Indicador de PDF anexado */}
-                                    {b.arquivoR2key && (
-                                        <Badge variant="outline" className="text-[8px] font-bold h-5 uppercase gap-1">
-                                            <FileText className="h-2.5 w-2.5" /> PDF
+                                    {/* Indicador de arquivos anexados */}
+                                    {b.arquivos && b.arquivos.length > 0 && (
+                                        <Badge variant="outline" className="text-[8px] font-bold h-5 uppercase gap-1 bg-primary/5 text-primary border-primary/20">
+                                            <FileText className="h-2.5 w-2.5" /> 
+                                            {b.arquivos.length} {b.arquivos.length === 1 ? 'Arquivo' : 'Arquivos'}
                                         </Badge>
                                     )}
                                 </div>
@@ -388,6 +392,16 @@ function TreatmentItemContent({
                                     >
                                         Visualizar
                                     </Button>
+
+                                    {/* Gerente pode anexar arquivos em orçamentos pendentes */}
+                                    {b.status === 'pendente' && isGerente && (
+                                        <BudgetFileUpload
+                                            budgetPublicId={b.publicId}
+                                            onSuccess={onBudgetUpdated}
+                                            hasFile={(b.arquivos?.length || 0) > 0}
+                                        />
+                                    )}
+
                                     {/* Gerente pode excluir orçamentos pendentes */}
                                     {b.status === 'pendente' && isGerente && (
                                         <Button
@@ -421,6 +435,7 @@ interface TreatmentAccordionProps {
     onAddBudget?: () => void;
     onViewBudget: (budget: Budget) => void;
     onDeleteBudget: (id: string) => void;
+    onBudgetUpdated?: () => void;
     isLoadingDetails?: boolean;
     canUpload?: boolean;
     /** Role do usuário logado, controla visibilidade das seções */
@@ -438,6 +453,7 @@ export function TreatmentAccordion({
     onAddBudget,
     onViewBudget,
     onDeleteBudget,
+    onBudgetUpdated,
     isLoadingDetails = false,
     canUpload = false,
     userRole,
@@ -501,6 +517,7 @@ export function TreatmentAccordion({
                                 onAddBudget={onAddBudget}
                                 onViewBudget={onViewBudget}
                                 onDeleteBudget={onDeleteBudget}
+                                onBudgetUpdated={onBudgetUpdated}
                                 canUpload={canUpload}
                                 userRole={userRole}
                             />

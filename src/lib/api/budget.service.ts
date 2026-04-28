@@ -65,7 +65,13 @@ export const budgetService = {
             body: JSON.stringify(data),
         }, token),
 
-    /** Obtém URL de download do PDF do orçamento (ambos) */
-    getFileUrl: (publicId: string, token?: string) =>
-        apiClient<{ downloadUrl: string | null, nomeOriginal: string | null }>(`/budgets/${publicId}/file`, {}, token),
+    /** Obtém lista de arquivos do orçamento (ambos) */
+    getFiles: (publicId: string, token?: string) =>
+        apiClient<any[]>(`/budgets/${publicId}/files`, {}, token),
+
+    /** Remove um arquivo do orçamento (somente gerente) */
+    deleteFile: (r2key: string, token?: string) =>
+        apiClient<void>(`/budgets/file/${r2key}`, {
+            method: 'DELETE',
+        }, token),
 };
