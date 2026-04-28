@@ -1,5 +1,18 @@
 "use client"
 
+/**
+ * @page DentistaPatientDetailPage
+ * @description Página de detalhes de um paciente para o DENTISTA.
+ *
+ * Regras de negócio aplicadas:
+ * - Dentista NÃO pode criar orçamentos (removido botão "Novo Orçamento")
+ * - Dentista PODE aprovar ou declinar orçamentos pendentes
+ * - Dentista NÃO pode excluir/cancelar orçamentos
+ * - Dentista vê seções "Exames Ortodônticos" (upload+download) e "Documentos Finais" (read-only)
+ * - Dentista NÃO vê seção "Setups do Paciente"
+ * - Dentista pode criar, editar e excluir tratamentos
+ */
+
 import { useState, use, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -18,35 +31,12 @@ import {
 } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { ArrowLeft, Plus, Trash2, FileText, ClipboardList, Stethoscope, CheckCircle2, Pencil, User, Loader2, AlertCircle } from 'lucide-react';
-import { FileManagement } from '@/components/FileManagement';
-import { Separator } from '@/components/ui/separator';
+import { ArrowLeft, Plus, FileText, ClipboardList, Stethoscope, Pencil, User, Loader2, AlertCircle, Download } from 'lucide-react';
 import { TreatmentForm } from '@/components/treatment/TreatmentForm';
 import { TreatmentAccordion } from '@/components/treatment/TreatmentAccordion';
 import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
 import { useAppAuth } from '@/hooks/use-app-auth';
-
-const formatNestedObj = (jsonStr: string) => {
-    try {
-        const obj = JSON.parse(jsonStr);
-        return (
-            <ul className="list-disc pl-4 mt-1 space-y-0.5 text-sm text-foreground">
-                {Object.entries(obj).map(([k, v]) => (
-                    <li key={k}>
-                        <span className="capitalize">{k.replace(/([A-Z])/g, ' $1')}</span>: <strong>{v as string}</strong>
-                    </li>
-                ))}
-            </ul>
-        );
-    } catch {
-        return <p className="text-sm text-foreground mt-1">{jsonStr}</p>;
-    }
-};
 
 const statusLabel: Record<string, string> = {
     pendente: 'Pendente',
@@ -60,9 +50,6 @@ const statusClass: Record<string, string> = {
     declinado: 'bg-red-100 text-red-700',
     cancelado: 'bg-gray-100 text-gray-500',
 };
-
-// Generates a mock ID for now
-const generateId = () => Math.random().toString(36).substr(2, 9);
 
 interface PageProps {
     params: Promise<{ id: string }>; // The id here is the publicId of the patient
@@ -81,17 +68,13 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     const [treatmentDetails, setTreatmentDetails] = useState<TreatmentDetails | null>(null);
 
     const [budgets, setBudgets] = useState<Budget[]>([]);
-    const [openBudget, setOpenBudget] = useState(false);
     const [viewingBudget, setViewingBudget] = useState<Budget | null>(null);
-    const [procedures, setProcedures] = useState<{ id: string, name: string, value: number }[]>([{ id: generateId(), name: '', value: 0 }]);
-    const [observations, setObservations] = useState('');
 
     const [openCreateTreatment, setOpenCreateTreatment] = useState(false);
     const [openEditTreatment, setOpenEditTreatment] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isLoadingDetails, setIsLoadingDetails] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [budgetToDelete, setBudgetToDelete] = useState<string | null>(null);
 
     const { toast } = useToast();
     const { token, user: activeUser, isLoaded } = useAppAuth();
@@ -100,7 +83,6 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
         if (!publicId || !isLoaded || !token) return;
         if (!silent) setIsLoading(true);
         try {
-            // First, get the patient to find the partnerPublicId
             const foundP = await patientService.findOne(publicId, token);
             setPatient(foundP);
 
@@ -126,38 +108,28 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     };
 
     const loadTreatmentData = async (treatmentId: string, silent = false) => {
-        if (!treatmentId || !token) {
-            return;
-        }
+        if (!treatmentId || !token) return;
 
-        // Se já temos os detalhes e não é um refresh forçado (silent), evitamos o fetch redundante
-        if (!silent && treatmentDetails?.publicId === treatmentId) {
-            return;
-        }
+        if (!silent && treatmentDetails?.publicId === treatmentId) return;
 
         if (!silent) setIsLoadingDetails(true);
         try {
             const details = await treatmentService.findOne(treatmentId, token);
-
             if (!details || !details.publicId) {
                 console.error('[ERROR] Detalhes inválidos retornados pela API:', details);
                 return;
             }
-
             setTreatmentDetails(details);
             const b = await budgetService.findByTreatment(treatmentId, token || undefined);
             setBudgets(b);
         } catch (err: any) {
             console.error(`[ERROR] Falha ao carregar tratamento "${treatmentId}":`, err);
-
-            // Tratamento especial para 404 intermitente (pode ser delay de escrita em DBs distribuídos/replicados)
             if (err.message?.includes('404') || err.message?.includes('não encontrado')) {
                 toast({
                     title: "Sincronizando dados...",
                     description: "Houve um pequeno atraso na resposta do servidor. Tentando novamente...",
                     variant: "default"
                 });
-                // Tentativa de retry único após 1.5s
                 setTimeout(() => loadTreatmentData(treatmentId, true), 1500);
             } else {
                 toast({ title: "Erro ao carregar detalhes", variant: "destructive" });
@@ -205,80 +177,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
         </div>
     );
 
-    const totalValue = procedures.reduce((s, p) => s + Number(p.value || 0), 0);
-
-    const addProcedure = () => setProcedures(ps => [...ps, { id: generateId(), name: '', value: 0 }]);
-    const removeProcedure = (pid: string) => setProcedures(ps => ps.filter(p => p.id !== pid));
-    const updateProcedure = (pid: string, field: 'name' | 'value', val: string | number) => {
-        setProcedures(ps => ps.map(p => p.id === pid ? { ...p, [field]: field === 'value' ? Number(val) : val } : p));
-    };
-
-    const handleSaveBudget = async () => {
-        if (!selectedTreatmentId) return;
-
-        setIsSubmitting(true);
-
-        try {
-            const newBudget = await budgetService.create({
-                tratamentoPublicId: selectedTreatmentId,
-                valor: totalValue,
-                descricao: observations.substring(0, 400)
-            }, token || undefined);
-
-            // 1. Fechamos o modal primeiro para garantir a UI fluida e limpar estado
-            setOpenBudget(false);
-            setProcedures([{ id: generateId(), name: '', value: 0 }]);
-            setObservations('');
-
-            // 2. Atualizamos a lista localmente (otimista)
-            if (newBudget && typeof newBudget === 'object' && newBudget.publicId) {
-                setBudgets(prev => [newBudget, ...prev]);
-                toast({ title: "Orçamento criado com sucesso!" });
-
-                // 3. Foca no novo item (scroll suave) e destaca
-                setTimeout(() => {
-                    const el = document.getElementById(`budget-${newBudget.publicId}`);
-                    if (el) {
-                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        el.classList.add('ring-2', 'ring-primary', 'bg-primary/5', 'scale-[1.02]');
-                        setTimeout(() => el.classList.remove('ring-2', 'ring-primary', 'bg-primary/5', 'scale-[1.02]'), 2000);
-                    }
-                }, 400);
-            }
-
-            // 4. Sincronismo em background (SILENCIOSO - sem loading visual)
-            loadTreatmentData(selectedTreatmentId, true);
-
-        } catch (err) {
-            console.error('Erro ao salvar orçamento:', err);
-            toast({
-                title: "Erro ao criar orçamento",
-                description: "Verifique os dados e tente novamente.",
-                variant: "destructive"
-            });
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleCancelBudget = async () => {
-        if (!budgetToDelete) return;
-
-        setIsSubmitting(true);
-        try {
-            await budgetService.cancel(budgetToDelete, token || undefined);
-            toast({
-                title: "Orçamento cancelado",
-                description: "O status do orçamento foi alterado para cancelado."
-            });
-            if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId);
-            setBudgetToDelete(null);
-        } catch (err) {
-            toast({ title: "Erro ao cancelar orçamento", variant: "destructive" });
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+    // ---- Ações do Dentista ----
 
     const handleApproveBudget = async (bid: string) => {
         setIsSubmitting(true);
@@ -334,23 +233,17 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
     };
 
     const handleTreatmentSuccess = (data: any) => {
-        // Extrai o objeto treatment caso ele venha embrulhado pelo backend antiga/erradamente
         const actualTreatment = data?.treatment ? data.treatment : data;
         const isEdit = openEditTreatment;
 
-        console.log('[DEBUG] handleTreatmentSuccess recebido:', actualTreatment);
-
-        // 1. Fechar modais imediatamente
         setOpenCreateTreatment(false);
         setOpenEditTreatment(false);
 
         if (!actualTreatment || !actualTreatment.publicId) {
-            console.error('[ERROR] Objeto de tratamento inválido após sucesso:', actualTreatment);
-            loadData(); // Recuperação de emergência
+            loadData();
             return;
         }
 
-        // 2. Atualização otimista
         if (isEdit) {
             setTreatments(prev => prev.map(t => t.publicId === actualTreatment.publicId ? actualTreatment : t));
             setTreatmentDetails(actualTreatment);
@@ -360,7 +253,6 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
             setTreatmentDetails(actualTreatment);
         }
 
-        // 3. Sincronismo silencioso
         loadData(true);
         loadTreatmentData(actualTreatment.publicId, true);
     };
@@ -427,74 +319,17 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                     budgets={budgets}
                     onEditTreatment={() => setOpenEditTreatment(true)}
                     onDeleteTreatment={handleDeleteTreatment}
-                    onAddBudget={() => setOpenBudget(true)}
+                    /* Dentista NÃO cria orçamentos */
+                    onAddBudget={undefined}
                     onViewBudget={setViewingBudget}
-                    onDeleteBudget={setBudgetToDelete}
+                    /* Dentista NÃO exclui orçamentos */
+                    onDeleteBudget={() => {}}
                     isLoadingDetails={isLoadingDetails}
+                    userRole="dentista"
                 />
             </div>
 
-
-            {/* Budget Dialog */}
-            <Dialog open={openBudget} onOpenChange={setOpenBudget}>
-                <DialogContent className="max-w-[95vw] md:max-w-6xl h-auto border-none shadow-2xl p-0 overflow-hidden">
-                    <DialogHeader className="p-6 border-b border-border bg-muted/5 flex-shrink-0">
-                        <DialogTitle className="text-xl font-bold">
-                            Gerar Novo Orçamento
-                        </DialogTitle>
-                    </DialogHeader>
-
-                    {isSubmitting && (
-                        <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] flex flex-col items-center justify-center z-50 rounded-lg animate-in fade-in duration-300">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-4">Processando...</p>
-                        </div>
-                    )}
-                    <div className="p-8 space-y-6 bg-background/50">
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch">
-                            <div className="md:col-span-8 flex flex-col space-y-3">
-                                <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground flex-shrink-0">Descrição do Tratamento e Procedimentos</Label>
-                                <Textarea
-                                    rows={6}
-                                    placeholder="Descreva aqui o plano de tratamento, materiais inclusos e observações gerais..."
-                                    value={observations}
-                                    onChange={e => setObservations(e.target.value)}
-                                    className="flex-1 min-h-[160px] border-primary/10 focus:border-primary transition-all text-sm resize-none bg-background shadow-sm p-4 leading-relaxed"
-                                />
-                            </div>
-                            <div className="md:col-span-4 flex flex-col space-y-3">
-                                <span className="text-[11px] font-black uppercase tracking-widest text-transparent flex-shrink-0 select-none pointer-events-none">VALOR</span>
-                                <div className="flex-1 bg-primary/5 rounded-2xl border border-primary/10 p-6 shadow-sm flex flex-col justify-center min-h-[160px]">
-                                    <Label className="text-[11px] font-black uppercase tracking-widest text-primary mb-4 block">Valor Final do Tratamento</Label>
-                                    <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-black text-xs uppercase">R$</span>
-                                        <Input
-                                            type="number"
-                                            className="pl-12 h-16 bg-background border-primary/10 focus:border-primary transition-all text-3xl font-black tabular-nums shadow-sm"
-                                            placeholder="0,00"
-                                            value={procedures[0]?.value || ''}
-                                            onChange={e => setProcedures([{ id: 'total', name: 'Total', value: Number(e.target.value) }])}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <DialogFooter className="p-6 border-t border-border bg-muted/5 gap-3">
-                        <Button variant="outline" onClick={() => setOpenBudget(false)} disabled={isSubmitting} className="h-12 px-8 font-bold uppercase text-xs tracking-widest">Descartar</Button>
-                        <Button 
-                            onClick={handleSaveBudget} 
-                            loading={isSubmitting} 
-                            disabled={totalValue === 0 || !observations} 
-                            className="h-12 px-8 font-bold uppercase text-xs tracking-widest min-w-[240px] shadow-lg shadow-primary/20"
-                        >
-                            Gerar e Salvar Orçamento
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            {/* Budget View Modal */}
+            {/* Budget View Modal — Dentista pode Aprovar/Declinar + ver PDF */}
             <Dialog open={!!viewingBudget} onOpenChange={v => !v && setViewingBudget(null)}>
                 <DialogContent className="max-w-lg">
                     <DialogHeader>
@@ -524,6 +359,26 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                                 </div>
                             </div>
 
+                            {/* PDF Anexado — Dentista pode visualizar/baixar */}
+                            {viewingBudget.arquivoDownloadUrl && (
+                                <div className="space-y-2">
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase">Documento Anexado</p>
+                                    <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-md border border-border">
+                                        <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                                        <span className="text-sm text-foreground truncate flex-1">{viewingBudget.arquivoNomeOriginal || 'Documento.pdf'}</span>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="gap-1.5 text-xs"
+                                            onClick={() => window.open(viewingBudget.arquivoDownloadUrl!, '_blank')}
+                                        >
+                                            <Download className="h-3.5 w-3.5" /> Baixar
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Ações do Dentista: Aprovar / Declinar */}
                             {viewingBudget?.status === 'pendente' && (
                                 <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border">
                                     <Button
@@ -550,6 +405,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
             {/* New Treatment Dialog */}
             <Dialog open={openCreateTreatment} onOpenChange={setOpenCreateTreatment}>
                 <DialogContent className="max-w-[95vw] md:max-w-7xl h-[92vh] flex flex-col p-0 overflow-hidden gap-0">
@@ -600,17 +456,6 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                     </div>
                 </DialogContent>
             </Dialog>
-
-            {/* Confirmation Dialog for Budget Cancellation */}
-            <ConfirmActionDialog
-                open={!!budgetToDelete}
-                onOpenChange={(open) => !open && setBudgetToDelete(null)}
-                onConfirm={handleCancelBudget}
-                isLoading={isSubmitting}
-                title="Confirmar Cancelamento"
-                description="Tem certeza que deseja cancelar este orçamento? O status será alterado para 'Cancelado', permitindo filtragem posterior."
-                confirmText="Confirmar"
-            />
         </div>
     );
 }

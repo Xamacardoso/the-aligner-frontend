@@ -1,5 +1,19 @@
 "use client";
 
+/**
+ * @component TreatmentAccordion
+ * @description Componente principal de exibição de tratamentos clínicos.
+ * Exibe um accordion com cada tratamento listado, e ao expandir mostra:
+ * - Detalhes clínicos (descrição, objetivos, apinhamentos)
+ * - 3 seções de arquivos com controle de acesso por role:
+ *   1. "Exames Ortodônticos e Modelos Digitais" (exames) — ambos
+ *   2. "Setups do Paciente" (setup) — somente gerente
+ *   3. "Documentos Finais" (final) — gerente controla, dentista visualiza
+ * - Seção de Orçamentos com filtros por status
+ *
+ * @prop userRole - Role do usuário logado ('gerente' | 'dentista')
+ */
+
 import React from "react";
 import {
     Accordion,
@@ -16,12 +30,12 @@ import {
     Calendar,
     Stethoscope,
     AlertCircle,
-    Files,
     Loader2,
     FlaskConical,
-    FileSearch
+    FileSearch,
+    FileCheck,
 } from "lucide-react";
-import { TreatmentListItem, TreatmentDetails, Budget } from "@/lib/types";
+import { TreatmentListItem, TreatmentDetails, Budget, UserRole } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { FileManagement } from "@/components/FileManagement";
@@ -59,10 +73,12 @@ interface TreatmentItemContentProps {
     budgets: Budget[];
     onEdit?: () => void;
     onDeleteTreatment?: (id: string) => void;
-    onAddBudget: () => void;
+    onAddBudget?: () => void;
     onViewBudget: (b: Budget) => void;
     onDeleteBudget: (id: string) => void;
     canUpload?: boolean;
+    /** Role do usuário logado */
+    userRole: UserRole;
 }
 
 /**
@@ -77,15 +93,21 @@ function TreatmentItemContent({
     onAddBudget,
     onViewBudget,
     onDeleteBudget,
-    canUpload = false
+    canUpload = false,
+    userRole,
 }: TreatmentItemContentProps) {
-    const [labFilesOpen, setLabFilesOpen] = React.useState(false);
-    const [dentistFilesOpen, setDentistFilesOpen] = React.useState(false);
+    const [examesFilesOpen, setExamesFilesOpen] = React.useState(false);
+    const [setupFilesOpen, setSetupFilesOpen] = React.useState(false);
+    const [finalFilesOpen, setFinalFilesOpen] = React.useState(false);
     const [budgetsOpen, setBudgetsOpen] = React.useState(false);
-    const [isUploadingLab, setIsUploadingLab] = React.useState(false);
-    const [isUploadingDentist, setIsUploadingDentist] = React.useState(false);
+    const [isUploadingExames, setIsUploadingExames] = React.useState(false);
+    const [isUploadingSetup, setIsUploadingSetup] = React.useState(false);
+    const [isUploadingFinal, setIsUploadingFinal] = React.useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
     const [statusFilter, setStatusFilter] = React.useState<'todos' | 'pendente' | 'aprovado' | 'declinado' | 'cancelado'>('todos');
+
+    const isGerente = userRole === 'gerente';
+    const isDentista = userRole === 'dentista';
 
     const filteredBudgets = budgets.filter(b => statusFilter === 'todos' || b.status === statusFilter);
 
@@ -158,97 +180,149 @@ function TreatmentItemContent({
                 </div>
             )}
 
-            {/* Seção de Arquivos do Laboratório */}
+            {/* ========================================== */}
+            {/* SEÇÃO 1: Exames Ortodônticos e Modelos Digitais */}
+            {/* Acesso: Upload e download para AMBOS (dentista e gerente) */}
+            {/* ========================================== */}
             <CollapsibleSection
-                title="Arquivos de Exames/Laboratório"
+                title="Exames Ortodônticos e Modelos Digitais"
                 icon={<FlaskConical className="h-4 w-4" />}
-                open={labFilesOpen}
-                onOpenChange={setLabFilesOpen}
+                open={examesFilesOpen}
+                onOpenChange={setExamesFilesOpen}
                 headerRight={
-                    (onEdit || canUpload) && (
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 gap-1.5 text-[10px] font-bold uppercase transition-all"
-                            disabled={isUploadingLab}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                document.getElementById(`file-upload-${treatment.publicId}-laboratorio`)?.click();
-                            }}
-                        >
-                            {isUploadingLab ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                                <Plus className="h-3.5 w-3.5" />
-                            )}
-                            {isUploadingLab ? "Enviando..." : "Upload"}
-                        </Button>
-                    )
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 gap-1.5 text-[10px] font-bold uppercase transition-all"
+                        disabled={isUploadingExames}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            document.getElementById(`file-upload-${treatment.publicId}-exames`)?.click();
+                        }}
+                    >
+                        {isUploadingExames ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                            <Plus className="h-3.5 w-3.5" />
+                        )}
+                        {isUploadingExames ? "Enviando..." : "Upload"}
+                    </Button>
                 }
             >
                 <FileManagement
                     treatmentPublicId={treatment.publicId}
-                    tipo="laboratorio"
+                    tipo="exames"
                     noCard
-                    onUploadSuccess={() => setLabFilesOpen(true)}
-                    onUploadingChange={setIsUploadingLab}
+                    onUploadSuccess={() => setExamesFilesOpen(true)}
+                    onUploadingChange={setIsUploadingExames}
                 />
             </CollapsibleSection>
 
-            {/* Seção de Documentos do Dentista / Planejamento */}
+            {/* ========================================== */}
+            {/* SEÇÃO 2: Setups do Paciente */}
+            {/* Acesso: Somente GERENTE (leitura, escrita, exclusão) */}
+            {/* Dentista NÃO vê esta seção */}
+            {/* ========================================== */}
+            {isGerente && (
+                <CollapsibleSection
+                    title="Setups do Paciente"
+                    icon={<FileSearch className="h-4 w-4" />}
+                    open={setupFilesOpen}
+                    onOpenChange={setSetupFilesOpen}
+                    headerRight={
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 gap-1.5 text-[10px] font-bold uppercase transition-all"
+                            disabled={isUploadingSetup}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                document.getElementById(`file-upload-${treatment.publicId}-setup`)?.click();
+                            }}
+                        >
+                            {isUploadingSetup ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                                <Plus className="h-3.5 w-3.5" />
+                            )}
+                            {isUploadingSetup ? "Enviando..." : "Upload"}
+                        </Button>
+                    }
+                >
+                    <FileManagement
+                        treatmentPublicId={treatment.publicId}
+                        tipo="setup"
+                        noCard
+                        onUploadSuccess={() => setSetupFilesOpen(true)}
+                        onUploadingChange={setIsUploadingSetup}
+                    />
+                </CollapsibleSection>
+            )}
+
+            {/* ========================================== */}
+            {/* SEÇÃO 3: Documentos Finais */}
+            {/* Acesso: Gerente controla tudo, Dentista somente visualiza/baixa */}
+            {/* ========================================== */}
             <CollapsibleSection
-                title="Documentos do Planejamento de Tratamento (Dentista)"
-                icon={<FileSearch className="h-4 w-4" />}
-                open={dentistFilesOpen}
-                onOpenChange={setDentistFilesOpen}
+                title="Documentos Finais"
+                icon={<FileCheck className="h-4 w-4" />}
+                open={finalFilesOpen}
+                onOpenChange={setFinalFilesOpen}
                 headerRight={
-                    (onEdit || canUpload) && (
+                    isGerente ? (
                         <Button
                             size="sm"
                             variant="outline"
                             className="h-7 gap-1.5 text-[10px] font-bold uppercase transition-all"
-                            disabled={isUploadingDentist}
+                            disabled={isUploadingFinal}
                             onClick={(e) => {
                                 e.stopPropagation();
-                                document.getElementById(`file-upload-${treatment.publicId}-dentista`)?.click();
+                                document.getElementById(`file-upload-${treatment.publicId}-final`)?.click();
                             }}
                         >
-                            {isUploadingDentist ? (
+                            {isUploadingFinal ? (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             ) : (
                                 <Plus className="h-3.5 w-3.5" />
                             )}
-                            {isUploadingDentist ? "Enviando..." : "Upload"}
+                            {isUploadingFinal ? "Enviando..." : "Upload"}
                         </Button>
-                    )
+                    ) : undefined
                 }
             >
                 <FileManagement
                     treatmentPublicId={treatment.publicId}
-                    tipo="dentista"
+                    tipo="final"
                     noCard
-                    onUploadSuccess={() => setDentistFilesOpen(true)}
-                    onUploadingChange={setIsUploadingDentist}
+                    onUploadSuccess={() => setFinalFilesOpen(true)}
+                    onUploadingChange={setIsUploadingFinal}
+                    readOnly={isDentista}
+                    canDelete={isGerente}
                 />
             </CollapsibleSection>
 
+            {/* ========================================== */}
             {/* Seção de Orçamentos */}
+            {/* ========================================== */}
             <CollapsibleSection
                 title="Orçamentos do Tratamento"
                 icon={<FileText className="h-4 w-4" />}
                 open={budgetsOpen}
                 onOpenChange={setBudgetsOpen}
                 headerRight={
-                    <Button
-                        size="sm"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onAddBudget();
-                        }}
-                        className="h-7 gap-1.5 text-[10px] font-bold uppercase"
-                    >
-                        <Plus className="h-3.5 w-3.5" /> Novo Orçamento
-                    </Button>
+                    /* Somente GERENTE pode criar novos orçamentos */
+                    isGerente && onAddBudget ? (
+                        <Button
+                            size="sm"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onAddBudget();
+                            }}
+                            className="h-7 gap-1.5 text-[10px] font-bold uppercase"
+                        >
+                            <Plus className="h-3.5 w-3.5" /> Novo Orçamento
+                        </Button>
+                    ) : undefined
                 }
             >
                 {budgets.length > 0 && (
@@ -297,6 +371,12 @@ function TreatmentItemContent({
                                             {b.dataCriacao ? new Date(b.dataCriacao).toLocaleDateString('pt-BR') : ''}
                                         </span>
                                     </div>
+                                    {/* Indicador de PDF anexado */}
+                                    {b.arquivoR2key && (
+                                        <Badge variant="outline" className="text-[8px] font-bold h-5 uppercase gap-1">
+                                            <FileText className="h-2.5 w-2.5" /> PDF
+                                        </Badge>
+                                    )}
                                 </div>
 
                                 <div className="flex items-center gap-2 mt-2 md:mt-0">
@@ -308,13 +388,14 @@ function TreatmentItemContent({
                                     >
                                         Visualizar
                                     </Button>
-                                     {b.status === 'pendente' && (
+                                    {/* Gerente pode excluir orçamentos pendentes */}
+                                    {b.status === 'pendente' && isGerente && (
                                         <Button
                                             variant="ghost"
                                             size="icon"
                                             onClick={() => onDeleteBudget(b.publicId)}
                                             className="h-7 w-7 text-destructive hover:bg-destructive/10 transition-colors"
-                                            title="Cancelar orçamento"
+                                            title="Excluir orçamento"
                                         >
                                             <Trash2 className="h-3.5 w-3.5" />
                                         </Button>
@@ -337,11 +418,13 @@ interface TreatmentAccordionProps {
     budgets: Budget[];
     onEditTreatment?: () => void;
     onDeleteTreatment?: (id: string) => void;
-    onAddBudget: () => void;
+    onAddBudget?: () => void;
     onViewBudget: (budget: Budget) => void;
     onDeleteBudget: (id: string) => void;
     isLoadingDetails?: boolean;
     canUpload?: boolean;
+    /** Role do usuário logado, controla visibilidade das seções */
+    userRole: UserRole;
 }
 
 export function TreatmentAccordion({
@@ -356,7 +439,8 @@ export function TreatmentAccordion({
     onViewBudget,
     onDeleteBudget,
     isLoadingDetails = false,
-    canUpload = false
+    canUpload = false,
+    userRole,
 }: TreatmentAccordionProps) {
     if (treatments.length === 0) {
         return (
@@ -418,6 +502,7 @@ export function TreatmentAccordion({
                                 onViewBudget={onViewBudget}
                                 onDeleteBudget={onDeleteBudget}
                                 canUpload={canUpload}
+                                userRole={userRole}
                             />
                         ) : (
                             <div className="py-8 text-center text-muted-foreground text-sm">

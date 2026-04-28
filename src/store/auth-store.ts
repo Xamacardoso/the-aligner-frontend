@@ -2,6 +2,11 @@ import { create } from 'zustand';
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
 
+/**
+ * @module AuthStore
+ * @description Store Zustand responsável por gerenciar o estado global de autenticação no lado do cliente.
+ */
+
 interface User {
     cpf: string;
     nome: string;
@@ -19,6 +24,10 @@ interface AuthState {
     initialize: () => void;
 }
 
+/**
+ * Hook global que provê o estado de Autenticação atual do sistema (Token e Usuário logado).
+ * Ele decodifica automaticamente o JWT em `initialize()` quando a página carrega.
+ */
 export const useAuthStore = create<AuthState>((set) => ({
     token: null,
     user: null,

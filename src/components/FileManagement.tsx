@@ -1,5 +1,17 @@
 "use client"
 
+/**
+ * @component FileManagement
+ * @description Componente reutilizável para gestão de arquivos de tratamento.
+ * Suporta upload direto ao Cloudflare R2 (presigned URL), download, visualização 3D (STL) e exclusão.
+ *
+ * Controle de acesso é feito via props:
+ * - `readOnly`: oculta upload e exclusão (dentista vendo "Documentos Finais")
+ * - `canDelete`: controla se o botão de excluir aparece (padrão: true se não readOnly)
+ *
+ * Categorias de arquivo suportadas: 'exames', 'setup', 'final'
+ */
+
 import { useState, useEffect } from 'react';
 import { TreatmentFile } from '@/lib/types';
 import { treatmentService } from '@/lib/api';
@@ -10,12 +22,22 @@ import { cn } from "@/lib/utils";
 import { useAppAuth } from '@/hooks/use-app-auth';
 
 interface FileManagementProps {
+    /** PublicId do tratamento ao qual os arquivos pertencem */
     treatmentPublicId: string;
-    tipo?: 'laboratorio' | 'dentista';
+    /** Categoria de arquivo a ser listada/gerenciada */
+    tipo?: 'exames' | 'setup' | 'final';
+    /** Título exibido no header do card (usado quando noCard=false) */
     title?: string;
+    /** Se true, renderiza sem o wrapper de card */
     noCard?: boolean;
+    /** Callback quando upload for concluído com sucesso */
     onUploadSuccess?: () => void;
+    /** Callback para informar estado de uploading ao componente pai */
     onUploadingChange?: (isUploading: boolean) => void;
+    /** Se true, oculta upload e exclusão — modo somente leitura */
+    readOnly?: boolean;
+    /** Se true, exibe botão de excluir (padrão: !readOnly) */
+    canDelete?: boolean;
 }
 
 export function FileManagement({
@@ -24,7 +46,9 @@ export function FileManagement({
     title = "Arquivos e Exames",
     noCard = false,
     onUploadSuccess,
-    onUploadingChange
+    onUploadingChange,
+    readOnly = false,
+    canDelete,
 }: FileManagementProps) {
     const inputId = `file-upload-${treatmentPublicId}-${tipo || 'all'}`;
     const [documents, setDocuments] = useState<TreatmentFile[]>([]);
@@ -33,6 +57,9 @@ export function FileManagement({
     const [deletingKey, setDeletingKey] = useState<string | null>(null);
     const { toast } = useToast();
     const { token } = useAppAuth();
+
+    // Resolve canDelete: se não especificado, é !readOnly
+    const showDelete = canDelete !== undefined ? canDelete : !readOnly;
 
     useEffect(() => {
         if (onUploadingChange) {
@@ -59,10 +86,9 @@ export function FileManagement({
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file || !treatmentPublicId) return;
+        if (!file || !treatmentPublicId || readOnly) return;
 
-        // Se não houver tipo definido, padrão para laboratorio
-        const uploadTipo = tipo || 'laboratorio';
+        const uploadTipo = tipo || 'exames';
 
         setIsUploading(true);
         try {
@@ -156,14 +182,16 @@ export function FileManagement({
             "mt-1 overflow-hidden",
             noCard ? "" : "bg-card rounded-lg border border-border"
         )}>
-            {/* Input oculto sempre disponível para gatilhos externos ou internos */}
-            <input
-                type="file"
-                id={inputId}
-                className="hidden"
-                onChange={handleFileChange}
-                disabled={isUploading}
-            />
+            {/* Input oculto para upload — não renderizado se readOnly */}
+            {!readOnly && (
+                <input
+                    type="file"
+                    id={inputId}
+                    className="hidden"
+                    onChange={handleFileChange}
+                    disabled={isUploading}
+                />
+            )}
 
             {!noCard && (
                 <div className="border-b border-border px-5 py-3 flex items-center justify-between">
@@ -171,19 +199,21 @@ export function FileManagement({
                         <File className="h-4 w-4 text-primary" />
                         <h2 className="text-sm font-bold text-foreground">{title}</h2>
                     </div>
-                    <div className="relative">
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-8 gap-1.5 text-[10px] font-bold uppercase transition-all"
-                            loading={isUploading}
-                            onClick={() => document.getElementById(inputId)?.click()}
-                            title="Fazer upload de novo arquivo"
-                        >
-                            <UploadCloud className="h-3 w-3" />
-                            Upload
-                        </Button>
-                    </div>
+                    {!readOnly && (
+                        <div className="relative">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 gap-1.5 text-[10px] font-bold uppercase transition-all"
+                                loading={isUploading}
+                                onClick={() => document.getElementById(inputId)?.click()}
+                                title="Fazer upload de novo arquivo"
+                            >
+                                <UploadCloud className="h-3 w-3" />
+                                Upload
+                            </Button>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -259,15 +289,17 @@ export function FileManagement({
                                                     >
                                                         <Download className="h-4 w-4 text-muted-foreground" />
                                                     </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8"
-                                                        onClick={() => handleDelete(doc.r2key)}
-                                                        title="Excluir"
-                                                    >
-                                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                                    </Button>
+                                                    {showDelete && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8"
+                                                            onClick={() => handleDelete(doc.r2key)}
+                                                            title="Excluir"
+                                                        >
+                                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             )}
                                         </>

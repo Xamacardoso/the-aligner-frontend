@@ -1,3 +1,19 @@
+/**
+ * @module apiClient
+ * @description Cliente HTTP centralizado para comunicação com o backend.
+ *
+ * Features:
+ * - Adiciona automaticamente o Content-Type: application/json
+ * - Injeta token JWT Bearer no header Authorization
+ * - Desativa cache do Next.js por padrão (cache: 'no-store')
+ * - Parseia erros do backend e relança como Error com mensagem legível
+ * - Trata respostas 204 (No Content) retornando objeto vazio
+ *
+ * @example
+ * ```ts
+ * const data = await apiClient<TreatmentDetails>('/treatments/123', {}, token);
+ * ```
+ */
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export async function apiClient<T>(

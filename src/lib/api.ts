@@ -1,3 +1,12 @@
+/**
+ * @module API
+ * @description Módulo central de exportação dos serviços de consumo da API Backend.
+ * 
+ * Este arquivo agrupa todas as chamadas HTTP (usando a instância configurada do Axios) 
+ * separadas por subdomínios (partner, patient, treatment, etc).
+ * Ele também mantém funções "legacy" para compatibilidade reversa temporária com componentes mais antigos.
+ */
+
 import { partnerService } from './api/partner.service';
 import { patientService } from './api/patient.service';
 import { treatmentService } from './api/treatment.service';

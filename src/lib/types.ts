@@ -1,3 +1,9 @@
+/**
+ * @module types
+ * @description Tipos TypeScript compartilhados por toda a aplicação frontend.
+ * Espelham as entidades do backend e são usados nos services, componentes e páginas.
+ */
+
 export type UserRole = 'gerente' | 'dentista';
 
 export interface User {
@@ -11,6 +17,7 @@ export interface User {
 // PARTNER / DENTIST
 // ==========================================
 
+/** Dados resumidos de um parceiro (dentista) para listagem */
 export interface PartnerListItem {
   publicId: string;
   nome: string;
@@ -21,6 +28,7 @@ export interface PartnerListItem {
   telefone?: string | null;
 }
 
+/** Dados completos de um parceiro */
 export interface PartnerDetails extends PartnerListItem {
   titulacao?: string | null;
   especialidades?: string[] | null;
@@ -43,6 +51,7 @@ export type Dentist = PartnerDetails;
 // PATIENT
 // ==========================================
 
+/** Dados resumidos de um paciente para listagem */
 export interface PatientListItem {
   publicId: string;
   nome: string;
@@ -50,6 +59,7 @@ export interface PatientListItem {
   nascimento?: string | Date | null;
 }
 
+/** Dados completos de um paciente */
 export interface PatientDetails extends PatientListItem {
   cpfParceiro: string;
   partnerPublicId: string;
@@ -72,12 +82,14 @@ export interface Patient extends PatientDetails {
 // TREATMENT
 // ==========================================
 
+/** Dados resumidos de um tratamento para listagem */
 export interface TreatmentListItem {
   publicId: string;
   queixaPrincipal?: string | null;
   dataInicio: string | Date | null;
 }
 
+/** Dados completos de um tratamento */
 export interface TreatmentDetails extends TreatmentListItem {
   descricaoCaso?: string | null;
   observacoesAdicionais?: string | null;
@@ -86,12 +98,19 @@ export interface TreatmentDetails extends TreatmentListItem {
   arquivos?: TreatmentFile[] | null;
 }
 
+/**
+ * Arquivo vinculado a um tratamento.
+ * Categorias:
+ * - 'exames': Exames Ortodônticos e Modelos Digitais (ambos podem ler/escrever)
+ * - 'setup': Setups do Paciente (somente gerente)
+ * - 'final': Documentos Finais (gerente controla, dentista visualiza)
+ */
 export interface TreatmentFile {
   publicId: string;
   formato: string;
   r2key: string;
   nomeOriginal: string;
-  tipo: 'laboratorio' | 'dentista';
+  tipo: 'exames' | 'setup' | 'final';
   dataCriacao: string | Date;
   downloadUrl?: string;
 }
@@ -102,6 +121,12 @@ export interface TreatmentFile {
 
 export type BudgetStatus = 'pendente' | 'aprovado' | 'declinado' | 'cancelado';
 
+/**
+ * Orçamento vinculado a um tratamento.
+ * - Criado pelo GERENTE
+ * - Aprovado/Declinado pelo DENTISTA
+ * - Pode ter um PDF anexado (pelo gerente)
+ */
 export interface Budget {
   publicId: string;
   tratamentoPublicId: string;
@@ -109,6 +134,12 @@ export interface Budget {
   descricao: string;
   status: BudgetStatus;
   dataCriacao: string | Date;
+  /** Chave R2 do PDF anexado (se houver) */
+  arquivoR2key?: string | null;
+  /** Nome original do PDF anexado */
+  arquivoNomeOriginal?: string | null;
+  /** URL temporária de download do PDF (gerada pelo backend) */
+  arquivoDownloadUrl?: string | null;
 }
 
 // Legacy support

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "docs": "npx typedoc --entryPoints src/lib src/hooks src/store src/components --entryPointStrategy expand --out documentation --projectDocuments \"documentation/**/*.md\" --cleanOutputDir false --theme default --name \"The Aligner - Frontend\""
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -76,6 +77,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
+    "typedoc": "^0.28.19",
     "typescript": "^5"
   }
 }

@@ -1,5 +1,17 @@
 "use client"
 
+/**
+ * @page GerentePatientDetailPage
+ * @description Página de detalhes de um paciente para o GERENTE (equipe TheAligner).
+ *
+ * Regras de negócio aplicadas:
+ * - Gerente PODE criar orçamentos e anexar PDF
+ * - Gerente PODE excluir orçamentos com status 'pendente'
+ * - Gerente NÃO pode aprovar nem declinar orçamentos
+ * - Gerente vê as 3 seções de arquivos: Exames, Setups, Documentos Finais
+ * - Gerente NÃO cria nem exclui tratamentos (isso é do dentista)
+ */
+
 import { useState, use, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -20,7 +32,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Trash2, FileText, ClipboardList, User, Loader2, Pencil, Calendar } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, FileText, ClipboardList, User, Loader2, Pencil, Calendar, Download, UploadCloud } from 'lucide-react';
 import { TreatmentAccordion } from '@/components/treatment/TreatmentAccordion';
 import { TreatmentForm } from '@/components/treatment/TreatmentForm';
 import { FileManagement } from '@/components/FileManagement';
@@ -41,7 +53,6 @@ const statusClass: Record<string, string> = {
     cancelado: 'bg-gray-100 text-gray-500',
 };
 
-// Generates a mock ID for now
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 interface PageProps {
@@ -55,7 +66,6 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
     const { toast } = useToast();
     const { token, isLoaded } = useAppAuth();
 
-    // In gerente view, we might need the partner CPF from somewhere or discover it
     const [patient, setPatient] = useState<PatientDetails | null>(null);
     const [dentist, setDentist] = useState<PartnerDetails | null>(null);
 
@@ -73,8 +83,10 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
     const [budgetToDelete, setBudgetToDelete] = useState<string | null>(null);
 
     const [openEditTreatment, setOpenEditTreatment] = useState(false);
-    const [openEditPatient, setOpenEditPatient] = useState(false);
-    const [patientForm, setPatientForm] = useState({ cpf: '', nome: '', nascimento: '' });
+
+    // Estado para upload de PDF do orçamento
+    const [budgetFile, setBudgetFile] = useState<File | null>(null);
+    const [isUploadingBudgetFile, setIsUploadingBudgetFile] = useState(false);
 
     const loadData = async () => {
         if (!isLoaded || !token || !publicId) return;
@@ -97,10 +109,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
     const loadTreatmentData = async (tid: string, silent = false) => {
         if (!tid) return;
 
-        // Se já temos os detalhes e não é um refresh forçado (silent), evitamos o fetch redundante
-        if (!silent && treatmentDetails?.publicId === tid) {
-            return;
-        }
+        if (!silent && treatmentDetails?.publicId === tid) return;
 
         if (!silent) setIsLoadingDetails(true);
         try {
@@ -132,12 +141,9 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
 
     const totalValue = procedures.reduce((s, p) => s + Number(p.value || 0), 0);
 
-    const addProcedure = () => setProcedures(ps => [...ps, { id: generateId(), name: '', value: 0 }]);
-    const removeProcedure = (pid: string) => setProcedures(ps => ps.filter(p => p.id !== pid));
-    const updateProcedure = (pid: string, field: 'name' | 'value', val: string | number) => {
-        setProcedures(ps => ps.map(p => p.id === pid ? { ...p, [field]: field === 'value' ? Number(val) : val } : p));
-    };
-
+    /**
+     * Cria orçamento e, se houver PDF selecionado, faz upload e vincula.
+     */
     const handleSaveBudget = async () => {
         if (!selectedTreatmentId) return;
 
@@ -150,17 +156,50 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                 descricao: observations.substring(0, 400)
             }, token || undefined);
 
-            // 1. Fechamos o modal primeiro e limpamos o formulário
+            // Se o gerente selecionou um PDF, faz upload
+            if (budgetFile && newBudget?.publicId) {
+                setIsUploadingBudgetFile(true);
+                try {
+                    const fileType = budgetFile.type || 'application/pdf';
+                    const { uploadUrl, r2key } = await budgetService.requestFileUpload(newBudget.publicId, {
+                        fileName: budgetFile.name,
+                        contentType: fileType,
+                    }, token || undefined);
+
+                    const res = await fetch(uploadUrl, {
+                        method: 'PUT',
+                        body: budgetFile,
+                        headers: { 'Content-Type': fileType },
+                    });
+
+                    if (!res.ok) throw new Error("Upload do PDF falhou");
+
+                    await budgetService.confirmFileUpload(newBudget.publicId, {
+                        r2key,
+                        nomeOriginal: budgetFile.name,
+                    }, token || undefined);
+                } catch (fileErr) {
+                    console.error('Erro no upload do PDF:', fileErr);
+                    toast({
+                        title: "Orçamento criado, mas erro no upload do PDF",
+                        description: "O orçamento foi salvo, mas o anexo não pôde ser enviado.",
+                        variant: "destructive"
+                    });
+                } finally {
+                    setIsUploadingBudgetFile(false);
+                }
+            }
+
+            // Limpar formulário
             setOpenBudget(false);
             setProcedures([{ id: generateId(), name: '', value: 0 }]);
             setObservations('');
+            setBudgetFile(null);
 
-            // 2. Atualização otimista e scroll
             if (newBudget && typeof newBudget === 'object' && newBudget.publicId) {
                 setBudgets(prev => [newBudget, ...prev]);
                 toast({ title: "Orçamento criado com sucesso!" });
 
-                // 3. Foca no novo item (scroll suave) e destaca
                 setTimeout(() => {
                     const el = document.getElementById(`budget-${newBudget.publicId}`);
                     if (el) {
@@ -171,7 +210,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                 }, 450);
             }
 
-            // 4. Sincronismo em background (SILENCIOSO)
+            // Sincronismo silencioso
             loadTreatmentData(selectedTreatmentId, true);
 
         } catch (err) {
@@ -186,42 +225,23 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
         }
     };
 
-    const handleCancelBudget = async () => {
+    /**
+     * Exclui (soft-delete) um orçamento pendente.
+     */
+    const handleDeleteBudget = async () => {
         if (!budgetToDelete) return;
 
         setIsSubmitting(true);
         try {
-            await budgetService.cancel(budgetToDelete, token || undefined);
+            await budgetService.delete(budgetToDelete, token || undefined);
             toast({
-                title: "Orçamento cancelado",
+                title: "Orçamento excluído",
                 description: "O orçamento foi removido com sucesso."
             });
             if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId, true);
             setBudgetToDelete(null);
         } catch (err) {
-            toast({ title: "Erro ao cancelar", variant: "destructive" });
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleDeleteTreatment = async (tid: string) => {
-        setIsSubmitting(true);
-        try {
-            await treatmentService.remove(tid, token || undefined);
-            toast({
-                title: "Tratamento removido",
-                description: "O tratamento e seus orçamentos foram excluídos com sucesso."
-            });
-            loadData();
-            setSelectedTreatmentId(null);
-            setTreatmentDetails(null);
-        } catch (err: any) {
-            toast({
-                title: "Erro ao remover tratamento",
-                description: err.message,
-                variant: "destructive"
-            });
+            toast({ title: "Erro ao excluir", variant: "destructive" });
         } finally {
             setIsSubmitting(false);
         }
@@ -241,40 +261,6 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
         
         loadData();
         loadTreatmentData(actualTreatment.publicId, true);
-    };
-
-    const openEditPatientModal = () => {
-        if (!patient) return;
-        setPatientForm({
-            cpf: patient.cpf,
-            nome: patient.nome,
-            nascimento: patient.nascimento ? new Date(patient.nascimento).toISOString().split('T')[0] : ''
-        });
-        setOpenEditPatient(true);
-    };
-
-    const handleSavePatient = async () => {
-        if (!publicId || !token) return;
-        setIsSubmitting(true);
-        try {
-            await patientService.update(publicId, {
-                nomePaciente: patientForm.nome,
-                cpfPaciente: patientForm.cpf,
-                dataNascimento: patientForm.nascimento
-            }, token);
-            
-            toast({ title: "Paciente atualizado com sucesso!" });
-            setOpenEditPatient(false);
-            loadData();
-        } catch (err: any) {
-            toast({
-                title: "Erro ao atualizar paciente",
-                description: err.message,
-                variant: "destructive"
-            });
-        } finally {
-            setIsSubmitting(false);
-        }
     };
 
     return (
@@ -303,8 +289,6 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
             <div className="bg-card rounded-lg border border-border p-5 mb-6 relative group">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-sm font-semibold text-foreground">Identificação do Paciente</h2>
-                    <h2 className="text-sm font-semibold text-foreground">Identificação do Paciente</h2>
-                    {/* Botão de editar removido conforme novo requisito: Gerente apenas visualiza */}
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                     {[
@@ -334,7 +318,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                     onSelect={setSelectedTreatmentId}
                     treatmentDetails={treatmentDetails}
                     budgets={budgets}
-                    // Edit/Delete desativados para Gerente conforme novo requisito
+                    /* Gerente NÃO edita nem exclui tratamentos */
                     onEditTreatment={undefined}
                     onDeleteTreatment={undefined}
                     onAddBudget={() => setOpenBudget(true)}
@@ -342,10 +326,11 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                     onDeleteBudget={setBudgetToDelete}
                     isLoadingDetails={isLoadingDetails}
                     canUpload={true}
+                    userRole="gerente"
                 />
             </div>
 
-            {/* Budget View Modal */}
+            {/* Budget View Modal — Gerente NÃO pode aprovar/declinar */}
             <Dialog open={!!viewingBudget} onOpenChange={v => !v && setViewingBudget(null)}>
                 <DialogContent className="max-w-[95vw] md:max-w-6xl h-auto border-none shadow-2xl p-0 overflow-hidden">
                     <DialogHeader className="p-6 border-b border-border bg-muted/5 flex-shrink-0">
@@ -381,19 +366,38 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* PDF Anexado — Gerente pode visualizar/baixar */}
+                            {viewingBudget.arquivoDownloadUrl && (
+                                <div className="space-y-2">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Documento Anexado</p>
+                                    <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-xl border border-border/50">
+                                        <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                                        <span className="text-sm text-foreground truncate flex-1">{viewingBudget.arquivoNomeOriginal || 'Documento.pdf'}</span>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="gap-1.5 text-xs font-bold"
+                                            onClick={() => window.open(viewingBudget.arquivoDownloadUrl!, '_blank')}
+                                        >
+                                            <Download className="h-3.5 w-3.5" /> Baixar PDF
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
-            <DialogFooter className="p-6 border-t border-border bg-muted/5">
+                    <DialogFooter className="p-6 border-t border-border bg-muted/5">
                         <Button variant="outline" onClick={() => setViewingBudget(null)} className="h-12 px-8 font-bold uppercase text-xs tracking-widest">Fechar Visualização</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            {/* Budget Dialog */}
+            {/* Budget Creation Dialog — Com upload de PDF */}
             <Dialog open={openBudget} onOpenChange={setOpenBudget}>
                 <DialogContent className="max-w-[95vw] md:max-w-6xl h-auto border-none shadow-2xl p-0 overflow-hidden">
                     <DialogHeader className="p-6 border-b border-border bg-muted/5 flex-shrink-0">
-                        <DialogTitle className="text-xl font-bold font-black">
+                        <DialogTitle className="text-xl font-bold">
                             Gerar Novo Orçamento
                         </DialogTitle>
                     </DialogHeader>
@@ -401,7 +405,9 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                     {isSubmitting && (
                         <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] flex flex-col items-center justify-center z-50 rounded-lg animate-in fade-in duration-300">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-4">Processando...</p>
+                            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-4">
+                                {isUploadingBudgetFile ? "Enviando PDF..." : "Processando..."}
+                            </p>
                         </div>
                     )}
                     <div className="p-8 space-y-6 bg-background/50">
@@ -433,9 +439,48 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Upload de PDF do orçamento */}
+                        <div className="space-y-3">
+                            <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+                                Anexar Documento PDF (opcional)
+                            </Label>
+                            <div className="flex items-center gap-3">
+                                <Input
+                                    type="file"
+                                    accept=".pdf,application/pdf"
+                                    id="budget-file-input"
+                                    className="hidden"
+                                    onChange={e => setBudgetFile(e.target.files?.[0] || null)}
+                                />
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="gap-2 text-xs font-bold uppercase h-10"
+                                    onClick={() => document.getElementById('budget-file-input')?.click()}
+                                >
+                                    <UploadCloud className="h-4 w-4" />
+                                    {budgetFile ? 'Trocar arquivo' : 'Selecionar PDF'}
+                                </Button>
+                                {budgetFile && (
+                                    <div className="flex items-center gap-2 bg-muted/40 px-3 py-2 rounded-lg border border-border/50">
+                                        <FileText className="h-4 w-4 text-primary flex-shrink-0" />
+                                        <span className="text-xs text-foreground font-medium truncate max-w-[200px]">{budgetFile.name}</span>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-6 w-6 text-destructive"
+                                            onClick={() => setBudgetFile(null)}
+                                        >
+                                            <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                     <DialogFooter className="p-6 border-t border-border bg-muted/5 gap-3">
-                        <Button variant="outline" onClick={() => setOpenBudget(false)} disabled={isSubmitting} className="h-12 px-8 font-bold uppercase text-xs tracking-widest">Descartar</Button>
+                        <Button variant="outline" onClick={() => { setOpenBudget(false); setBudgetFile(null); }} disabled={isSubmitting} className="h-12 px-8 font-bold uppercase text-xs tracking-widest">Descartar</Button>
                         <Button 
                             onClick={handleSaveBudget} 
                             loading={isSubmitting} 
@@ -448,15 +493,15 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                 </DialogContent>
             </Dialog>
 
-            {/* Confirmation Dialog for Budget Cancellation */}
+            {/* Confirmation Dialog for Budget Deletion */}
             <ConfirmActionDialog
                 open={!!budgetToDelete}
                 onOpenChange={(open) => !open && setBudgetToDelete(null)}
-                onConfirm={handleCancelBudget}
+                onConfirm={handleDeleteBudget}
                 isLoading={isSubmitting}
-                title="Confirmar Cancelamento"
-                description="Tem certeza que deseja cancelar este orçamento? O status será alterado para 'Cancelado', permitindo filtragem posterior."
-                confirmText="Confirmar"
+                title="Confirmar Exclusão"
+                description="Tem certeza que deseja excluir este orçamento? Esta ação não pode ser desfeita."
+                confirmText="Excluir"
             />
 
             {/* Edit Treatment Dialog */}
@@ -482,57 +527,6 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                             )}
                         </div>
                     </div>
-                </DialogContent>
-            </Dialog>
-
-            {/* Edit Patient Dialog */}
-            <Dialog open={openEditPatient} onOpenChange={setOpenEditPatient}>
-                <DialogContent className="max-w-[95vw] md:max-w-6xl h-auto flex flex-col p-0 overflow-hidden border-none shadow-2xl">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <User className="h-5 w-5 text-primary" />
-                            Editar Identificação do Paciente
-                        </DialogTitle>
-                    </DialogHeader>
-
-                    <div className="py-6 space-y-4">
-                        <div className="space-y-1.5">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">CPF *</Label>
-                            <Input
-                                value={patientForm.cpf}
-                                onChange={e => setPatientForm(f => ({ ...f, cpf: e.target.value.replace(/\D/g, '').slice(0, 11) }))}
-                                placeholder="Apenas números"
-                                disabled
-                                className="bg-muted cursor-not-allowed h-11"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nome Completo *</Label>
-                            <Input 
-                                value={patientForm.nome} 
-                                onChange={e => setPatientForm(f => ({ ...f, nome: e.target.value }))}
-                                className="h-11"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Data de Nascimento</Label>
-                            <div className="relative">
-                                <Input 
-                                    type="date" 
-                                    value={patientForm.nascimento} 
-                                    onChange={e => setPatientForm(f => ({ ...f, nascimento: e.target.value }))}
-                                    className="h-11"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <DialogFooter className="gap-2 sm:gap-0">
-                        <Button variant="outline" onClick={() => setOpenEditPatient(false)} className="h-11 px-8">Cancelar</Button>
-                        <Button onClick={handleSavePatient} disabled={!patientForm.nome} loading={isSubmitting} className="h-11 px-8">
-                            Atualizar Dados
-                        </Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
