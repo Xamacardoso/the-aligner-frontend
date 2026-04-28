@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "docs": "npx typedoc --entryPoints src/lib src/hooks src/store src/components --entryPointStrategy expand --out documentation --projectDocuments \"documentation/**/*.md\" --cleanOutputDir false --theme default --name \"The Aligner - Frontend\""
+    "docs": "npx typedoc --entryPoints src/lib src/hooks src/store src/components --entryPointStrategy expand --out documentation --projectDocuments \"documentation/**/*.md\" --cleanOutputDir false --theme default --name \"The Aligner - Frontend\"",
+    "docs:run": "npx http-server documentation"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

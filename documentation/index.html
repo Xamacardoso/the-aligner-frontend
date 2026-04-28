@@ -1,0 +1,133 @@
+<!DOCTYPE html><html class="default" lang="en" data-base="./"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>The Aligner - Frontend</title><meta name="description" content="Documentation for The Aligner - Frontend"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script defer src="assets/main.js"></script><script async src="assets/icons.js" id="tsd-icons-script"></script><script async src="assets/search.js" id="tsd-search-script"></script><script async src="assets/navigation.js" id="tsd-nav-script"></script><script async src="assets/hierarchy.js" id="tsd-hierarchy-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="index.html" class="title">The Aligner - Frontend</a><div id="tsd-toolbar-links"></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><h1>The Aligner - Frontend</h1></div><div class="tsd-panel tsd-typography"><h1 id="the-aligner-frontend" class="tsd-anchor-link">The Aligner — Frontend<a href="#the-aligner-frontend" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1>
+<p>Interface web moderna para o sistema de gestão odontológica The Aligner, construída com Next.js 16 e Shadcn UI.</p>
+<h2 id="🏗-stack" class="tsd-anchor-link">🏗 Stack<a href="#🏗-stack" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Camada</th>
+<th style="text-align:left">Tecnologia</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Framework</td>
+<td style="text-align:left">Next.js 16 (App Router + Turbopack)</td>
+</tr>
+<tr>
+<td style="text-align:left">UI Components</td>
+<td style="text-align:left">Shadcn UI + Radix Primitives</td>
+</tr>
+<tr>
+<td style="text-align:left">Styling</td>
+<td style="text-align:left">Tailwind CSS</td>
+</tr>
+<tr>
+<td style="text-align:left">Estado</td>
+<td style="text-align:left">React Context + <code>useState</code></td>
+</tr>
+<tr>
+<td style="text-align:left">HTTP</td>
+<td style="text-align:left">Fetch nativo + apiClient centralizado</td>
+</tr>
+<tr>
+<td style="text-align:left">Tipagem</td>
+<td style="text-align:left">TypeScript</td>
+</tr>
+<tr>
+<td style="text-align:left">Visualização 3D</td>
+<td style="text-align:left">Three.js (STL Viewer)</td>
+</tr>
+<tr>
+<td style="text-align:left">Documentação</td>
+<td style="text-align:left">TypeDoc</td>
+</tr>
+</tbody>
+</table>
+<h2 id="📁-estrutura-de-pastas" class="tsd-anchor-link">📁 Estrutura de Pastas<a href="#📁-estrutura-de-pastas" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<pre><code><span class="hl-0">src</span><span class="hl-1">/</span><br/><span class="hl-1">├── </span><span class="hl-0">app</span><span class="hl-1">/</span><br/><span class="hl-1">│   ├── (</span><span class="hl-0">dashboard</span><span class="hl-1">)/</span><br/><span class="hl-1">│   │   ├── </span><span class="hl-0">dentista</span><span class="hl-1">/          # </span><span class="hl-0">Páginas</span><span class="hl-1"> </span><span class="hl-2">do</span><span class="hl-1"> </span><span class="hl-0">Dentista</span><br/><span class="hl-1">│   │   │   ├── </span><span class="hl-0">paciente</span><span class="hl-1">/[</span><span class="hl-0">id</span><span class="hl-1">]/ # </span><span class="hl-0">Detalhe</span><span class="hl-1"> </span><span class="hl-2">do</span><span class="hl-1"> </span><span class="hl-3">paciente</span><span class="hl-1"> (</span><span class="hl-0">dentista</span><span class="hl-1">)</span><br/><span class="hl-1">│   │   │   └── </span><span class="hl-0">pacientes</span><span class="hl-1">/     # </span><span class="hl-0">Lista</span><span class="hl-1"> </span><span class="hl-0">de</span><span class="hl-1"> </span><span class="hl-0">pacientes</span><br/><span class="hl-1">│   │   └── </span><span class="hl-0">gerente</span><span class="hl-1">/           # </span><span class="hl-0">Páginas</span><span class="hl-1"> </span><span class="hl-2">do</span><span class="hl-1"> </span><span class="hl-0">Gerente</span><br/><span class="hl-1">│   │       ├── </span><span class="hl-0">paciente</span><span class="hl-1">/[</span><span class="hl-0">id</span><span class="hl-1">]/ # </span><span class="hl-0">Detalhe</span><span class="hl-1"> </span><span class="hl-2">do</span><span class="hl-1"> </span><span class="hl-3">paciente</span><span class="hl-1"> (</span><span class="hl-0">gerente</span><span class="hl-1">)</span><br/><span class="hl-1">│   │       ├── </span><span class="hl-0">pacientes</span><span class="hl-1">/     # </span><span class="hl-0">Gestão</span><span class="hl-1"> </span><span class="hl-0">de</span><span class="hl-1"> </span><span class="hl-0">pacientes</span><br/><span class="hl-1">│   │       ├── </span><span class="hl-0">dentistas</span><span class="hl-1">/     # </span><span class="hl-0">Gestão</span><span class="hl-1"> </span><span class="hl-0">de</span><span class="hl-1"> </span><span class="hl-0">dentistas</span><br/><span class="hl-1">│   │       └── </span><span class="hl-0">manutencao</span><span class="hl-1">/    # </span><span class="hl-0">Painel</span><span class="hl-1"> </span><span class="hl-0">de</span><span class="hl-1"> </span><span class="hl-0">manutenção</span><br/><span class="hl-1">│   ├── </span><span class="hl-0">sign</span><span class="hl-1">-</span><span class="hl-4">in</span><span class="hl-1">/               # </span><span class="hl-0">Página</span><span class="hl-1"> </span><span class="hl-0">de</span><span class="hl-1"> </span><span class="hl-0">login</span><br/><span class="hl-1">│   └── </span><span class="hl-0">visualizador</span><span class="hl-1">-3</span><span class="hl-0">d</span><span class="hl-1">/       # </span><span class="hl-0">Viewer</span><span class="hl-1"> 3</span><span class="hl-5">D</span><span class="hl-1"> </span><span class="hl-0">para</span><span class="hl-1"> </span><span class="hl-0">arquivos</span><span class="hl-1"> </span><span class="hl-5">STL</span><br/><span class="hl-1">├── </span><span class="hl-0">components</span><span class="hl-1">/</span><br/><span class="hl-1">│   ├── </span><span class="hl-0">treatment</span><span class="hl-1">/</span><br/><span class="hl-1">│   │   ├── </span><span class="hl-0">TreatmentAccordion</span><span class="hl-1">.</span><span class="hl-0">tsx</span><span class="hl-1">  # </span><span class="hl-0">Accordion</span><span class="hl-1"> </span><span class="hl-0">principal</span><span class="hl-1"> </span><span class="hl-0">de</span><span class="hl-1"> </span><span class="hl-0">tratamentos</span><br/><span class="hl-1">│   │   ├── </span><span class="hl-0">TreatmentForm</span><span class="hl-1">.</span><span class="hl-0">tsx</span><span class="hl-1">       # </span><span class="hl-0">Formulário</span><span class="hl-1"> </span><span class="hl-0">de</span><span class="hl-1"> </span><span class="hl-0">criação</span><span class="hl-1">/</span><span class="hl-0">edição</span><br/><span class="hl-1">│   │   └── </span><span class="hl-0">ClinicalVisualizer</span><span class="hl-1">.</span><span class="hl-0">tsx</span><span class="hl-1">  # </span><span class="hl-0">Visualizador</span><span class="hl-1"> </span><span class="hl-0">de</span><span class="hl-1"> </span><span class="hl-0">objetivos</span><span class="hl-1">/</span><span class="hl-0">apinhamentos</span><br/><span class="hl-1">│   ├── </span><span class="hl-0">FileManagement</span><span class="hl-1">.</span><span class="hl-0">tsx</span><span class="hl-1">      # </span><span class="hl-0">Componente</span><span class="hl-1"> </span><span class="hl-0">de</span><span class="hl-1"> </span><span class="hl-0">upload</span><span class="hl-1">/</span><span class="hl-0">download</span><span class="hl-1"> </span><span class="hl-0">de</span><span class="hl-1"> </span><span class="hl-0">arquivos</span><br/><span class="hl-1">│   ├── </span><span class="hl-0">CollapsibleSection</span><span class="hl-1">.</span><span class="hl-0">tsx</span><span class="hl-1">  # </span><span class="hl-0">Seção</span><span class="hl-1"> </span><span class="hl-0">colapsável</span><span class="hl-1"> </span><span class="hl-0">reutilizável</span><br/><span class="hl-1">│   ├── </span><span class="hl-0">ConfirmActionDialog</span><span class="hl-1">.</span><span class="hl-0">tsx</span><span class="hl-1"> # </span><span class="hl-0">Modal</span><span class="hl-1"> </span><span class="hl-0">de</span><span class="hl-1"> </span><span class="hl-0">confirmação</span><br/><span class="hl-1">│   └── </span><span class="hl-0">ui</span><span class="hl-1">/                     # </span><span class="hl-0">Componentes</span><span class="hl-1"> </span><span class="hl-0">Shadcn</span><span class="hl-1"> </span><span class="hl-5">UI</span><br/><span class="hl-1">├── </span><span class="hl-0">hooks</span><span class="hl-1">/</span><br/><span class="hl-1">│   └── </span><span class="hl-0">use</span><span class="hl-1">-</span><span class="hl-0">app</span><span class="hl-1">-</span><span class="hl-0">auth</span><span class="hl-1">.</span><span class="hl-0">ts</span><span class="hl-1">         # </span><span class="hl-0">Hook</span><span class="hl-1"> </span><span class="hl-0">de</span><span class="hl-1"> </span><span class="hl-0">autenticação</span><br/><span class="hl-1">└── </span><span class="hl-0">lib</span><span class="hl-1">/</span><br/><span class="hl-1">    ├── </span><span class="hl-0">api</span><span class="hl-1">/</span><br/><span class="hl-1">    │   ├── </span><span class="hl-0">client</span><span class="hl-1">.</span><span class="hl-0">ts</span><span class="hl-1">           # </span><span class="hl-0">Cliente</span><span class="hl-1"> </span><span class="hl-5">HTTP</span><span class="hl-1"> </span><span class="hl-0">centralizado</span><br/><span class="hl-1">    │   ├── </span><span class="hl-0">treatment</span><span class="hl-1">.</span><span class="hl-0">service</span><span class="hl-1">.</span><span class="hl-0">ts</span><br/><span class="hl-1">    │   ├── </span><span class="hl-0">budget</span><span class="hl-1">.</span><span class="hl-0">service</span><span class="hl-1">.</span><span class="hl-0">ts</span><br/><span class="hl-1">    │   ├── </span><span class="hl-0">patient</span><span class="hl-1">.</span><span class="hl-0">service</span><span class="hl-1">.</span><span class="hl-0">ts</span><br/><span class="hl-1">    │   ├── </span><span class="hl-0">partner</span><span class="hl-1">.</span><span class="hl-0">service</span><span class="hl-1">.</span><span class="hl-0">ts</span><br/><span class="hl-1">    │   ├── </span><span class="hl-0">clinical</span><span class="hl-1">.</span><span class="hl-0">service</span><span class="hl-1">.</span><span class="hl-0">ts</span><br/><span class="hl-1">    │   └── </span><span class="hl-0">maintenance</span><span class="hl-1">.</span><span class="hl-0">service</span><span class="hl-1">.</span><span class="hl-0">ts</span><br/><span class="hl-1">    ├── </span><span class="hl-0">types</span><span class="hl-1">.</span><span class="hl-0">ts</span><span class="hl-1">                # </span><span class="hl-0">Tipos</span><span class="hl-1"> </span><span class="hl-0">TypeScript</span><span class="hl-1"> </span><span class="hl-0">globais</span><br/><span class="hl-1">    └── </span><span class="hl-0">utils</span><span class="hl-1">.</span><span class="hl-0">ts</span><span class="hl-1">                # </span><span class="hl-3">Utilidades</span><span class="hl-1"> (</span><span class="hl-0">cn</span><span class="hl-1">, </span><span class="hl-0">etc</span><span class="hl-1">)</span>
+</code><button>Copy</button></pre>
+
+<h2 id="🔐-autenticação" class="tsd-anchor-link">🔐 Autenticação<a href="#🔐-autenticação" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>O sistema usa JWT com o seguinte fluxo:</p>
+<ol>
+<li>Usuário faz login com CPF + Senha</li>
+<li>Backend retorna <code>access_token</code> (JWT)</li>
+<li>Frontend armazena no <code>localStorage</code></li>
+<li>O hook <code>useAppAuth()</code> fornece <code>token</code>, <code>user</code> e <code>isLoaded</code></li>
+<li>Todas as chamadas API incluem <code>Authorization: Bearer &lt;token&gt;</code></li>
+</ol>
+<h2 id="🎨-controle-de-acesso-por-role" class="tsd-anchor-link">🎨 Controle de Acesso por Role<a href="#🎨-controle-de-acesso-por-role" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="dentista-" class="tsd-anchor-link">Dentista (<code>/dentista/</code>)<a href="#dentista-" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<ul>
+<li>✅ Cria, edita e exclui tratamentos</li>
+<li>✅ Aprova e declina orçamentos</li>
+<li>✅ Upload/download de Exames Ortodônticos</li>
+<li>✅ Download de Documentos Finais (somente leitura)</li>
+<li>❌ <strong>Não</strong> cria orçamentos</li>
+<li>❌ <strong>Não</strong> acessa Setups do Paciente</li>
+</ul>
+<h3 id="gerente-" class="tsd-anchor-link">Gerente (<code>/gerente/</code>)<a href="#gerente-" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<ul>
+<li>✅ Cria orçamentos e anexa PDF</li>
+<li>✅ Exclui orçamentos pendentes</li>
+<li>✅ Upload/download em todas as 3 seções de arquivos</li>
+<li>❌ <strong>Não</strong> aprova/declina orçamentos</li>
+<li>❌ <strong>Não</strong> cria/edita/exclui tratamentos</li>
+</ul>
+<h2 id="⚡-setup-rápido" class="tsd-anchor-link">⚡ Setup Rápido<a href="#⚡-setup-rápido" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="1-instalar-dependências" class="tsd-anchor-link">1. Instalar dependências<a href="#1-instalar-dependências" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="bash"><span class="hl-3">npm</span><span class="hl-1"> </span><span class="hl-6">install</span>
+</code><button type="button">Copy</button></pre>
+
+<h3 id="2-configurar-variáveis-de-ambiente" class="tsd-anchor-link">2. Configurar variáveis de ambiente<a href="#2-configurar-variáveis-de-ambiente" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="env">NEXT_PUBLIC_API_URL=http://localhost:3001
+</code><button type="button">Copy</button></pre>
+
+<h3 id="3-iniciar-em-desenvolvimento" class="tsd-anchor-link">3. Iniciar em desenvolvimento<a href="#3-iniciar-em-desenvolvimento" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="bash"><span class="hl-3">npm</span><span class="hl-1"> </span><span class="hl-6">run</span><span class="hl-1"> </span><span class="hl-6">dev</span>
+</code><button type="button">Copy</button></pre>
+
+<p>O frontend estará disponível em <code>http://localhost:3000</code>.</p>
+<h2 id="📖-documentação" class="tsd-anchor-link">📖 Documentação<a href="#📖-documentação" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="typedoc-código-fonte" class="tsd-anchor-link">TypeDoc (Código-fonte)<a href="#typedoc-código-fonte" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="bash"><span class="hl-3">npm</span><span class="hl-1"> </span><span class="hl-6">run</span><span class="hl-1"> </span><span class="hl-6">docs</span>
+</code><button type="button">Copy</button></pre>
+
+<p>Os arquivos ficam em <code>documentation/</code> — abra <code>index.html</code> no navegador.</p>
+<h2 id="🧪-scripts-disponíveis" class="tsd-anchor-link">🧪 Scripts Disponíveis<a href="#🧪-scripts-disponíveis" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Script</th>
+<th style="text-align:left">Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>npm run dev</code></td>
+<td style="text-align:left">Desenvolvimento com Turbopack</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>npm run build</code></td>
+<td style="text-align:left">Build de produção</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>npm run start</code></td>
+<td style="text-align:left">Servir build de produção</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>npm run docs</code></td>
+<td style="text-align:left">Gerar documentação TypeDoc</td>
+</tr>
+</tbody>
+</table>
+<h2 id="📦-componentes-principais" class="tsd-anchor-link">📦 Componentes Principais<a href="#📦-componentes-principais" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="_" class="tsd-anchor-link"><code>TreatmentAccordion</code><a href="#_" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Accordion que exibe tratamentos com 3 seções de arquivos e orçamentos. Recebe <code>userRole</code> para controlar visibilidade.</p>
+<h3 id="_-1" class="tsd-anchor-link"><code>FileManagement</code><a href="#_-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Componente de upload/download com controle de acesso. Props <code>readOnly</code> e <code>canDelete</code> controlam botões visíveis.</p>
+<h3 id="_-2" class="tsd-anchor-link"><code>CollapsibleSection</code><a href="#_-2" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Seção colapsável com animação suave. Suporta modo controlado e não-controlado.</p>
+<h3 id="_-3" class="tsd-anchor-link"><code>ConfirmActionDialog</code><a href="#_-3" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Modal de confirmação reutilizável com loading state.</p>
+</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#the-aligner-frontend"><span>The <wbr/>Aligner — <wbr/>Frontend</span></a><ul><li><a href="#🏗-stack"><span>🏗 <wbr/>Stack</span></a></li><li><a href="#📁-estrutura-de-pastas"><span>📁 <wbr/>Estrutura de <wbr/>Pastas</span></a></li><li><a href="#🔐-autenticação"><span>🔐 <wbr/>Autenticação</span></a></li><li><a href="#🎨-controle-de-acesso-por-role"><span>🎨 <wbr/>Controle de <wbr/>Acesso por <wbr/>Role</span></a></li><li><ul><li><a href="#dentista-"><span>Dentista ()</span></a></li><li><a href="#gerente-"><span>Gerente ()</span></a></li></ul></li><li><a href="#⚡-setup-rápido"><span>⚡ <wbr/>Setup <wbr/>Rápido</span></a></li><li><ul><li><a href="#1-instalar-dependências"><span>1. <wbr/>Instalar dependências</span></a></li><li><a href="#2-configurar-variáveis-de-ambiente"><span>2. <wbr/>Configurar variáveis de ambiente</span></a></li><li><a href="#3-iniciar-em-desenvolvimento"><span>3. <wbr/>Iniciar em desenvolvimento</span></a></li></ul></li><li><a href="#📖-documentação"><span>📖 <wbr/>Documentação</span></a></li><li><ul><li><a href="#typedoc-código-fonte"><span>Type<wbr/>Doc (<wbr/>Código-<wbr/>fonte)</span></a></li></ul></li><li><a href="#🧪-scripts-disponíveis"><span>🧪 <wbr/>Scripts <wbr/>Disponíveis</span></a></li><li><a href="#📦-componentes-principais"><span>📦 <wbr/>Componentes <wbr/>Principais</span></a></li><li><ul><li><a href="#_"><span></span></a></li><li><a href="#_-1"><span></span></a></li><li><a href="#_-2"><span></span></a></li><li><a href="#_-3"><span></span></a></li></ul></li></ul></div></details></div><div class="site-menu"><nav class="tsd-navigation"><a href="modules.html">The Aligner - Frontend</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>
