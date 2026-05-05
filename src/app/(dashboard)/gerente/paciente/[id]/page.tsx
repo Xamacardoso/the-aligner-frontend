@@ -28,6 +28,7 @@ import {
     TreatmentDetails
 } from '@/lib/types';
 import { Button } from '@/components/ui/button';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -295,15 +296,14 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                     <h2 className="text-sm font-semibold text-foreground">Identificação do Paciente</h2>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                    {[
-                        ['CPF', patient.cpf],
-                        ['Nascimento', patient.nascimento ? new Date(patient.nascimento).toLocaleDateString('pt-BR') : '—'],
-                    ].map(([label, value]) => (
-                        <div key={label}>
-                            <span className="text-foreground font-semibold">{label}: </span>
-                            <span className="text-muted-foreground">{value || '—'}</span>
-                        </div>
-                    ))}
+                    <div>
+                        <span className="text-foreground font-semibold">CPF: </span>
+                        <span className="text-muted-foreground">{patient.cpf || '—'}</span>
+                    </div>
+                    <div>
+                        <span className="text-foreground font-semibold">Nascimento: </span>
+                        <span className="text-muted-foreground"><FormattedDate date={patient.nascimento} /></span>
+                    </div>
                 </div>
             </div>
 

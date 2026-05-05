@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { patientService } from '@/lib/api';
 import { PatientListItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -243,7 +244,7 @@ export default function DentistaPatientsPage() {
                                 >
                                     <TableCell>{p.cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}</TableCell>
                                     <TableCell className="font-medium">{p.nome}</TableCell>
-                                    <TableCell>{p.nascimento ? new Date(p.nascimento).toLocaleDateString('pt-BR') : '-'}</TableCell>
+                                    <TableCell><FormattedDate date={p.nascimento} placeholder="-" /></TableCell>
                                     <TableCell>
                                         <div className="flex gap-1 justify-end">
                                             <Button

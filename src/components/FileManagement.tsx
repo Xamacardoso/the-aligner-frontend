@@ -21,6 +21,7 @@ import { File, Download, UploadCloud, Loader2, Eye, Box, Trash2 } from 'lucide-r
 import { cn } from "@/lib/utils";
 import { useAppAuth } from '@/hooks/use-app-auth';
 import { logger } from '@/lib/logger';
+import { FormattedDate } from './ui/formatted-date';
 
 interface FileManagementProps {
     /** PublicId do tratamento ao qual os arquivos pertencem */
@@ -267,7 +268,7 @@ export function FileManagement({
                                         <p className="text-[10px] text-muted-foreground flex gap-2">
                                             <span className="uppercase">{doc.formato}</span>
                                             <span>•</span>
-                                            <span>{doc.dataCriacao ? new Date(doc.dataCriacao).toLocaleDateString('pt-BR') : ''}</span>
+                                            <span><FormattedDate date={doc.dataCriacao} placeholder="" /></span>
                                         </p>
                                     </div>
                                 </div>

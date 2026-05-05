@@ -15,6 +15,7 @@
  */
 
 import React from "react";
+import { FormattedDate } from "../ui/formatted-date";
 import {
     Accordion,
     AccordionContent,
@@ -371,7 +372,7 @@ function TreatmentItemContent({
                                             {Number(b.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                                         </span>
                                         <span className="text-[9px] text-muted-foreground">
-                                            {b.dataCriacao ? new Date(b.dataCriacao).toLocaleDateString('pt-BR') : ''}
+                                            <FormattedDate date={b.dataCriacao} placeholder="" />
                                         </span>
                                     </div>
                                     {/* Indicador de arquivos anexados */}

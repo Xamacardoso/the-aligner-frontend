@@ -31,6 +31,7 @@ import {
 } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ArrowLeft, Plus, FileText, ClipboardList, Stethoscope, Pencil, User, Loader2, AlertCircle, Download } from 'lucide-react';
 import { TreatmentForm } from '@/components/treatment/TreatmentForm';
@@ -284,15 +285,14 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
             <div className="bg-card rounded-lg border border-border p-5 mb-6">
                 <h2 className="text-sm font-semibold text-foreground mb-4">Dados do Paciente</h2>
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                    {[
-                        ['CPF', patient.cpf],
-                        ['Data de Nascimento', patient.nascimento ? new Date(patient.nascimento).toLocaleDateString('pt-BR') : '—'],
-                    ].map(([label, value]) => (
-                        <div key={label}>
-                            <span className="text-foreground font-semibold">{label}: </span>
-                            <span className="text-muted-foreground">{value || '—'}</span>
-                        </div>
-                    ))}
+                    <div>
+                        <span className="text-foreground font-semibold">CPF: </span>
+                        <span className="text-muted-foreground">{patient.cpf || '—'}</span>
+                    </div>
+                    <div>
+                        <span className="text-foreground font-semibold">Data de Nascimento: </span>
+                        <span className="text-muted-foreground"><FormattedDate date={patient.nascimento} /></span>
+                    </div>
                 </div>
             </div>
 
