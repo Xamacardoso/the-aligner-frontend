@@ -371,75 +371,73 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                                 </div>
                             </div>
 
-                            {/* Arquivos Anexados — Gerente pode visualizar/baixar/excluir */}
-                            {viewingBudget.arquivos && viewingBudget.arquivos.length > 0 && (
-                                <div className="space-y-4">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Documentos Anexados ({viewingBudget.arquivos.length})</p>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                                        {viewingBudget.arquivos.map((file) => (
-                                            <div key={file.r2key} className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border/50 group/file transition-colors hover:bg-muted/50">
-                                                <div className="flex items-center gap-3 overflow-hidden">
-                                                    <FileText className="h-5 w-5 text-primary flex-shrink-0" />
-                                                    <div className="overflow-hidden">
-                                                        <p className="text-xs font-bold text-foreground truncate" title={file.nomeOriginal}>
-                                                            {file.nomeOriginal}
-                                                        </p>
-                                                        <p className="text-[9px] text-muted-foreground uppercase">{file.formato}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-1 ml-2">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-primary hover:bg-primary/10"
-                                                        onClick={() => window.open(file.downloadUrl, '_blank')}
-                                                        title="Baixar"
-                                                    >
-                                                        <Download className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                                                        onClick={async () => {
-                                                            try {
-                                                                await budgetService.deleteFile(file.r2key, token || undefined);
-                                                                toast({ title: "Arquivo removido" });
-                                                                if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId, true);
-                                                                setViewingBudget(prev => prev ? {
-                                                                    ...prev,
-                                                                    arquivos: prev.arquivos?.filter(f => f.r2key !== file.r2key)
-                                                                } : null);
-                                                            } catch (err) {
-                                                                toast({ title: "Erro ao excluir arquivo", variant: "destructive" });
-                                                            }
-                                                        }}
-                                                        title="Excluir"
-                                                    >
-                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                    </Button>
+                            {/* Seção de Documentos — Gerente pode visualizar/baixar/excluir e ADICIONAR */}
+                            <div className="space-y-4">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Documentos Anexados ({(viewingBudget.arquivos?.length || 0)})</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {viewingBudget.arquivos?.map((file) => (
+                                        <div key={file.r2key} className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border/50 group/file transition-colors hover:bg-muted/50">
+                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                                                <div className="overflow-hidden">
+                                                    <p className="text-xs font-bold text-foreground truncate" title={file.nomeOriginal}>
+                                                        {file.nomeOriginal}
+                                                    </p>
+                                                    <p className="text-[9px] text-muted-foreground uppercase">{file.formato}</p>
                                                 </div>
                                             </div>
-                                        ))}
-
-                                        {/* Dropzone para adicionar novos arquivos diretamente no modal */}
-                                        <div className="col-span-1">
-                                            <BudgetFileUpload
-                                                budgetPublicId={viewingBudget.publicId}
-                                                variant="card"
-                                                onSuccess={async () => {
-                                                    if (selectedTreatmentId) {
-                                                        const updatedBudgets = await budgetService.findByTreatment(selectedTreatmentId, token || undefined);
-                                                        const current = updatedBudgets.find(b => b.publicId === viewingBudget.publicId);
-                                                        if (current) setViewingBudget(current);
-                                                        loadTreatmentData(selectedTreatmentId, true);
-                                                    }
-                                                }}
-                                            />
+                                            <div className="flex items-center gap-1 ml-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-primary hover:bg-primary/10"
+                                                    onClick={() => window.open(file.downloadUrl, '_blank')}
+                                                    title="Baixar"
+                                                >
+                                                    <Download className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                                    onClick={async () => {
+                                                        try {
+                                                            await budgetService.deleteFile(file.r2key, token || undefined);
+                                                            toast({ title: "Arquivo removido" });
+                                                            if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId, true);
+                                                            setViewingBudget(prev => prev ? {
+                                                                ...prev,
+                                                                arquivos: prev.arquivos?.filter(f => f.r2key !== file.r2key)
+                                                            } : null);
+                                                        } catch (err) {
+                                                            toast({ title: "Erro ao excluir arquivo", variant: "destructive" });
+                                                        }
+                                                    }}
+                                                    title="Excluir"
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </div>
                                         </div>
+                                    ))}
+
+                                    {/* Dropzone para adicionar novos arquivos diretamente no modal */}
+                                    <div className="col-span-1">
+                                        <BudgetFileUpload
+                                            budgetPublicId={viewingBudget.publicId}
+                                            variant="card"
+                                            onSuccess={async () => {
+                                                if (selectedTreatmentId) {
+                                                    const updatedBudgets = await budgetService.findByTreatment(selectedTreatmentId, token || undefined);
+                                                    const current = updatedBudgets.find(b => b.publicId === viewingBudget.publicId);
+                                                    if (current) setViewingBudget(current);
+                                                    await loadTreatmentData(selectedTreatmentId, true);
+                                                }
+                                            }}
+                                        />
                                     </div>
                                 </div>
-                            )}
+                            </div>
                         </div>
                     )}
                     <DialogFooter className="p-6 border-t border-border bg-muted/5">

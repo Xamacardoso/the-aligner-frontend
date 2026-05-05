@@ -37,6 +37,17 @@ export function BudgetFileUpload({
         const files = Array.from(e.target.files || []);
         if (files.length === 0 || !budgetPublicId) return;
 
+        const MAX_FILE_SIZE = 60 * 1024 * 1024; // 60MB
+        const oversizedFiles = files.filter(f => f.size > MAX_FILE_SIZE);
+        if (oversizedFiles.length > 0) {
+            toast({
+                title: "Arquivos muito grandes",
+                description: `O limite por arquivo é de 60MB. (${oversizedFiles.length} arquivos excederam o limite)`,
+                variant: "destructive"
+            });
+            return;
+        }
+
         const invalidFiles = files.filter(f => f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf'));
         if (invalidFiles.length > 0) {
             toast({
@@ -46,7 +57,7 @@ export function BudgetFileUpload({
             });
             return;
         }
-
+        
         setIsUploading(true);
         let successCount = 0;
 
