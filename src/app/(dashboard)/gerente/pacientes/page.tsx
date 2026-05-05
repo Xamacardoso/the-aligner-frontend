@@ -6,6 +6,7 @@ import { PartnerListItem } from '@/lib/types';
 import { Search, UserRound, GraduationCap } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useAppAuth } from '@/hooks/use-app-auth';
+import { logger } from '@/lib/logger';
 import {
     Accordion,
     AccordionContent,
@@ -44,7 +45,7 @@ export default function GerentePacientesPage() {
                 setTotalDentists(data.total);
                 setError(null);
             } catch (err: any) {
-                console.error(err);
+                logger.error('Erro ao carregar lista de dentistas para o gerente', { dentistPage, dentistSearch, err });
                 if (err.message.includes('403')) {
                     setError('Você não tem permissão para acessar esta lista.');
                 } else {

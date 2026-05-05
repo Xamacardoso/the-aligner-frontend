@@ -37,6 +37,7 @@ import { TreatmentForm } from '@/components/treatment/TreatmentForm';
 import { TreatmentAccordion } from '@/components/treatment/TreatmentAccordion';
 import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
 import { useAppAuth } from '@/hooks/use-app-auth';
+import { logger } from '@/lib/logger';
 
 const statusLabel: Record<string, string> = {
     pendente: 'Pendente',
@@ -100,7 +101,7 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
                 }
             }
         } catch (err) {
-            console.error(err);
+            logger.error('Erro ao carregar dados do paciente (dentista)', { publicId, err });
             toast({ title: "Erro ao carregar dados do paciente", variant: "destructive" });
         } finally {
             if (!silent) setIsLoading(false);
@@ -116,14 +117,14 @@ export default function DentistaPatientDetailPage({ params }: PageProps) {
         try {
             const details = await treatmentService.findOne(treatmentId, token);
             if (!details || !details.publicId) {
-                console.error('[ERROR] Detalhes inválidos retornados pela API:', details);
+                logger.error('Detalhes inválidos retornados pela API (dentista)', { treatmentId, details });
                 return;
             }
             setTreatmentDetails(details);
             const b = await budgetService.findByTreatment(treatmentId, token || undefined);
             setBudgets(b);
         } catch (err: any) {
-            console.error(`[ERROR] Falha ao carregar tratamento "${treatmentId}":`, err);
+            logger.error(`Falha ao carregar tratamento "${treatmentId}" (dentista)`, { treatmentId, err });
             if (err.message?.includes('404') || err.message?.includes('não encontrado')) {
                 toast({
                     title: "Sincronizando dados...",

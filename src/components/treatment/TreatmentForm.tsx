@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { useAppAuth } from "@/hooks/use-app-auth";
 
 import { TreatmentDetails } from "@/lib/types";
+import { logger } from "@/lib/logger";
 
 interface TreatmentFormProps {
     patientPublicId: string;
@@ -72,7 +73,7 @@ export function TreatmentForm({
                     setForm(f => ({ ...f, objetivos: mappedObjs }));
                 }
             } catch (err) {
-                console.error("Erro ao carregar dados clínicos auxiliares", err);
+                logger.error("Erro ao carregar dados clínicos auxiliares", { err });
             }
         }
         loadAuxData();

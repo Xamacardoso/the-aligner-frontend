@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { File, Download, UploadCloud, Loader2, Eye, Box, Trash2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useAppAuth } from '@/hooks/use-app-auth';
+import { logger } from '@/lib/logger';
 
 interface FileManagementProps {
     /** PublicId do tratamento ao qual os arquivos pertencem */
@@ -75,7 +76,7 @@ export function FileManagement({
             const docs = await treatmentService.getFiles(treatmentPublicId, tipo, token || undefined);
             setDocuments(docs);
         } catch (err) {
-            console.error(err);
+            logger.error('Erro ao carregar documentos do tratamento', { treatmentPublicId, tipo, err });
         } finally {
             setIsLoading(false);
         }
@@ -151,7 +152,7 @@ export function FileManagement({
             loadDocuments();
             if (onUploadSuccess) onUploadSuccess();
         } catch (err: any) {
-            console.error(err);
+            logger.error('Erro no upload de arquivo do tratamento', { treatmentPublicId, uploadTipo, err });
             toast({
                 title: "Erro no upload parcial",
                 description: err.message || "Alguns arquivos podem não ter sido enviados.",
@@ -193,7 +194,7 @@ export function FileManagement({
             document.body.removeChild(link);
             window.URL.revokeObjectURL(blobUrl);
         } catch (err) {
-            console.error(err);
+            logger.error('Erro ao processar download de arquivo', { url, fileName, err });
             toast({ title: "Erro ao baixar", description: "Não foi possível forçar o download.", variant: "destructive" });
             window.open(url, '_blank');
         }

@@ -7,6 +7,7 @@ import { budgetService } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useAppAuth } from "@/hooks/use-app-auth";
 import { cn } from "@/lib/utils";
+import { logger } from "@/lib/logger";
 
 interface BudgetFileUploadProps {
     budgetPublicId: string;
@@ -96,7 +97,7 @@ export function BudgetFileUpload({
 
             if (onSuccess) onSuccess();
         } catch (error: any) {
-            console.error("Erro no upload do orçamento:", error);
+            logger.error("Erro no upload do orçamento", { budgetPublicId, error });
             toast({
                 title: "Erro no upload parcial",
                 description: error.message || "Alguns arquivos podem não ter sido enviados.",

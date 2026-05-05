@@ -16,6 +16,7 @@ import { PartnerDetails } from "@/lib/types";
 import { Loader2, User, Building, Award, Phone, Eye, EyeOff } from "lucide-react";
 import { useAppAuth } from "@/hooks/use-app-auth";
 import { formatCpf, formatPhone, formatCnpj, formatCep } from "@/lib/utils";
+import { logger } from "@/lib/logger";
 
 interface PartnerFormProps {
     initialData?: PartnerDetails;
@@ -97,7 +98,7 @@ export function PartnerForm({
                     }));
                 }
             } catch (err) {
-                console.error("Erro ao carregar dados auxiliares", err);
+                logger.error("Erro ao carregar dados auxiliares do parceiro", { err });
             }
         }
         loadAuxData();
@@ -120,7 +121,7 @@ export function PartnerForm({
                         }));
                     }
                 } catch (err) {
-                    console.error("Erro ao buscar CEP", err);
+                    logger.error("Erro ao buscar CEP", { cep: form.cep, err });
                 }
             }
         }

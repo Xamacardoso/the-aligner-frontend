@@ -7,6 +7,7 @@ import { PatientListItem } from '@/lib/types';
 import { Search, ChevronRight, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useAppAuth } from '@/hooks/use-app-auth';
+import { logger } from '@/lib/logger';
 import {
     Pagination,
     PaginationContent,
@@ -39,7 +40,7 @@ export function DentistPatientsSection({ dentistPublicId }: DentistPatientsSecti
                 setPatients(data.items);
                 setTotalPatients(data.total);
             } catch (err) {
-                console.error(err);
+                logger.error('Erro ao carregar pacientes do dentista', { dentistPublicId, patientPage, err });
             } finally {
                 setIsLoading(false);
             }

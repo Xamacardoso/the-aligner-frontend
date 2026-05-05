@@ -40,6 +40,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
 import { useAppAuth } from '@/hooks/use-app-auth';
 import { BudgetFileUpload } from '@/components/budget/BudgetFileUpload';
+import { logger } from '@/lib/logger';
 
 const statusLabel: Record<string, string> = {
     pendente: 'Pendente',
@@ -103,7 +104,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                 if (ts.length > 0) setSelectedTreatmentId(ts[0].publicId);
             }
         } catch (err) {
-            console.error(err);
+            logger.error('Erro ao carregar dados iniciais da página do paciente', { publicId, err });
         }
     };
 
@@ -119,7 +120,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
             const b = await budgetService.findByTreatment(tid, token || undefined);
             setBudgets(b);
         } catch (err) {
-            console.error(err);
+            logger.error('Erro ao carregar dados do tratamento', { tid, err });
         } finally {
             if (!silent) setIsLoadingDetails(false);
         }
@@ -181,7 +182,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                             nomeOriginal: file.name,
                         }, token || undefined);
                     } catch (fileErr) {
-                        console.error('Erro no upload do arquivo:', fileErr);
+                        logger.error('Erro no upload de anexo do orçamento', { fileName: file.name, fileErr });
                         toast({
                             title: `Erro no upload: ${file.name}`,
                             description: "O orçamento foi salvo, mas este anexo não pôde ser enviado.",
@@ -215,11 +216,11 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
             // Sincronismo silencioso
             loadTreatmentData(selectedTreatmentId, true);
 
-        } catch (err) {
-            console.error('Erro ao salvar orçamento:', err);
+        } catch (err: any) {
+            logger.error('Erro no processamento de upload de documentos', { treatmentPublicId: selectedTreatmentId, err });
             toast({
                 title: "Erro ao criar orçamento",
-                description: "Verifique os dados e tente novamente.",
+                description: err.message || "Verifique os dados e tente novamente.",
                 variant: "destructive"
             });
         } finally {
@@ -243,6 +244,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
             if (selectedTreatmentId) loadTreatmentData(selectedTreatmentId, true);
             setBudgetToDelete(null);
         } catch (err) {
+            logger.error('Erro ao excluir orçamento', { budgetToDelete, err });
             toast({ title: "Erro ao excluir", variant: "destructive" });
         } finally {
             setIsSubmitting(false);
@@ -410,6 +412,7 @@ export default function GerentePatientDetailPage({ params }: PageProps) {
                                                                 arquivos: prev.arquivos?.filter(f => f.r2key !== file.r2key)
                                                             } : null);
                                                         } catch (err) {
+                                                            logger.error('Erro ao excluir arquivo do orçamento', { r2key: file.r2key, err });
                                                             toast({ title: "Erro ao excluir arquivo", variant: "destructive" });
                                                         }
                                                     }}

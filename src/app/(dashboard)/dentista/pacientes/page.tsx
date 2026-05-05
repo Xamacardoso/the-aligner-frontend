@@ -24,6 +24,7 @@ import {
     PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useAppAuth } from '@/hooks/use-app-auth';
+import { logger } from '@/lib/logger';
 
 interface PatientForm {
     cpf: string;
@@ -81,7 +82,7 @@ export default function DentistaPatientsPage() {
             setPatients(data.items);
             setTotalItems(data.total);
         } catch (err) {
-            console.error(err);
+            logger.error('Erro ao carregar lista de pacientes do dentista', { dentistPublicId, page, err });
         } finally {
             setIsFetching(false);
         }

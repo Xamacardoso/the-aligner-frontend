@@ -17,6 +17,7 @@ import { PartnerForm } from '@/components/partner/PartnerForm';
 import { formatPhone } from '@/lib/utils';
 import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
 import { useAppAuth } from '@/hooks/use-app-auth';
+import { logger } from '@/lib/logger';
 import {
     Pagination,
     PaginationContent,
@@ -51,7 +52,7 @@ export default function GerenteDentistasPage() {
             setDentists(data.items);
             setTotalItems(data.total);
         } catch (err) {
-            console.error(err);
+            logger.error('Erro ao carregar lista de dentistas (gerente)', { page, search, err });
         }
     };
 
@@ -62,7 +63,7 @@ export default function GerenteDentistasPage() {
             const details = await partnerService.findOne(d.publicId, token || undefined);
             setViewDetails(details);
         } catch (err) {
-            console.error(err);
+            logger.error('Erro ao carregar detalhes do dentista', { publicId: d.publicId, err });
             toast({
                 title: "Erro",
                 description: "Não foi possível carregar os detalhes do dentista.",
