@@ -113,8 +113,8 @@ export default function DentistaPatientsPage() {
             if (isEditing && selectedPublicId) {
                 await patientService.update(selectedPublicId, {
                     nomePaciente: form.nome,
-                    cpfPaciente: form.cpf,
-                    dataNascimento: form.nascimento
+                    cpfPaciente: form.cpf || undefined,
+                    dataNascimento: form.nascimento || undefined
                 }, token || undefined);
                 toast({
                     title: "Paciente atualizado",
@@ -122,9 +122,9 @@ export default function DentistaPatientsPage() {
                 });
             } else {
                 await patientService.create({
-                    cpfPaciente: form.cpf,
+                    cpfPaciente: form.cpf || undefined,
                     nomePaciente: form.nome,
-                    dataNascimento: form.nascimento,
+                    dataNascimento: form.nascimento || undefined,
                 }, user?.publicId || '', token || undefined);
                 toast({
                     title: "Paciente cadastrado",
@@ -242,7 +242,7 @@ export default function DentistaPatientsPage() {
                                     className="cursor-pointer hover:bg-muted/50 transition-colors"
                                     onClick={() => router.push(`/dentista/paciente/${p.publicId}`)}
                                 >
-                                    <TableCell>{p.cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}</TableCell>
+                                    <TableCell>{p.cpf ? p.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : <span className="text-muted-foreground italic">Não informado</span>}</TableCell>
                                     <TableCell className="font-medium">{p.nome}</TableCell>
                                     <TableCell><FormattedDate date={p.nascimento} placeholder="-" /></TableCell>
                                     <TableCell>
@@ -368,16 +368,15 @@ export default function DentistaPatientsPage() {
                             <div className="space-y-2">
                                 <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                                     <Plus className="h-3.5 w-3.5 text-primary" />
-                                    CPF *
+                                    CPF
                                 </Label>
                                 <Input
                                     value={formatCpf(form.cpf)}
                                     onChange={e => setForm(f => ({ ...f, cpf: e.target.value.replace(/\D/g, '').slice(0, 11) }))}
                                     placeholder="000.000.000-00"
-                                    disabled={isEditing}
+                                    disabled={false}
                                     className={cn(
-                                        "h-12 border-primary/10 focus:border-primary transition-all font-mono font-bold shadow-sm",
-                                        isEditing && "bg-muted/50 cursor-not-allowed grayscale"
+                                        "h-12 border-primary/10 focus:border-primary transition-all font-mono font-bold shadow-sm"
                                     )}
                                 />
                             </div>
@@ -402,7 +401,7 @@ export default function DentistaPatientsPage() {
                         <Button variant="outline" onClick={() => setOpen(false)} className="h-12 px-8 font-bold uppercase text-xs tracking-widest">Cancelar</Button>
                         <Button 
                             onClick={handleSave} 
-                            disabled={!form.cpf || !form.nome} 
+                            disabled={!form.nome} 
                             loading={isSubmitting}
                             className="h-12 px-8 font-bold uppercase text-xs tracking-widest min-w-[200px] shadow-lg shadow-primary/10"
                         >

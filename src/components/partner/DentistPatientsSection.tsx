@@ -98,7 +98,7 @@ export function DentistPatientsSection({ dentistPublicId }: DentistPatientsSecti
                                     <div>
                                         <p className="text-sm font-semibold text-foreground">{p.nome}</p>
                                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                                            CPF: {p.cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") || '—'}
+                                            CPF: {p.cpf ? p.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : 'Não informado'}
                                         </p>
                                     </div>
                                 </div>
